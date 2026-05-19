@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* You can define your global modern dark theme variables here later */
+@theme {
+  --color-primary: #e11d48; /* Rose 600 - Good for blood donation theme */
+  --color-background-dark: #0f172a;
+}
