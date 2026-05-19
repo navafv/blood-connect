@@ -35,7 +35,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'password', 'role', 
             'phone_number', 'is_email_verified', 'is_phone_verified', 'organization'
         ]
-        # FIX: Ensure verification statuses cannot be modified by user requests, 
+        # Ensure verification statuses cannot be modified by user requests, 
         # only by the internal OTP verification endpoint/logic.
         extra_kwargs = {
             'password': {'write_only': True},
@@ -82,7 +82,7 @@ class DonorSerializer(serializers.ModelSerializer):
     # We create a specific masked phone field for the public search endpoint
     masked_phone = serializers.SerializerMethodField()
     
-    # FIX: Added country and state string representations for the React frontend
+    # Added country and state string representations for the React frontend
     organization_name = serializers.CharField(source='organization.name', read_only=True)
     country_name = serializers.CharField(source='country.name', read_only=True)
     state_name = serializers.CharField(source='state.name', read_only=True)
@@ -102,10 +102,10 @@ class DonorSerializer(serializers.ModelSerializer):
 
     def get_masked_phone(self, obj):
         """Returns the phone number with the last digits masked for public privacy"""
-        if obj.phone_number:
+        if obj.phone_number and len(obj.phone_number) >= 10:
             # Mask format logic for public safety
-            return obj.phone_number[:6] + 'XXX XXXXX'
-        return None
+            return obj.phone_number[:6] + 'XXXX'
+        return "INVALID/HIDDEN"
 
 
 # ==========================================
