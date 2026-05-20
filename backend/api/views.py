@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
+from rest_framework.pagination import PageNumberPagination
 from django.db import transaction
 from django.db.models import Count
 from django.utils import timezone
@@ -21,6 +22,15 @@ from .serializers import (
     ContactMessageSerializer, MasterCountrySerializer, MasterStateSerializer, MasterDistrictSerializer,
     CustomUserSerializer, OrganizationSerializer, DonorSerializer, AdvertisementSerializer, SystemLogSerializer
 )
+
+
+# ==========================================
+# CUSTOM PAGINATION CLASS
+# ==========================================
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 20 # Return 20 items per page by default
+    page_size_query_param = 'page_size' # Allow frontend to request ?page_size=50
+    max_page_size = 100 # Maximum limit to prevent abuse
 
 # ==========================================
 # 1. PUBLIC GEOGRAPHIC VIEWS (For Dropdowns)
@@ -67,6 +77,7 @@ class PublicDonorSearchView(generics.ListAPIView):
     serializer_class = DonorSerializer
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         # 1. Start with donors whose parent organization has been approved
@@ -368,13 +379,14 @@ class SuperAdminDashboardStatsView(APIView):
 
 class SuperAdminSystemLogListView(generics.ListAPIView):
     """
-    Returns the last 100 system logs for the Super Admin audit trail.
+    Returns system logs for the Super Admin audit trail with pagination.
     """
     permission_classes = [IsSuperAdmin]
     serializer_class = SystemLogSerializer
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        return SystemLog.objects.all().order_by('-timestamp')[:100]
+        return SystemLog.objects.all().order_by('-timestamp')
     
 
 class TenantDashboardStatsView(APIView):
