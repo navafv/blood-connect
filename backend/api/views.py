@@ -1,6 +1,9 @@
 import string
 import random
+import csv
+import io
 from rest_framework import viewsets, generics, permissions, status
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
@@ -181,6 +184,80 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
         """
         org = self.request.user.organization
         serializer.save(organization=org)
+
+class TenantDonorBulkUploadView(APIView):
+    """
+    Allows ORG_ADMINs to upload a CSV file and bulk-import thousands of donors at once.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser] # Allows accepting file uploads
+
+    @transaction.atomic
+    def post(self, request):
+        user = request.user
+        if not user.organization:
+            return Response({"error": "No organization linked."}, status=status.HTTP_400_BAD_REQUEST)
+
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not file.name.endswith('.csv'):
+            return Response({"error": "Only .csv files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        org = user.organization
+        
+        try:
+            # Decode the file and read it as a CSV dictionary
+            decoded_file = file.read().decode('utf-8')
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+            
+            donors_to_create = []
+            errors = []
+            
+            # Loop through the rows (starting at 2 because row 1 is the header)
+            for idx, row in enumerate(reader, start=2): 
+                try:
+                    # Basic validation for required fields
+                    if not row.get('full_name') or not row.get('phone_number') or not row.get('blood_group'):
+                        errors.append(f"Row {idx} skipped: Missing required full_name, phone_number, or blood_group.")
+                        continue
+                        
+                    last_donation = row.get('last_donation_date')
+                    if not last_donation or last_donation.strip() == '':
+                        last_donation = None
+
+                    # Create the model instance in memory (does NOT hit the database yet)
+                    donor = Donor(
+                        organization=org,
+                        # Defaulting geographic data to the hospital's location for bulk imports
+                        country=org.country, 
+                        state=org.state,
+                        district=org.district,
+                        full_name=row.get('full_name').strip(),
+                        phone_number=row.get('phone_number').strip(),
+                        date_of_birth=row.get('date_of_birth', '2000-01-01').strip(),
+                        gender=row.get('gender', 'O').strip().upper()[:1],
+                        blood_group=row.get('blood_group').strip().upper(),
+                        last_donation_date=last_donation
+                    )
+                    donors_to_create.append(donor)
+                    
+                except Exception as e:
+                    errors.append(f"Row {idx} skipped: Invalid data format ({str(e)}).")
+
+            # Execute the massive SQL INSERT in a fraction of a second
+            if donors_to_create:
+                Donor.objects.bulk_create(donors_to_create, ignore_conflicts=True)
+                
+            return Response({
+                "message": f"Successfully imported {len(donors_to_create)} donors.",
+                "errors": errors
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({"error": f"Error parsing CSV file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ==========================================

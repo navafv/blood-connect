@@ -24,6 +24,7 @@ from .views import (
     TenantBillingUpdateView,
     TenantOrganizationView,
     TenantStaffViewSet,
+    TenantDonorBulkUploadView,
 )
 
 router = DefaultRouter()
@@ -68,5 +69,6 @@ urlpatterns = [
     path('tenant/organization/', TenantOrganizationView.as_view(), name='tenant-organization'),
     path('tenant/dashboard-stats/', TenantDashboardStatsView.as_view(), name='tenant-dashboard-stats'),
     path('tenant/billing/plan/', TenantBillingUpdateView.as_view(), name='tenant-billing-plan'),
+    path('tenant/donors/bulk-upload/', TenantDonorBulkUploadView.as_view(), name='tenant-donor-bulk-upload'),
     path('', include(router.urls)),
 ]
