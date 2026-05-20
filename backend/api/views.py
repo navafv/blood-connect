@@ -192,6 +192,7 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
 class TenantDonorBulkUploadView(APIView):
     """
     Allows ORG_ADMINs to upload a CSV file and bulk-import thousands of donors at once.
+    Optimized for low-memory streaming and strict security validation.
     """
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser] # Allows accepting file uploads
@@ -208,15 +209,23 @@ class TenantDonorBulkUploadView(APIView):
 
         if not file.name.endswith('.csv'):
             return Response({"error": "Only .csv files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        allowed_mime_types = ['text/csv', 'application/csv', 'application/vnd.ms-excel']
+        if file.content_type not in allowed_mime_types:
+            return Response({"error": "Invalid file type. Please upload a valid CSV."}, status=status.HTTP_400_BAD_REQUEST)
 
         org = user.organization
         
         try:
-            # Decode the file and read it as a CSV dictionary
-            decoded_file = file.read().decode('utf-8')
-            io_string = io.StringIO(decoded_file)
-            reader = csv.DictReader(io_string)
-            
+            decoded_file = io.TextIOWrapper(file, encoding='utf-8', errors='replace')
+            reader = csv.DictReader(decoded_file)
+            expected_headers = {'full_name', 'phone_number', 'blood_group'}
+            if not reader.fieldnames or not expected_headers.issubset(set(reader.fieldnames)):
+                return Response(
+                    {"error": f"Invalid CSV headers. File must contain at least: {', '.join(expected_headers)}"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             donors_to_create = []
             errors = []
             
