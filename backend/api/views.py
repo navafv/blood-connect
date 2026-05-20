@@ -4,6 +4,7 @@ from rest_framework import viewsets, generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
+from rest_framework.throttling import AnonRateThrottle
 from django.db import transaction
 from django.db.models import Count
 from django.utils import timezone
@@ -65,6 +66,7 @@ class PublicDonorSearchView(generics.ListAPIView):
     """
     serializer_class = DonorSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [AnonRateThrottle]
 
     def get_queryset(self):
         # 1. Start with donors whose parent organization has been approved

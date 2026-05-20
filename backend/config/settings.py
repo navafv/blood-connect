@@ -128,7 +128,11 @@ CORS_ALLOWED_ORIGINS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '30/min',  # Anonymous users (public search): 30 requests per minute
+        'user': '1000/day' # Authenticated users (logged-in hospitals): 1000 requests per day
+    }
 }
 
 AUTH_USER_MODEL = 'api.CustomUser'
