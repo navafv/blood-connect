@@ -9,6 +9,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.pagination import PageNumberPagination
+from django.core.mail import send_mail
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Count
 from django.utils import timezone
@@ -284,39 +286,43 @@ class ActiveAdvertisementView(generics.ListAPIView):
 # ==========================================
 
 class PasswordResetRequestView(APIView):
-    """
-    Takes an email, finds the user, generates a secure token, 
-    and simulates sending an email with the reset link.
-    """
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [AnonRateThrottle]
 
     def post(self, request):
         email = request.data.get('email')
-        
-        # 1. Find the user by email
         user = CustomUser.objects.filter(email=email).first()
 
         if user:
-            # 2. Generate secure tokens
-            # uid is an encoded version of the User's ID
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            # token is a secure, one-time use string
             token = default_token_generator.make_token(user)
+            # Use a variable for the frontend URL in settings.py for production flexibility
+            reset_link = f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
 
-            # 3. Create the frontend URL they need to click
-            # Assuming your React app is running on localhost:5173
-            reset_link = f"http://localhost:5173/reset-password?uid={uid}&token={token}"
+            # Prepare the email
+            subject = "Reset your BloodConnect Password"
+            plain_message = f"Click the link below to reset your password: {reset_link}"
+            html_message = f"""
+            <div style="font-family: Arial; padding: 20px;">
+                <h2>Password Reset Request</h2>
+                <p>We received a request to reset your password. Click the button below to proceed:</p>
+                <a href="{reset_link}" style="background-color: #e11d48; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                    Reset Password
+                </a>
+                <p style="margin-top: 20px; color: #666;">If you did not request this, please ignore this email.</p>
+            </div>
+            """
 
-            # 4. SIMULATE SENDING EMAIL (Prints to your Python console)
-            print("\n" + "="*50)
-            print("✉️ SIMULATED PASSWORD RESET EMAIL")
-            print(f"To: {email}")
-            print(f"Subject: Reset your BloodConnect Password")
-            print(f"Message: Click the link below to reset your password:")
-            print(f"{reset_link}")
-            print("="*50 + "\n")
+            # Actual Email Delivery
+            try:
+                send_mail(
+                    subject, plain_message, settings.DEFAULT_FROM_EMAIL,
+                    [email], html_message=html_message, fail_silently=False
+                )
+            except Exception as e:
+                print(f"Failed to send password reset email: {e}")
 
-        # Always return 200 OK so attackers can't guess valid emails
+        # Always return 200 OK
         return Response(
             {"message": "If an account exists, a password reset link has been sent."}, 
             status=status.HTTP_200_OK
@@ -389,6 +395,7 @@ class SuperAdminOrganizationListView(generics.ListAPIView):
 class SuperAdminOrganizationStatusUpdateView(APIView):
     """
     Allows a Super Admin to Approve (ACTIVE) or Suspend an organization.
+    Fires a welcome email upon approval.
     """
     permission_classes = [IsSuperAdmin]
 
@@ -402,13 +409,70 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         if new_status not in dict(Organization.STATUS_CHOICES).keys():
             return Response({"error": "Invalid status provided."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Track the old status to ensure we only send the welcome email ONCE
+        old_status = organization.status
+        
+        # Update and save the new status
         organization.status = new_status
         organization.save()
+
+        if old_status != 'ACTIVE' and new_status == 'ACTIVE':
+            self.send_approval_email(organization)
 
         return Response({
             "message": f"Organization status updated to {new_status}",
             "status": new_status
         }, status=status.HTTP_200_OK)
+
+    def send_approval_email(self, organization):
+        """Generates and sends a styled HTML welcome email."""
+        subject = "Welcome to BloodConnect! Your Dashboard is Ready 🩸"
+        
+        # Plain text fallback (for older email clients)
+        plain_message = f"Welcome to BloodConnect, {organization.name}! Your account has been approved. Log in at http://localhost:5173/login"
+        
+        # Beautiful HTML Version
+        html_message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <span style="font-size: 40px;">🩸</span>
+            </div>
+            <h2 style="color: #0f172a; text-align: center; margin-bottom: 20px;">Welcome to BloodConnect, <br/> <span style="color: #e11d48;">{organization.name}</span>!</h2>
+            
+            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                Great news! Your organization's registration has been officially <strong>approved</strong> by our administrative team.
+            </p>
+            
+            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                You can now log into your Tenant Dashboard to start importing your existing donor registry, inviting your hospital staff, and saving lives in your local community.
+            </p>
+            
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="http://localhost:5173/login" style="background-color: #e11d48; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                    Access Your Dashboard
+                </a>
+            </div>
+            
+            <p style="color: #94a3b8; font-size: 13px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                If you have any questions, simply reply to this email or visit our Contact Us page.<br/>
+                &copy; 2026 BloodConnect Platform
+            </p>
+        </div>
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=plain_message,          # Fallback
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[organization.contact_email],
+                html_message=html_message,      # Primary HTML
+                fail_silently=False,
+            )
+        except Exception as e:
+            # We catch the exception and print it so an email failure 
+            # doesn't crash the API response and prevent approval.
+            print(f"CRITICAL: Failed to send email to {organization.contact_email}. Error: {e}")
     
 class SuperAdminDashboardStatsView(APIView):
     """
@@ -567,24 +631,69 @@ class TenantStaffViewSet(viewsets.ModelViewSet):
         temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
 
         # 4. Create the new user and lock them to the current organization
+        org = request.user.organization
         user = CustomUser.objects.create_user(
             username=email,
             email=email,
             password=temp_password,
             first_name=first_name,
             role=role,
-            organization=request.user.organization
+            organization=org
         )
 
-        # --- DEVELOPER NOTE ---
-        # In a real app, you would use Django's send_mail() here.
-        # For now, we print it to the terminal so you can test logging in as the new staff member!
-        print("\n" + "="*50)
-        print("✉️ STAFF INVITATION EMAIL SIMULATION")
-        print(f"To: {email}")
-        print(f"Your hospital admin has invited you to BloodConnect.")
-        print(f"Your temporary password is: {temp_password}")
-        print("="*50 + "\n")
+        # 5. ACTUAL EMAIL DELIVERY
+        login_url = f"{getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')}/login"
+        
+        subject = f"You've been invited to join {org.name} on BloodConnect 🩸"
+        plain_message = f"Welcome! You've been invited to join {org.name} on BloodConnect. Your temporary password is: {temp_password}. Please log in at {login_url} and change your password immediately."
+        
+        html_message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <span style="font-size: 40px;">🏥</span>
+            </div>
+            <h2 style="color: #0f172a; text-align: center; margin-bottom: 20px;">Staff Invitation</h2>
+            
+            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                Hello {first_name},
+            </p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                You have been invited by your administrator to join the <strong>{org.name}</strong> team on the BloodConnect platform.
+            </p>
+            
+            <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 15px; margin: 25px 0;">
+                <p style="margin: 0; color: #334155; font-size: 15px;">Your Temporary Login Credentials:</p>
+                <p style="margin: 10px 0 0 0; font-size: 16px;">
+                    <strong>Email:</strong> {email}<br/>
+                    <strong>Password:</strong> <span style="font-family: monospace; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">{temp_password}</span>
+                </p>
+            </div>
+            
+            <p style="color: #ef4444; font-size: 14px; font-weight: bold;">
+                * Please log in and change this temporary password immediately.
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{login_url}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px; display: inline-block;">
+                    Log In Now
+                </a>
+            </div>
+        </div>
+        """
+
+        try:
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+        except Exception as e:
+            # Catching the exception ensures the user account is still created 
+            # even if the email fails to send (e.g., SMTP rate limit reached).
+            print(f"Failed to send staff invite email to {email}. Error: {e}")
 
         serializer = self.get_serializer(user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

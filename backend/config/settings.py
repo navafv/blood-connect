@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -136,3 +137,19 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'api.CustomUser'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# SendGrid specifically requires the username to be exactly 'apikey'
+EMAIL_HOST_USER = 'apikey' 
+
+# Read the API key from your hidden .env file
+EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', 'your-fallback-key-here') 
+
+# The "From" address that users will see (Ensure this is verified in SendGrid!)
+DEFAULT_FROM_EMAIL = 'support@bloodconnect.com'
+
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
