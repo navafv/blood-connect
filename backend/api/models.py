@@ -121,9 +121,24 @@ class Organization(models.Model):
 # 4. DONOR (Managed by Organizations)
 # ==========================================
 
+class SoftDeleteQuerySet(models.QuerySet):
+    def delete(self):
+        """
+        Intercepts bulk deletions (e.g., Donor.objects.filter(...).delete())
+        and executes a bulk SQL UPDATE instead.
+        """
+        return super().update(is_deleted=True, deleted_at=timezone.now())
+
 class ActiveDonorManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_deleted=False)
+        # Return our custom QuerySet, filtering out soft-deleted records
+        return SoftDeleteQuerySet(self.model, using=self._db).filter(is_deleted=False)
+
+class AllDonorManager(models.Manager):
+    def get_queryset(self):
+        # Return our custom QuerySet, but include EVERYTHING (even deleted ones)
+        # This allows SuperAdmins to view deleted records or undelete them.
+        return SoftDeleteQuerySet(self.model, using=self._db)
 
 class Donor(models.Model):
     BLOOD_GROUP_CHOICES = (
@@ -163,23 +178,33 @@ class Donor(models.Model):
     last_donation_date = models.DateField(null=True, blank=True)
     is_permanently_deferred = models.BooleanField(default=False)
     deferral_reason = models.TextField(blank=True, null=True, help_text="e.g., Medical condition, recent tattoo")
+    
+    # Soft Delete Fields
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    objects = ActiveDonorManager()  # Donor.objects.all() now hides deleted donors!
-    all_objects = models.Manager()  # Donor.all_objects.all() allows SuperAdmins to find deleted ones.
+    
+    # Managers
+    objects = ActiveDonorManager()  # Default manager (hides deleted)
+    all_objects = AllDonorManager() # Admin manager (shows everything, but bulk deletes still soft-delete)
 
     def __str__(self):
         return f"{self.full_name} ({self.blood_group})"
 
     def delete(self, *args, **kwargs):
         """
-        Soft-delete the donor instead of removing them from the database.
+        Soft-delete the single instance instead of removing it from the database.
         Required for medical audit compliance (HIPAA).
         """
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save()
+
+    def hard_delete(self, *args, **kwargs):
+        """
+        Only used if a SuperAdmin legitimately needs to permanently purge a record.
+        """
+        super().delete(*args, **kwargs)
 
     @property
     def is_available_now(self):

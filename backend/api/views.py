@@ -21,6 +21,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from datetime import timedelta
 
+from .tasks import send_async_email
 from .models import (
     ContactMessage, MasterCountry, MasterState, MasterDistrict,
     CustomUser, Organization, Donor, Advertisement, SystemLog
@@ -87,8 +88,9 @@ class PublicDonorSearchView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        # 1. Start with donors whose parent organization has been approved
-        queryset = Donor.objects.filter(organization__status='ACTIVE')
+        queryset = Donor.objects.select_related(
+            'organization', 'country', 'state', 'district'
+        ).filter(organization__status='ACTIVE')
 
         # 2. Grab search parameters from the URL (e.g., ?blood_group=O+&district=5)
         blood_group = self.request.query_params.get('blood_group')
@@ -171,14 +173,14 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """STRICT ISOLATION: Filter query to only this user's organization."""
         user = self.request.user
-        
-        # If the user isn't attached to an org (e.g., a public user somehow got in), return nothing.
         if not user.organization:
             return Donor.objects.none()
             
-        return Donor.objects.filter(organization=user.organization)
+        # Add select_related here too!
+        return Donor.objects.select_related(
+            'organization', 'country', 'state', 'district'
+        ).filter(organization=user.organization)
 
     def perform_create(self, serializer):
         """
@@ -324,14 +326,13 @@ class PasswordResetRequestView(APIView):
             </div>
             """
 
-            # Actual Email Delivery
-            try:
-                send_mail(
-                    subject, plain_message, settings.DEFAULT_FROM_EMAIL,
-                    [email], html_message=html_message, fail_silently=False
-                )
-            except Exception as e:
-                print(f"Failed to send password reset email: {e}")
+            # ACTUAL ASYNC EMAIL DELIVERY
+            send_async_email.delay(
+                subject=subject, 
+                plain_message=plain_message, 
+                recipient_list=[email], 
+                html_message=html_message
+            )
 
         # Always return 200 OK
         return Response(
@@ -471,19 +472,13 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         </div>
         """
         
-        try:
-            send_mail(
-                subject=subject,
-                message=plain_message,          # Fallback
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[organization.contact_email],
-                html_message=html_message,      # Primary HTML
-                fail_silently=False,
-            )
-        except Exception as e:
-            # We catch the exception and print it so an email failure 
-            # doesn't crash the API response and prevent approval.
-            print(f"CRITICAL: Failed to send email to {organization.contact_email}. Error: {e}")
+        # ACTUAL ASYNC EMAIL DELIVERY
+        send_async_email.delay(
+            subject=subject,
+            plain_message=plain_message,
+            recipient_list=[organization.contact_email],
+            html_message=html_message
+        )
     
 class SuperAdminDashboardStatsView(APIView):
     """
@@ -692,19 +687,13 @@ class TenantStaffViewSet(viewsets.ModelViewSet):
         </div>
         """
 
-        try:
-            send_mail(
-                subject=subject,
-                message=plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-        except Exception as e:
-            # Catching the exception ensures the user account is still created 
-            # even if the email fails to send (e.g., SMTP rate limit reached).
-            print(f"Failed to send staff invite email to {email}. Error: {e}")
+        # ACTUAL ASYNC EMAIL DELIVERY
+        send_async_email.delay(
+            subject=subject,
+            plain_message=plain_message,
+            recipient_list=[email],
+            html_message=html_message
+        )
 
         serializer = self.get_serializer(user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

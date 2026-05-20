@@ -173,3 +173,12 @@ EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', 'your-fallback-key-here
 
 # The "From" address that users will see (Ensure this is verified in SendGrid!)
 DEFAULT_FROM_EMAIL = 'support@bloodconnect.com'
+
+# ==========================================
+# CELERY & REDIS CONFIGURATION
+# ==========================================
+# Assuming Redis is running locally on the default port
+CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
