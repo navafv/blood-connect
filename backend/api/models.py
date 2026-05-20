@@ -121,6 +121,10 @@ class Organization(models.Model):
 # 4. DONOR (Managed by Organizations)
 # ==========================================
 
+class ActiveDonorManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
 class Donor(models.Model):
     BLOOD_GROUP_CHOICES = (
         ('A+', 'A Positive'), ('A-', 'A Negative'),
@@ -140,7 +144,7 @@ class Donor(models.Model):
         ('O', 'Other'),
     )
 
-    # Multi-Tenant Link: Which org owns this donor record?
+    # Multi-Tenant Link
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='donors')
     
     # Personal Info
@@ -159,11 +163,23 @@ class Donor(models.Model):
     last_donation_date = models.DateField(null=True, blank=True)
     is_permanently_deferred = models.BooleanField(default=False)
     deferral_reason = models.TextField(blank=True, null=True, help_text="e.g., Medical condition, recent tattoo")
-    
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    objects = ActiveDonorManager()  # Donor.objects.all() now hides deleted donors!
+    all_objects = models.Manager()  # Donor.all_objects.all() allows SuperAdmins to find deleted ones.
 
     def __str__(self):
         return f"{self.full_name} ({self.blood_group})"
+
+    def delete(self, *args, **kwargs):
+        """
+        Soft-delete the donor instead of removing them from the database.
+        Required for medical audit compliance (HIPAA).
+        """
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
 
     @property
     def is_available_now(self):

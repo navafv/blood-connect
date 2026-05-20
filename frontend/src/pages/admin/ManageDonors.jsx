@@ -7,7 +7,6 @@ import {
   Filter,
   MoreVertical,
   Edit,
-  Trash2,
   Phone,
   Calendar,
   Loader2,
@@ -16,6 +15,7 @@ import {
   FileUp,
   Download,
   CheckCircle2,
+  Archive,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import {
@@ -64,17 +64,17 @@ export default function ManageDonors() {
   const handleDelete = async (id, name) => {
     if (
       !window.confirm(
-        `Are you sure you want to remove ${name} from your registry?`,
+        `Are you sure you want to archive ${name}? This will remove them from the active registry.`,
       )
     )
       return;
 
     try {
       await api.delete(`/tenant/donors/${id}/`);
-      // Update UI by filtering out the deleted donor
+      // Update UI by filtering out the archived donor
       setDonors(donors.filter((donor) => donor.id !== id));
     } catch (err) {
-      alert("Failed to delete donor. Please try again.");
+      alert("Failed to archive donor. Please try again.");
     }
   };
 
@@ -357,12 +357,13 @@ export default function ManageDonors() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                            title="Archive Record"
+                            className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
                             onClick={() =>
                               handleDelete(donor.id, donor.full_name)
                             }
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Archive className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
