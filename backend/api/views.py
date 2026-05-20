@@ -19,7 +19,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from .tasks import send_async_email
 from .models import (
@@ -221,7 +221,8 @@ class TenantDonorBulkUploadView(APIView):
         try:
             decoded_file = io.TextIOWrapper(file, encoding='utf-8', errors='replace')
             reader = csv.DictReader(decoded_file)
-            expected_headers = {'full_name', 'phone_number', 'blood_group'}
+            
+            expected_headers = {'full_name', 'phone_number', 'blood_group', 'date_of_birth'}
             if not reader.fieldnames or not expected_headers.issubset(set(reader.fieldnames)):
                 return Response(
                     {"error": f"Invalid CSV headers. File must contain at least: {', '.join(expected_headers)}"}, 
@@ -234,28 +235,45 @@ class TenantDonorBulkUploadView(APIView):
             # Loop through the rows (starting at 2 because row 1 is the header)
             for idx, row in enumerate(reader, start=2): 
                 try:
-                    # Basic validation for required fields
-                    if not row.get('full_name') or not row.get('phone_number') or not row.get('blood_group'):
-                        errors.append(f"Row {idx} skipped: Missing required full_name, phone_number, or blood_group.")
+                    full_name = row.get('full_name')
+                    phone_number = row.get('phone_number')
+                    blood_group = row.get('blood_group')
+                    dob_str = row.get('date_of_birth')
+
+                    # 1. Basic validation for required fields (including DOB)
+                    if not full_name or not phone_number or not blood_group or not dob_str:
+                        errors.append(f"Row {idx} skipped: Missing required fields (full_name, phone_number, blood_group, or date_of_birth).")
                         continue
                         
-                    last_donation = row.get('last_donation_date')
-                    if not last_donation or last_donation.strip() == '':
-                        last_donation = None
+                    # 2. Strict Date of Birth Parsing
+                    try:
+                        parsed_dob = datetime.strptime(dob_str.strip(), '%Y-%m-%d').date()
+                    except ValueError:
+                        errors.append(f"Row {idx} skipped: Invalid date_of_birth format '{dob_str}'. Expected YYYY-MM-DD.")
+                        continue
+
+                    # 3. Strict Last Donation Date Parsing (Optional Field)
+                    last_donation_str = row.get('last_donation_date')
+                    parsed_last_donation = None
+                    if last_donation_str and last_donation_str.strip():
+                        try:
+                            parsed_last_donation = datetime.strptime(last_donation_str.strip(), '%Y-%m-%d').date()
+                        except ValueError:
+                            errors.append(f"Row {idx} skipped: Invalid last_donation_date format. Expected YYYY-MM-DD.")
+                            continue
 
                     # Create the model instance in memory (does NOT hit the database yet)
                     donor = Donor(
                         organization=org,
-                        # Defaulting geographic data to the hospital's location for bulk imports
                         country=org.country, 
                         state=org.state,
                         district=org.district,
-                        full_name=row.get('full_name').strip(),
-                        phone_number=row.get('phone_number').strip(),
-                        date_of_birth=row.get('date_of_birth', '2000-01-01').strip(),
+                        full_name=full_name.strip(),
+                        phone_number=phone_number.strip(),
+                        date_of_birth=parsed_dob,
                         gender=row.get('gender', 'O').strip().upper()[:1],
-                        blood_group=row.get('blood_group').strip().upper(),
-                        last_donation_date=last_donation
+                        blood_group=blood_group.strip().upper(),
+                        last_donation_date=parsed_last_donation
                     )
                     donors_to_create.append(donor)
                     

@@ -70,6 +70,17 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email or self.username
 
+    def save(self, *args, **kwargs):
+        """
+        If the phone_number is submitted as an empty string (""), 
+        we forcefully convert it to Python's None (SQL NULL).
+        This ensures multiple users without phone numbers don't violate the unique=True constraint.
+        """
+        if not self.phone_number:
+            self.phone_number = None
+            
+        super().save(*args, **kwargs)
+
 
 # ==========================================
 # 3. ORGANIZATION (The SaaS Tenant)
