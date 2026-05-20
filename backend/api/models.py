@@ -2,6 +2,15 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from datetime import timedelta
+from django.core.validators import RegexValidator
+
+# ==========================================
+# GLOBAL VALIDATORS
+# ==========================================
+phone_regex = RegexValidator(
+    regex=r'^\+?1?\d{9,15}$',
+    message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
+)
 
 # ==========================================
 # 1. GEOGRAPHIC MASTER DATA (The "Locks")
@@ -49,7 +58,7 @@ class CustomUser(AbstractUser):
     )
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PUBLIC_USER')
-    phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    phone_number = models.CharField(validators=[phone_regex], max_length=20, unique=True, null=True, blank=True)
     
     # Verification Flags (For OTP Step)
     is_email_verified = models.BooleanField(default=False)
@@ -89,7 +98,7 @@ class Organization(models.Model):
     name = models.CharField(max_length=255)
     org_type = models.CharField(max_length=20, choices=ORG_TYPE_CHOICES)
     contact_email = models.EmailField(unique=True)
-    contact_phone = models.CharField(max_length=20)
+    contact_phone = models.CharField(validators=[phone_regex], max_length=20)
     description = models.TextField(blank=True, null=True)
     
     # Geographic Locking (Tenant is locked to these)
@@ -139,7 +148,7 @@ class Donor(models.Model):
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     date_of_birth = models.DateField()
-    phone_number = models.CharField(max_length=20) # Will be masked in API Serializer
+    phone_number = models.CharField(validators=[phone_regex], max_length=20) 
     
     # Geographic Locking
     country = models.ForeignKey(MasterCountry, on_delete=models.PROTECT)
