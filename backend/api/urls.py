@@ -25,6 +25,7 @@ from .views import (
     TenantOrganizationView,
     TenantStaffViewSet,
     TenantDonorBulkUploadView,
+    AdClickRedirectView
 )
 
 router = DefaultRouter()
@@ -62,6 +63,7 @@ urlpatterns = [
     path('donors/search/', PublicDonorSearchView.as_view(), name='public-donor-search'),
     path('advertisements/', ActiveAdvertisementView.as_view(), name='active-ads'),
     path('public/contact/', ContactMessageCreateView.as_view(), name='public-contact'),
+    path('public/ads/<int:pk>/click/', AdClickRedirectView.as_view(), name='public-ad-click'),
 
     # ==========================================
     # TENANT ENDPOINTS

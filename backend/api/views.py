@@ -12,12 +12,14 @@ from rest_framework.pagination import PageNumberPagination
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, F
 from django.utils import timezone
-from datetime import timedelta
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from datetime import timedelta
 
 from .models import (
     ContactMessage, MasterCountry, MasterState, MasterDistrict,
@@ -757,6 +759,7 @@ class TenantBillingUpdateView(APIView):
 # ==========================================
 # 8. Contact Message Creation View (For Public Contact Us Form)
 # ==========================================
+
 class ContactMessageCreateView(generics.CreateAPIView):
     """
     Allows the public to submit contact forms to the Super Admin.
@@ -764,3 +767,26 @@ class ContactMessageCreateView(generics.CreateAPIView):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
     permission_classes = [permissions.AllowAny]
+
+
+# ==========================================
+# 9. Advertisement Click Tracking and Redirection
+# ==========================================
+
+class AdClickRedirectView(APIView):
+    """
+    Public endpoint to track advertisement clicks. 
+    Increments the click counter securely and redirects the user.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk):
+        # 1. Find the ad or return a 404 error
+        ad = get_object_or_404(Advertisement, pk=pk)
+        
+        # 2. Securely increment the click counter at the database level
+        # Using F() prevents race conditions if multiple users click simultaneously!
+        Advertisement.objects.filter(pk=pk).update(clicks=F('clicks') + 1)
+        
+        # 3. Issue a 302 HTTP Redirect to send the user to the advertiser's site
+        return HttpResponseRedirect(redirect_to=ad.target_link)
