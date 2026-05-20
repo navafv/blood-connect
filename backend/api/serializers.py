@@ -98,7 +98,7 @@ class DonorSerializer(serializers.ModelSerializer):
             'is_permanently_deferred', 'deferral_reason', 'is_available_now'
         ]
         # Prevent org staff from accidentally changing which org a donor belongs to
-        read_only_fields = ['organization', 'country', 'state', 'district']
+        read_only_fields = ['organization']
 
     def get_masked_phone(self, obj):
         """Returns the phone number with the last digits masked for public privacy"""

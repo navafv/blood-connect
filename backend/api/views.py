@@ -167,12 +167,7 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
         and locks the donor to the organization's geographic region.
         """
         org = self.request.user.organization
-        serializer.save(
-            organization=org,
-            country=org.country,
-            state=org.state,
-            district=org.district
-        )
+        serializer.save(organization=org)
 
 
 # ==========================================
