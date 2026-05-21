@@ -120,7 +120,7 @@ class Organization(models.Model):
 
     # SaaS Management
     plan_tier = models.CharField(max_length=20, choices=PLAN_CHOICES, default='FREE')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -175,10 +175,10 @@ class Donor(models.Model):
     
     # Personal Info
     full_name = models.CharField(max_length=255)
-    blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES)
+    blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, db_index=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     date_of_birth = models.DateField()
-    phone_number = models.CharField(validators=[phone_regex], max_length=20) 
+    phone_number = models.CharField(validators=[phone_regex], max_length=20)
     
     # Geographic Locking
     country = models.ForeignKey(MasterCountry, on_delete=models.PROTECT)
@@ -189,6 +189,7 @@ class Donor(models.Model):
     last_donation_date = models.DateField(null=True, blank=True)
     is_permanently_deferred = models.BooleanField(default=False)
     deferral_reason = models.TextField(blank=True, null=True, help_text="e.g., Medical condition, recent tattoo")
+    has_consented = models.BooleanField(default=False, help_text="Donor explicitly consented to data storage and contact.")
     
     # Soft Delete Fields
     is_deleted = models.BooleanField(default=False)
