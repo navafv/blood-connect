@@ -135,10 +135,9 @@ STATIC_URL = 'static/'
 # CORS & REST FRAMEWORK
 # ==========================================
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
+cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000')
+CORS_ALLOWED_ORIGINS = cors_origins_env.split(',')
+
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
@@ -147,7 +146,8 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_THROTTLE_RATES': {
         'anon': '30/min',
-        'user': '1000/day'
+        'user': '1000/day',
+        'login': '5/min',
     }
 }
 

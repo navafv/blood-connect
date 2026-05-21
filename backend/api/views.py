@@ -7,7 +7,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
-from rest_framework.throttling import AnonRateThrottle
+from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.core.mail import send_mail
@@ -34,7 +34,13 @@ from .serializers import (
 
 
 class CookieTokenObtainPairView(TokenObtainPairView):
-    """Overrides login to set tokens as HttpOnly cookies instead of returning JSON."""
+    """
+    Overrides login to set tokens as HttpOnly cookies instead of returning JSON.
+    Includes strict throttling to prevent credential stuffing.
+    """
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
+
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         
