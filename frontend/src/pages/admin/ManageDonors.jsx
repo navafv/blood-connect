@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users,
   Plus,
   Search,
   Filter,
-  MoreVertical,
   Edit,
-  Phone,
+  Archive,
   Calendar,
   Loader2,
   AlertCircle,
@@ -15,7 +15,6 @@ import {
   FileUp,
   Download,
   CheckCircle2,
-  Archive,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import {
@@ -30,91 +29,97 @@ import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
 export default function ManageDonors() {
-  const [donors, setDonors] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   // Bulk Upload State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadResult, setUploadResult] = useState(null);
 
-  // 1. Fetch Tenant's Donors on Mount
-  useEffect(() => {
-    fetchDonors();
-  }, []);
+  // 1. Initialize Query Client for cache invalidation
+  const queryClient = useQueryClient();
 
-  const fetchDonors = async () => {
-    setIsLoading(true);
-    setError("");
-    try {
+  // 2. Fetch Donors using React Query (Replaces useEffect & useState)
+  const {
+    data: donors = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["tenantDonors"],
+    queryFn: async () => {
       const response = await api.get("/tenant/donors/");
       // Using .results just in case Pagination is enabled on this endpoint
-      setDonors(response.data.results || response.data);
-    } catch (err) {
-      console.error("Error fetching donors:", err);
-      setError("Failed to load your donor registry. Please try again later.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return response.data.results || response.data;
+    },
+  });
 
-  const handleDelete = async (id, name) => {
+  // 3. Delete/Archive Mutation (Replaces standard async function)
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      await api.delete(`/tenant/donors/${id}/`);
+    },
+    onSuccess: () => {
+      // Instantly triggers a background refetch to update the table
+      queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+    },
+    onError: () => {
+      alert("Failed to archive donor. Please try again.");
+    },
+  });
+
+  // 4. Bulk Upload Mutation (Replaces manual isUploading state)
+  const uploadMutation = useMutation({
+    mutationFn: async (formData) => {
+      const response = await api.post("/tenant/donors/bulk-upload/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setUploadResult({
+        success: true,
+        message: data.message,
+        errors: data.errors,
+      });
+      // Invalidate cache to show new donors immediately
+      queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+      setUploadFile(null);
+    },
+    onError: (err) => {
+      setUploadResult({
+        success: false,
+        message:
+          err.response?.data?.error || "An error occurred during upload.",
+      });
+    },
+  });
+
+  // --- Handlers ---
+  const handleDelete = (id, name) => {
     if (
       !window.confirm(
         `Are you sure you want to archive ${name}? This will remove them from the active registry.`,
       )
     )
       return;
-
-    try {
-      await api.delete(`/tenant/donors/${id}/`);
-      // Update UI by filtering out the archived donor
-      setDonors(donors.filter((donor) => donor.id !== id));
-    } catch (err) {
-      alert("Failed to archive donor. Please try again.");
-    }
+    // Trigger the mutation
+    deleteMutation.mutate(id);
   };
 
-  // --- Bulk Upload Logic ---
-  const handleFileUpload = async (e) => {
+  const handleFileUpload = (e) => {
     e.preventDefault();
     if (!uploadFile) return;
 
-    setIsUploading(true);
     setUploadResult(null);
-
-    // Form data is required for sending files
     const formData = new FormData();
     formData.append("file", uploadFile);
 
-    try {
-      const response = await api.post("/tenant/donors/bulk-upload/", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      setUploadResult({
-        success: true,
-        message: response.data.message,
-        errors: response.data.errors,
-      });
-      fetchDonors(); // Refresh the table automatically!
-    } catch (error) {
-      setUploadResult({
-        success: false,
-        message:
-          error.response?.data?.error || "An error occurred during upload.",
-      });
-    } finally {
-      setIsUploading(false);
-      setUploadFile(null);
-    }
+    // Trigger the mutation
+    uploadMutation.mutate(formData);
   };
 
   const downloadTemplate = () => {
-    // Generates a blank CSV template for the user
     const headers =
       "full_name,phone_number,date_of_birth,gender,blood_group,last_donation_date\n";
     const example = "John Doe,+919876543210,1995-08-24,M,O+,2026-01-15\n";
@@ -126,7 +131,7 @@ export default function ManageDonors() {
     a.click();
   };
 
-  // 2. Local Search Filtering
+  // Local Search Filtering (runs instantly on cached query data)
   const filteredDonors = donors.filter(
     (donor) =>
       donor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -242,11 +247,15 @@ export default function ManageDonors() {
               <Loader2 className="h-8 w-8 animate-spin mb-4 text-rose-500" />
               <p>Loading your registry...</p>
             </div>
-          ) : error ? (
+          ) : isError ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400">
               <AlertCircle className="h-8 w-8 mb-4 text-rose-500" />
-              <p>{error}</p>
-              <Button variant="outline" className="mt-4" onClick={fetchDonors}>
+              <p>{error?.message || "Failed to load registry."}</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => queryClient.invalidateQueries(["tenantDonors"])}
+              >
                 Try Again
               </Button>
             </div>
@@ -358,12 +367,19 @@ export default function ManageDonors() {
                             variant="ghost"
                             size="sm"
                             title="Archive Record"
-                            className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                            className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 disabled:opacity-50"
                             onClick={() =>
                               handleDelete(donor.id, donor.full_name)
                             }
+                            disabled={deleteMutation.isPending}
                           >
-                            <Archive className="h-4 w-4" />
+                            {/* Show loading spinner only on the specific item being deleted */}
+                            {deleteMutation.isPending &&
+                            deleteMutation.variables === donor.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Archive className="h-4 w-4" />
+                            )}
                           </Button>
                         </div>
                       </td>
@@ -411,7 +427,11 @@ export default function ManageDonors() {
 
           {uploadResult && (
             <div
-              className={`p-4 rounded-xl text-sm border ${uploadResult.success ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}
+              className={`p-4 rounded-xl text-sm border ${
+                uploadResult.success
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                  : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+              }`}
             >
               <div className="flex items-center gap-2 font-bold mb-2">
                 {uploadResult.success ? (
@@ -446,7 +466,11 @@ export default function ManageDonors() {
                   onChange={(e) => setUploadFile(e.target.files[0])}
                 />
                 <div
-                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl transition-colors ${uploadFile ? "border-emerald-500 bg-emerald-500/5" : "border-slate-700 hover:border-slate-600 bg-slate-900/50"}`}
+                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl transition-colors ${
+                    uploadFile
+                      ? "border-emerald-500 bg-emerald-500/5"
+                      : "border-slate-700 hover:border-slate-600 bg-slate-900/50"
+                  }`}
                 >
                   {uploadFile ? (
                     <>
@@ -479,10 +503,10 @@ export default function ManageDonors() {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={!uploadFile || isUploading}
+                disabled={!uploadFile || uploadMutation.isPending}
                 className="min-w-32"
               >
-                {isUploading ? (
+                {uploadMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />{" "}
                     Uploading...
