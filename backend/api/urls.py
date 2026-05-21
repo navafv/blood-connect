@@ -1,9 +1,5 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 
 from .views import (
     ContactMessageCreateView,
@@ -25,7 +21,10 @@ from .views import (
     TenantOrganizationView,
     TenantStaffViewSet,
     TenantDonorBulkUploadView,
-    AdClickRedirectView
+    AdClickRedirectView,
+    CookieTokenObtainPairView,
+    CookieTokenRefreshView,
+    LogoutView,
 )
 
 router = DefaultRouter()
@@ -45,8 +44,9 @@ urlpatterns = [
     # AUTHENTICATION ENDPOINTS (For React Login/Register)
     # ==========================================
     path('auth/register/', RegisterOrganizationView.as_view(), name='register-org'),
-    path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/login/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/password-reset-request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 

@@ -139,14 +139,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'api.authentication.CustomCookieJWTAuthentication',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '30/min',  # Anonymous users (public search): 30 requests per minute
-        'user': '1000/day' # Authenticated users (logged-in hospitals): 1000 requests per day
+        'anon': '30/min',
+        'user': '1000/day'
     }
 }
 
@@ -156,11 +157,17 @@ AUTH_USER_MODEL = 'api.CustomUser'
 # JWT AUTHENTICATION SETTINGS
 # ==========================================
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # Access token lasts 1 hour
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    # Refresh token lasts 7 days (Keeps users logged in)
-    'ROTATE_REFRESH_TOKENS': True,                  # Issue a new refresh token every time the user refreshes
-    'BLACKLIST_AFTER_ROTATION': True,               # Invalidate old refresh tokens to prevent replay attacks
-    'AUTH_HEADER_TYPES': ('Bearer',),               # Expect 'Authorization: Bearer <token>'
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_COOKIE': 'access_token',
+    'AUTH_COOKIE_REFRESH': 'refresh_token',
+    'AUTH_COOKIE_SECURE': not DEBUG,
+    'AUTH_COOKIE_HTTP_ONLY': True,
+    'AUTH_COOKIE_PATH': '/',
+    'AUTH_COOKIE_SAMESITE': 'Lax',
 }
 
 

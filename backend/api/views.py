@@ -9,6 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.pagination import PageNumberPagination
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
@@ -30,6 +31,91 @@ from .serializers import (
     ContactMessageSerializer, MasterCountrySerializer, MasterStateSerializer, MasterDistrictSerializer,
     CustomUserSerializer, OrganizationSerializer, DonorSerializer, AdvertisementSerializer, SystemLogSerializer
 )
+
+
+class CookieTokenObtainPairView(TokenObtainPairView):
+    """Overrides login to set tokens as HttpOnly cookies instead of returning JSON."""
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            access_token = response.data.get('access')
+            refresh_token = response.data.get('refresh')
+            
+            # Set Access Token Cookie
+            response.set_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                value=access_token,
+                expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+            )
+            # Set Refresh Token Cookie
+            response.set_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                value=refresh_token,
+                expires=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+            )
+            
+            # Remove tokens from JSON response body for ultimate security
+            del response.data['access']
+            del response.data['refresh']
+            response.data['message'] = 'Login successful.'
+
+        return response
+    
+class CookieTokenRefreshView(TokenRefreshView):
+    """Overrides refresh to read from cookies and issue new cookies."""
+    def post(self, request, *args, **kwargs):
+        # 1. Extract refresh token from cookie and inject it into the request data
+        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+        if refresh_token:
+            request.data['refresh'] = refresh_token
+            
+        response = super().post(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            # 2. Update Access Cookie
+            response.set_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                value=response.data.get('access'),
+                expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+            )
+            del response.data['access']
+
+            # 3. Update Refresh Cookie (if ROTATE_REFRESH_TOKENS is True)
+            if 'refresh' in response.data:
+                response.set_cookie(
+                    key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                    value=response.data['refresh'],
+                    expires=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+                    secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                    httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                    samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+                )
+                del response.data['refresh']
+                
+            response.data['message'] = 'Session extended.'
+            
+        return response
+    
+class LogoutView(APIView):
+    """Securely logs the user out by commanding the browser to destroy the cookies."""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        response = Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
+        # Destroy the cookies
+        response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'])
+        response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+        return response
 
 
 # ==========================================

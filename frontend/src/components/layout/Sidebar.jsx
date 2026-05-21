@@ -27,10 +27,18 @@ export function Sidebar({ isOpen, setIsOpen }) {
     },
   ];
 
-  const handleLogout = () => {
-    // Securely clear JWT tokens and user data
-    localStorage.clear();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // 1. Tell the backend to destroy the HttpOnly cookies
+      await api.post("/auth/logout/");
+    } catch (error) {
+      console.error("Logout failed on backend", error);
+    } finally {
+      // 2. Clear our non-sensitive UI state and redirect
+      localStorage.removeItem("isAuthenticated");
+      localStorage.removeItem("userRole");
+      navigate("/login");
+    }
   };
 
   const handleLinkClick = () => {

@@ -7,9 +7,18 @@ export function AdminLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.clear(); // Clear the JWT tokens securely
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // 1. Tell the backend to destroy the HttpOnly cookies
+      await api.post("/auth/logout/");
+    } catch (error) {
+      console.error("Logout failed on backend", error);
+    } finally {
+      // 2. Clear our non-sensitive UI state and redirect
+      localStorage.removeItem("isAuthenticated");
+      localStorage.removeItem("userRole");
+      navigate("/login");
+    }
   };
 
   return (
