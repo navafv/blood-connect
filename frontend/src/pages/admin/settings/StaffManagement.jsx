@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users,
   Search,
@@ -8,7 +9,6 @@ import {
   Clock,
   Loader2,
   Trash2,
-  Edit,
   AlertCircle,
 } from "lucide-react";
 import { Card } from "../../../components/ui/Card";
@@ -20,12 +20,9 @@ import { Modal } from "../../../components/ui/Modal";
 import api from "../../../lib/axios";
 
 export default function StaffManagement() {
-  const [staffList, setStaffList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
 
   // New Staff Form State
   const [newStaff, setNewStaff] = useState({
@@ -34,23 +31,57 @@ export default function StaffManagement() {
     role: "ORG_STAFF",
   });
 
-  // 1. Fetch Staff List on Load
-  useEffect(() => {
-    fetchStaff();
-  }, []);
+  // 1. Initialize Query Client for cache invalidation
+  const queryClient = useQueryClient();
 
-  const fetchStaff = async () => {
-    setIsLoading(true);
-    try {
+  // 2. Fetch Staff using React Query
+  const {
+    data: staffList = [],
+    isLoading,
+    isError,
+    error: fetchError,
+  } = useQuery({
+    queryKey: ["tenantStaff"],
+    queryFn: async () => {
       const response = await api.get("/tenant/staff/");
-      setStaffList(response.data);
-    } catch (err) {
-      console.error("Failed to fetch staff:", err);
-      setError("Could not load the staff directory.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return response.data;
+    },
+  });
+
+  // 3. Invite Staff Mutation
+  const inviteMutation = useMutation({
+    mutationFn: async (staffData) => {
+      const response = await api.post("/tenant/staff/", staffData);
+      return response.data;
+    },
+    onSuccess: () => {
+      // Instantly triggers a background refetch to update the table
+      queryClient.invalidateQueries({ queryKey: ["tenantStaff"] });
+      setIsModalOpen(false);
+      setNewStaff({ name: "", email: "", role: "ORG_STAFF" });
+      setFormError("");
+    },
+    onError: (err) => {
+      console.error("Invite failed:", err);
+      setFormError(
+        err.response?.data?.error || "Failed to invite staff member.",
+      );
+    },
+  });
+
+  // 4. Delete Staff Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      await api.delete(`/tenant/staff/${id}/`);
+    },
+    onSuccess: () => {
+      // Update UI by triggering a refetch
+      queryClient.invalidateQueries({ queryKey: ["tenantStaff"] });
+    },
+    onError: (err) => {
+      alert(err.response?.data?.error || "Failed to remove staff member.");
+    },
+  });
 
   // Filter staff based on search input
   const filteredStaff = staffList.filter((staff) => {
@@ -64,40 +95,19 @@ export default function StaffManagement() {
   const handleInviteChange = (e) => {
     const { name, value } = e.target;
     setNewStaff((prev) => ({ ...prev, [name]: value }));
-    if (error) setError("");
+    if (formError) setFormError("");
   };
 
-  // 2. Submit New Staff Invite
-  const handleInviteSubmit = async (e) => {
+  const handleInviteSubmit = (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError("");
-
-    try {
-      const response = await api.post("/tenant/staff/", newStaff);
-      // Add the new user to the UI immediately
-      setStaffList([response.data, ...staffList]);
-      setIsModalOpen(false);
-      setNewStaff({ name: "", email: "", role: "ORG_STAFF" });
-    } catch (err) {
-      console.error("Invite failed:", err);
-      setError(err.response?.data?.error || "Failed to invite staff member.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setFormError("");
+    inviteMutation.mutate(newStaff);
   };
 
-  // 3. Delete Staff Member
-  const handleDelete = async (id, name) => {
+  const handleDelete = (id, name) => {
     if (!window.confirm(`Are you sure you want to revoke access for ${name}?`))
       return;
-
-    try {
-      await api.delete(`/tenant/staff/${id}/`);
-      setStaffList(staffList.filter((staff) => staff.id !== id));
-    } catch (err) {
-      alert(err.response?.data?.error || "Failed to remove staff member.");
-    }
+    deleteMutation.mutate(id);
   };
 
   const getRoleBadge = (role) => {
@@ -164,6 +174,7 @@ export default function StaffManagement() {
             className="pl-10 bg-slate-950 border-slate-700"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search Staff"
           />
         </div>
       </div>
@@ -200,6 +211,28 @@ export default function StaffManagement() {
                   >
                     <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-2" />
                     Loading staff directory...
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr>
+                  <td
+                    colSpan="5"
+                    className="px-6 py-12 text-center text-slate-500"
+                  >
+                    <AlertCircle className="h-8 w-8 mx-auto text-rose-500 mb-2" />
+                    <p>
+                      {fetchError?.message ||
+                        "Could not load the staff directory."}
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() =>
+                        queryClient.invalidateQueries(["tenantStaff"])
+                      }
+                    >
+                      Try Again
+                    </Button>
                   </td>
                 </tr>
               ) : filteredStaff.length > 0 ? (
@@ -253,10 +286,18 @@ export default function StaffManagement() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10"
+                            title="Revoke Access"
+                            aria-label={`Revoke access for ${displayName}`}
+                            className="h-8 w-8 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 disabled:opacity-50"
                             onClick={() => handleDelete(staff.id, displayName)}
+                            disabled={deleteMutation.isPending}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {deleteMutation.isPending &&
+                            deleteMutation.variables === staff.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
                           </Button>
                         </div>
                       </td>
@@ -281,14 +322,14 @@ export default function StaffManagement() {
       {/* --- Invite Staff Modal --- */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => !isSubmitting && setIsModalOpen(false)}
+        onClose={() => !inviteMutation.isPending && setIsModalOpen(false)}
         title="Invite Team Member"
       >
         <form onSubmit={handleInviteSubmit} className="space-y-6">
-          {error && (
+          {formError && (
             <div className="flex items-center gap-2 p-3 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg">
               <AlertCircle className="h-4 w-4 shrink-0" />
-              <p>{error}</p>
+              <p>{formError}</p>
             </div>
           )}
 
@@ -345,17 +386,17 @@ export default function StaffManagement() {
               type="button"
               variant="ghost"
               onClick={() => setIsModalOpen(false)}
-              disabled={isSubmitting}
+              disabled={inviteMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               variant="primary"
-              disabled={isSubmitting}
+              disabled={inviteMutation.isPending}
               className="min-w-30"
             >
-              {isSubmitting ? (
+              {inviteMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
                 </>

@@ -232,9 +232,14 @@ export default function ManageDonors() {
                   className="pl-9 h-9 bg-slate-950/50"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search Donors"
                 />
               </div>
-              <Button variant="outline" className="h-9 px-3 bg-slate-950/50">
+              <Button
+                variant="outline"
+                className="h-9 px-3 bg-slate-950/50"
+                aria-label="Filter Donors"
+              >
                 <Filter className="h-4 w-4" />
               </Button>
             </div>
@@ -360,6 +365,7 @@ export default function ManageDonors() {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-slate-400 hover:text-white"
+                            aria-label={`Edit ${donor.full_name}`}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -367,6 +373,7 @@ export default function ManageDonors() {
                             variant="ghost"
                             size="sm"
                             title="Archive Record"
+                            aria-label={`Archive ${donor.full_name}`}
                             className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 disabled:opacity-50"
                             onClick={() =>
                               handleDelete(donor.id, donor.full_name)

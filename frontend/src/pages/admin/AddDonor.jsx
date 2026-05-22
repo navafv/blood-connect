@@ -214,6 +214,7 @@ export default function AddDonor() {
         <Link to="/admin/donors">
           <Button
             variant="ghost"
+            aria-label="Go back to donor registry"
             className="h-10 w-10 p-0 rounded-full hover:bg-slate-800 text-slate-400"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -521,7 +522,7 @@ export default function AddDonor() {
 
             {/* Submit Actions */}
             <div className="pt-6 border-t border-slate-800 flex justify-end gap-4">
-              <Link to="/admin">
+              <Link to="/admin/donors">
                 <Button
                   type="button"
                   variant="ghost"
