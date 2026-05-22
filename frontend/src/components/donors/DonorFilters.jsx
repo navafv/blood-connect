@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import { Search, MapPin, Droplet } from 'lucide-react';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
-import { Button } from '../ui/Button';
+import { useState } from "react";
+import { Search, MapPin, Droplet } from "lucide-react";
+import { Input } from "../ui/Input";
+import { Select } from "../ui/Select";
+import { Button } from "../ui/Button";
 
 export function DonorFilters({ onFilter }) {
   const [filters, setFilters] = useState({
-    bloodGroup: '',
-    location: '',
+    bloodGroup: "",
+    location: "",
   });
 
-  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+  const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,29 +24,33 @@ export function DonorFilters({ onFilter }) {
   };
 
   const handleReset = () => {
-    const cleared = { bloodGroup: '', location: '' };
+    const cleared = { bloodGroup: "", location: "" };
     setFilters(cleared);
     onFilter(cleared);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-slate-800 bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 shadow-lg">
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-xl border border-slate-800 bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 shadow-lg"
+    >
       <div className="flex flex-col gap-4 md:flex-row md:items-end">
-        
         {/* Blood Group Filter */}
         <div className="flex-1 space-y-2">
           <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
             <Droplet className="h-4 w-4 text-rose-500" />
             Blood Group
           </label>
-          <Select 
-            name="bloodGroup" 
-            value={filters.bloodGroup} 
+          <Select
+            name="bloodGroup"
+            value={filters.bloodGroup}
             onChange={handleChange}
           >
             <option value="">Any Blood Group</option>
             {bloodGroups.map((bg) => (
-              <option key={bg} value={bg}>{bg}</option>
+              <option key={bg} value={bg}>
+                {bg}
+              </option>
             ))}
           </Select>
         </div>
@@ -57,9 +61,9 @@ export function DonorFilters({ onFilter }) {
             <MapPin className="h-4 w-4 text-rose-500" />
             Location
           </label>
-          <Input 
+          <Input
             name="location"
-            placeholder="e.g., Munderi, Kannur or 670591" 
+            placeholder="e.g., Munderi, Kannur or 670591"
             value={filters.location}
             onChange={handleChange}
           />
@@ -75,7 +79,6 @@ export function DonorFilters({ onFilter }) {
             Search Donors
           </Button>
         </div>
-        
       </div>
     </form>
   );

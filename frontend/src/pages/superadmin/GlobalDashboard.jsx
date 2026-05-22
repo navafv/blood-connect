@@ -274,7 +274,7 @@ export default function GlobalDashboard() {
                 <div key={log.id} className="relative flex gap-4">
                   {/* Timeline connector */}
                   {index !== systemLogs.length - 1 && (
-                    <div className="absolute left-4 top-8 bottom-[-24px] w-[1px] bg-slate-800" />
+                    <div className="absolute left-4 top-8 -bottom-6 w-px bg-slate-800" />
                   )}
 
                   {/* Icon */}

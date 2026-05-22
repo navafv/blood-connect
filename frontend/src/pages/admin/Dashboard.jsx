@@ -239,7 +239,7 @@ export default function Dashboard() {
                     <div key={activity.id} className="relative flex gap-4">
                       {/* Visual Line for Timeline effect */}
                       {index !== recentActivity.length - 1 && (
-                        <div className="absolute left-4 top-8 bottom-[-24px] w-[1px] bg-slate-800" />
+                        <div className="absolute left-4 top-8 -bottom-6 w-px bg-slate-800" />
                       )}
 
                       <div

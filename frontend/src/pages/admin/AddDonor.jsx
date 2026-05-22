@@ -9,6 +9,7 @@ import {
   AlertCircle,
   ShieldAlert,
   MapPin,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import {
@@ -62,10 +63,10 @@ export default function AddDonor() {
     last_donation_date: "",
     is_permanently_deferred: false,
     deferral_reason: "",
-    // New Geographic fields
     country: "",
     state: "",
     district: "",
+    has_consented: false,
   });
 
   // 1. Initial Load: Fetch Org details & Countries to pre-fill the form
@@ -117,7 +118,9 @@ export default function AddDonor() {
     if (!formData.state) return;
     const fetchDistricts = async () => {
       try {
-        const res = await api.get(`/locations/districts/?state=${formData.state}`);
+        const res = await api.get(
+          `/locations/districts/?state=${formData.state}`,
+        );
         setDistricts(res.data);
       } catch (err) {
         console.error("Failed to fetch districts", err);
@@ -150,9 +153,16 @@ export default function AddDonor() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Safety check
+    // Safety checks
     if (!formData.country || !formData.state || !formData.district) {
       setError("Please ensure the geographic location is fully selected.");
+      return;
+    }
+
+    if (!formData.has_consented) {
+      setError(
+        "You must verify donor consent before adding them to the database.",
+      );
       return;
     }
 
@@ -477,6 +487,38 @@ export default function AddDonor() {
               )}
             </div>
 
+            {/* --- Section 5: Compliance & Consent --- */}
+            <div className="space-y-4 pt-4 border-t border-slate-800/50">
+              <div className="flex items-start gap-3 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
+                <div className="mt-0.5">
+                  <input
+                    type="checkbox"
+                    id="consent"
+                    name="has_consented"
+                    className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-rose-500 focus:ring-rose-500 focus:ring-offset-slate-900"
+                    checked={formData.has_consented}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="flex-1">
+                  <label
+                    htmlFor="consent"
+                    className="text-sm font-medium text-slate-300 flex items-center gap-2 cursor-pointer"
+                  >
+                    <ClipboardCheck className="h-4 w-4 text-emerald-500" />
+                    Donor Consent Verification *
+                  </label>
+                  <p className="text-xs text-slate-400 mt-1">
+                    I verify that this donor has explicitly consented to having
+                    their medical and contact information securely stored on the
+                    BloodConnect platform and agrees to be contacted for blood
+                    donation requests.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Submit Actions */}
             <div className="pt-6 border-t border-slate-800 flex justify-end gap-4">
               <Link to="/admin">
@@ -491,7 +533,7 @@ export default function AddDonor() {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !formData.has_consented}
                 className="w-40"
               >
                 {isSubmitting ? (

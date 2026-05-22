@@ -207,7 +207,7 @@ export default function BillingSubscription() {
                   <p className="text-sm font-medium text-slate-400 mb-1">
                     Payment Method
                   </p>
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2 text-slate-500 italic">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2 italic">
                     Not Configured
                   </h3>
                 </div>

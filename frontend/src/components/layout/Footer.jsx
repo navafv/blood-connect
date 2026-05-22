@@ -1,5 +1,5 @@
-import { Droplet } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Droplet } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
@@ -9,15 +9,22 @@ export function Footer() {
           <Droplet className="h-5 w-5 fill-current" />
           <span className="text-lg font-bold text-white">BloodConnect</span>
         </div>
-        
+
         <p className="text-sm text-slate-400 text-center md:text-left">
-          &copy; {new Date().getFullYear()} BloodConnect SaaS. All rights reserved.
+          &copy; {new Date().getFullYear()} BloodConnect SaaS. All rights
+          reserved.
         </p>
-        
+
         <div className="flex gap-4 text-sm text-slate-400">
-          <Link to="/privacy" className="hover:text-rose-400 transition-colors">Privacy</Link>
-          <Link to="/terms" className="hover:text-rose-400 transition-colors">Terms</Link>
-          <Link to="/contact" className="hover:text-rose-400 transition-colors">Contact</Link>
+          <Link to="/privacy" className="hover:text-rose-400 transition-colors">
+            Privacy
+          </Link>
+          <Link to="/terms" className="hover:text-rose-400 transition-colors">
+            Terms
+          </Link>
+          <Link to="/contact" className="hover:text-rose-400 transition-colors">
+            Contact
+          </Link>
         </div>
       </div>
     </footer>
