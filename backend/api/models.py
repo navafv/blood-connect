@@ -243,20 +243,21 @@ class Donor(models.Model):
 
 class Advertisement(models.Model):
     title = models.CharField(max_length=255)
-    image_url = models.URLField()
+    image = models.ImageField(upload_to='advertisements/', help_text="Upload the banner image")
     target_link = models.URLField()
-    
-    # Geo-Targeting
-    target_country = models.ForeignKey(MasterCountry, on_delete=models.CASCADE, related_name='ads')
-    target_state = models.ForeignKey(MasterState, on_delete=models.CASCADE, null=True, blank=True, help_text="Leave blank to target whole country")
     
     is_active = models.BooleanField(default=True)
     clicks = models.PositiveIntegerField(default=0)
     
     created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
 
     def __str__(self):
-        return f"Ad: {self.title} ({self.target_country.code})"
+        return self.title
+        
+    @property
+    def is_expired(self):
+        return self.expires_at < timezone.now()
 
 
 # ==========================================

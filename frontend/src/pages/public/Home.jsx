@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
+import { AdBanner } from "../../components/ads/AdBanner";
 
 export default function Home() {
   const features = [
@@ -143,6 +144,13 @@ export default function Home() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Advertisement Banner */}
+      <section className="py-12 border-b border-slate-800 bg-slate-900/20">
+        <div className="container mx-auto max-w-5xl px-4">
+          <AdBanner />
         </div>
       </section>
 

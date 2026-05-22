@@ -3,12 +3,13 @@ import random
 import csv
 import io
 from rest_framework import viewsets, generics, permissions, status
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.core.mail import send_mail
 from django.conf import settings
@@ -48,6 +49,13 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             access_token = response.data.get('access')
             refresh_token = response.data.get('refresh')
             
+            user = CustomUser.objects.filter(username=request.data.get('username')).first()
+            actual_role = user.role
+            
+            # If they were created via terminal, force them to be a SUPER_ADMIN
+            if user and user.is_superuser:
+                actual_role = 'SUPER_ADMIN'
+            
             # Set Access Token Cookie
             response.set_cookie(
                 key=settings.SIMPLE_JWT['AUTH_COOKIE'],
@@ -70,7 +78,9 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             # Remove tokens from JSON response body for ultimate security
             del response.data['access']
             del response.data['refresh']
+            
             response.data['message'] = 'Login successful.'
+            response.data['role'] = actual_role
 
         return response
     
@@ -390,18 +400,15 @@ class TenantDonorBulkUploadView(APIView):
 # ==========================================
 
 class ActiveAdvertisementView(generics.ListAPIView):
-    """Returns active ads. Can be filtered by the user's searching region."""
+    """Public view to fetch ALL active and non-expired ads."""
     serializer_class = AdvertisementSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        country_id = self.request.query_params.get('country')
-        
-        queryset = Advertisement.objects.filter(is_active=True)
-        if country_id:
-            queryset = queryset.filter(target_country_id=country_id)
-            
-        return queryset
+        return Advertisement.objects.filter(
+            is_active=True, 
+            expires_at__gt=timezone.now()
+        ).order_by('-created_at')
 
 
 # ==========================================
@@ -495,13 +502,15 @@ class PasswordResetConfirmView(APIView):
 
 class IsSuperAdmin(permissions.BasePermission):
     """
-    Custom permission to only allow users with the 'SUPER_ADMIN' role.
+    Custom permission to allow users with the 'SUPER_ADMIN' role 
+    OR native Django superusers (created via python manage.py createsuperuser).
     """
-    def hasattr_role(self, request):
-        return hasattr(request.user, 'role') and request.user.role == 'SUPER_ADMIN'
-
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and self.hasattr_role(request))
+        return bool(
+            request.user and 
+            request.user.is_authenticated and 
+            (request.user.role == 'SUPER_ADMIN' or request.user.is_superuser)
+        )
 
 
 class SuperAdminOrganizationListView(generics.ListAPIView):
@@ -644,6 +653,46 @@ class SuperAdminSystemLogListView(generics.ListAPIView):
 
     def get_queryset(self):
         return SystemLog.objects.all().order_by('-timestamp')
+    
+class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
+    """CRUD endpoints for Super Admins to manage system-wide advertisements."""
+    queryset = Advertisement.objects.all().order_by('-created_at')
+    serializer_class = AdvertisementSerializer
+    permission_classes = [IsSuperAdmin]
+    parser_classes = [MultiPartParser, FormParser] # Required for image uploads
+
+    def create(self, request, *args, **kwargs):
+        # Calculate expiration date based on the dropdown selection (months)
+        duration_months = int(request.data.get('duration_months', 1))
+        expires_at = timezone.now() + timedelta(days=30 * duration_months)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(expires_at=expires_at)
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
+    def extend(self, request, pk=None):
+        """Extends the ad expiration date."""
+        ad = self.get_object()
+        months = int(request.data.get('months', 1))
+        
+        if ad.is_expired:
+            ad.expires_at = timezone.now() + timedelta(days=30 * months)
+        else:
+            ad.expires_at += timedelta(days=30 * months)
+            
+        ad.save()
+        return Response({'message': 'Ad extended successfully', 'expires_at': ad.expires_at})
+
+    @action(detail=True, methods=['post'])
+    def toggle(self, request, pk=None):
+        """Toggles the is_active status (Disable/Enable)."""
+        ad = self.get_object()
+        ad.is_active = not ad.is_active
+        ad.save()
+        return Response({'message': 'Status updated', 'is_active': ad.is_active})
     
 
 class TenantDashboardStatsView(APIView):

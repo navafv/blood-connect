@@ -44,6 +44,7 @@ const GlobalDashboard = lazy(
 const ManageOrganizations = lazy(
   () => import("./pages/superadmin/ManageOrganizations"),
 );
+const ManageAds = lazy(() => import("./pages/superadmin/ManageAds"));
 const SystemLogs = lazy(() => import("./pages/superadmin/SystemLogs"));
 
 // --- Loading Fallback UI ---
@@ -105,6 +106,7 @@ function App() {
             <Route path="/superadmin" element={<SuperAdminLayout />}>
               <Route index element={<GlobalDashboard />} />
               <Route path="organizations" element={<ManageOrganizations />} />
+              <Route path="ads" element={<ManageAds />} />
               <Route path="logs" element={<SystemLogs />} />
             </Route>
           </Route>

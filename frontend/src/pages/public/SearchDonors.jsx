@@ -18,6 +18,7 @@ import { Card, CardContent } from "../../components/ui/Card";
 import { Select } from "../../components/ui/Select";
 import { Badge } from "../../components/ui/Badge";
 import api from "../../lib/axios";
+import { AdBanner } from "../../components/ads/AdBanner";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -275,6 +276,11 @@ export default function SearchDonors() {
             </form>
           </CardContent>
         </Card>
+      </div>
+
+      {/* --- Advertisement Banner --- */}
+      <div className="container mx-auto max-w-5xl px-4 mt-8">
+        <AdBanner />
       </div>
 
       {/* --- Search Results --- */}

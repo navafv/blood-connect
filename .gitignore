@@ -87,3 +87,5 @@ ehthumbs_vista.db
 celerybeat-schedule
 celerybeat-schedule-shm
 celerybeat-schedule-wal
+
+start.bat

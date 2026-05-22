@@ -16,6 +16,7 @@ from .views import (
     SuperAdminOrganizationListView,
     SuperAdminOrganizationStatusUpdateView,
     SuperAdminDashboardStatsView,
+    SuperAdminAdvertisementViewSet,
     TenantDashboardStatsView,
     TenantBillingUpdateView,
     TenantOrganizationView,
@@ -30,6 +31,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'tenant/donors', TenantDonorViewSet, basename='tenant-donor')
 router.register(r'tenant/staff', TenantStaffViewSet, basename='tenant-staff')
+router.register(r'superadmin/ads', SuperAdminAdvertisementViewSet, basename='superadmin-ads')
 
 urlpatterns = [
     # ==========================================

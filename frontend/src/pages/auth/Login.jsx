@@ -27,23 +27,21 @@ export default function Login() {
     setError("");
 
     try {
-      // 1. Send credentials. Django will automatically inject the HttpOnly cookies into the browser!
+      // 1. Send credentials to Django
       const response = await api.post("/auth/login/", {
         username: formData.email,
         password: formData.password,
       });
 
-      // 2. We NO LONGER save tokens to LocalStorage.
-      // Instead, we just save non-sensitive UI flags so React knows the user is logged in.
-      const isSuperAdmin = formData.email.includes("superadmin");
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem(
-        "userRole",
-        isSuperAdmin ? "SUPER_ADMIN" : "ORG_ADMIN",
-      );
+      // 2. Read the role injected by our backend update
+      const userRole = response.data.role;
 
-      // 3. Route the user
-      if (isSuperAdmin) {
+      // 3. Save basic UI state
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userRole", userRole);
+
+      // 4. Securely route the user based on their actual database role
+      if (userRole === "SUPER_ADMIN") {
         navigate("/superadmin");
       } else {
         navigate("/admin");

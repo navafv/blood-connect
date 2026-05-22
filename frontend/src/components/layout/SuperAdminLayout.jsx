@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Bell,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 
@@ -25,6 +26,7 @@ export function SuperAdminLayout() {
       path: "/superadmin/organizations",
       icon: Building2,
     },
+    { name: "Manage Ads", path: "/superadmin/ads", icon: Megaphone },
     { name: "System Logs", path: "/superadmin/logs", icon: TerminalSquare },
   ];
 

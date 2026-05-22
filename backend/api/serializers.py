@@ -113,12 +113,12 @@ class DonorSerializer(serializers.ModelSerializer):
 # ==========================================
 
 class AdvertisementSerializer(serializers.ModelSerializer):
+    is_expired = serializers.ReadOnlyField()
+
     class Meta:
         model = Advertisement
-        fields = [
-            'id', 'title', 'image_url', 'target_link', 
-            'target_country', 'target_state', 'is_active', 'clicks'
-        ]
+        fields = ['id', 'title', 'image', 'target_link', 'is_active', 'clicks', 'created_at', 'expires_at', 'is_expired']
+        read_only_fields = ['clicks', 'created_at', 'expires_at', 'is_expired']
 
 
 # ==========================================

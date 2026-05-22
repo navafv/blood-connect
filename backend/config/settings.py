@@ -141,6 +141,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+    
+
+# ==========================================
+# MEDIA FILES (For Ad Banner Uploads)
+# ==========================================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # ==========================================
@@ -229,3 +238,5 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=0, hour=0, day_of_month=1),
     },
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

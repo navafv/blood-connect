@@ -9,6 +9,7 @@ import {
   Droplet,
   X,
 } from "lucide-react";
+import api from "../../lib/axios";
 
 export function Sidebar({ isOpen, setIsOpen }) {
   const location = useLocation();
