@@ -1,7 +1,78 @@
+import React, { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export function Modal({ isOpen, onClose, title, children, className }) {
+  const modalRef = useRef(null);
+  const previousFocusRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // 1. Store the element that had focus before the modal opened
+    previousFocusRef.current = document.activeElement;
+
+    // 2. Focus the modal container itself so screen readers start reading the title
+    if (modalRef.current) {
+      modalRef.current.focus();
+    }
+
+    // Prevent background scrolling while modal is open
+    document.body.style.overflow = "hidden";
+
+    // 3. Handle keyboard events (Tab trapping and Escape to close)
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        // Find all focusable elements inside the modal
+        const focusableElements = modalRef.current.querySelectorAll(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+
+        if (focusableElements.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          // Shift + Tab: If on the first element (or the modal itself), jump to the last element
+          if (
+            document.activeElement === firstElement ||
+            document.activeElement === modalRef.current
+          ) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          // Tab: If on the last element, jump back to the first element
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      // 4. Cleanup: Remove listener, restore scroll, and return focus
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "unset";
+
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -10,12 +81,18 @@ export function Modal({ isOpen, onClose, title, children, className }) {
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
+        aria-hidden="true" /* Hide backdrop from screen readers */
       />
 
       {/* Modal Dialog */}
       <div
+        ref={modalRef}
+        tabIndex={-1} /* Allows the div to receive programmatic focus */
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl transform transition-all",
+          "relative z-50 w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl transform transition-all focus:outline-none",
           className,
         )}
       >
@@ -26,9 +103,9 @@ export function Modal({ isOpen, onClose, title, children, className }) {
           <button
             onClick={onClose}
             className="rounded-full p-1 text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500"
+            aria-label="Close modal"
           >
             <X className="h-5 w-5" />
-            <span className="sr-only">Close</span>
           </button>
         </div>
         <div>{children}</div>
