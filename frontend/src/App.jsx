@@ -15,6 +15,7 @@ const DonorGuidelines = lazy(() => import("./pages/public/DonorGuidelines"));
 const ContactUs = lazy(() => import("./pages/public/ContactUs"));
 const PrivacyPolicy = lazy(() => import("./pages/public/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/public/TermsOfService"));
+const OrganizationProfile = lazy(() => import("./pages/public/OrganizationProfile"));
 
 // --- Auth Pages (Lazy Loaded) ---
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -77,6 +78,7 @@ function App() {
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/org/:slug" element={<OrganizationProfile />} />
           </Route>
 
           {/* ==========================================

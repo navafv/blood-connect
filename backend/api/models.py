@@ -1,8 +1,10 @@
+import uuid
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-from django.utils import timezone
 from datetime import timedelta
+from django.utils import timezone
+from django.utils.text import slugify
 from django.core.validators import RegexValidator
+from django.contrib.auth.models import AbstractUser
 
 # ==========================================
 # GLOBAL VALIDATORS
@@ -103,6 +105,7 @@ class Organization(models.Model):
     )
 
     name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=150, unique=True, null=True, blank=True, help_text="Custom URL handle for the public profile.")
     org_type = models.CharField(max_length=20, choices=ORG_TYPE_CHOICES)
     contact_email = models.EmailField(unique=True)
     contact_phone = models.CharField(validators=[phone_regex], max_length=20)
@@ -114,10 +117,15 @@ class Organization(models.Model):
     district = models.ForeignKey(MasterDistrict, on_delete=models.PROTECT)
     address_line = models.TextField()
 
+    # Mini-Website Image Fields
+    banner_image = models.ImageField(upload_to='organization/banners/', blank=True, null=True)
+    gallery_photo_1 = models.ImageField(upload_to='organization/gallery/', blank=True, null=True)
+    gallery_photo_2 = models.ImageField(upload_to='organization/gallery/', blank=True, null=True)
+
     # SaaS Management & Privacy
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', db_index=True)
     is_paid = models.BooleanField(default=False, help_text="True if the organization has an active paid subscription.")
-    is_searchable = models.BooleanField(default=True, help_text="If False, this organization's donors are hidden from public search.") # 🛡️ NEW
+    is_searchable = models.BooleanField(default=True, help_text="If False, this organization's donors are hidden from public search.")
     subscription_expires_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -127,6 +135,15 @@ class Organization(models.Model):
         if not self.is_paid or not self.subscription_expires_at:
             return False
         return self.subscription_expires_at > timezone.now()
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate a slug if the organization doesn't have one yet
+        if not self.slug:
+            base_slug = slugify(self.name)
+            unique_id = str(uuid.uuid4())[:6]
+            self.slug = f"{base_slug}-{unique_id}"
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.get_org_type_display()})"

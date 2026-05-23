@@ -12,6 +12,7 @@ import {
   AlertCircle,
   CheckCircle2,
   FileText,
+  ImagePlus,
 } from "lucide-react";
 import {
   Card,
@@ -27,6 +28,11 @@ export default function ProfileSettings() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
+  const [fileData, setFileData] = useState({
+    banner_image: null,
+    gallery_photo_1: null,
+    gallery_photo_2: null,
+  });
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [updateError, setUpdateError] = useState("");
 
@@ -47,19 +53,36 @@ export default function ProfileSettings() {
   useEffect(() => {
     if (orgData && !isEditing) {
       setFormData({
+        slug: orgData.slug || "",
         name: orgData.name || "",
         contact_email: orgData.contact_email || "",
         contact_phone: orgData.contact_phone || "",
         address_line: orgData.address_line || "",
         description: orgData.description || "",
       });
+      // Reset file inputs when leaving edit mode
+      setFileData({
+        banner_image: null,
+        gallery_photo_1: null,
+        gallery_photo_2: null,
+      });
     }
   }, [orgData, isEditing]);
+
+  // 2. Add a specialized change handler just for the slug to prevent spaces/symbols
+  const handleSlugChange = (e) => {
+    const formattedSlug = e.target.value
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-"); // Replaces spaces and symbols with hyphens
+    setFormData({ ...formData, slug: formattedSlug });
+  };
 
   // 2. Update Mutation
   const updateMutation = useMutation({
     mutationFn: async (payload) => {
-      const response = await api.patch("/tenant/organization/", payload);
+      const response = await api.patch("/tenant/organization/", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -81,10 +104,32 @@ export default function ProfileSettings() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    setFileData({ ...fileData, [e.target.name]: e.target.files[0] });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setUpdateError("");
-    updateMutation.mutate(formData);
+
+    const payload = new FormData();
+
+    // Append standard text fields
+    Object.keys(formData).forEach((key) => {
+      if (formData[key] !== null && formData[key] !== undefined) {
+        payload.append(key, formData[key]);
+      }
+    });
+
+    // Append files ONLY if the user actually selected a new one
+    if (fileData.banner_image)
+      payload.append("banner_image", fileData.banner_image);
+    if (fileData.gallery_photo_1)
+      payload.append("gallery_photo_1", fileData.gallery_photo_1);
+    if (fileData.gallery_photo_2)
+      payload.append("gallery_photo_2", fileData.gallery_photo_2);
+
+    updateMutation.mutate(payload);
   };
 
   if (isLoading) {
@@ -167,6 +212,28 @@ export default function ProfileSettings() {
                     className="bg-slate-950"
                   />
                 </div>
+                <div className="space-y-2 col-span-2">
+                  <label className="text-sm font-medium text-slate-400">
+                    Custom Profile URL
+                  </label>
+                  <div className="flex rounded-md shadow-sm">
+                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-700 bg-slate-800 text-slate-400 sm:text-sm">
+                      bloodconnect.com/hospital/
+                    </span>
+                    <Input
+                      name="slug"
+                      value={formData.slug}
+                      onChange={handleSlugChange}
+                      className="flex-1 rounded-none rounded-r-md bg-slate-950 focus:ring-rose-500"
+                      placeholder="your-hospital-name"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    This is your public web address. Only lowercase letters,
+                    numbers, and hyphens are allowed.
+                  </p>
+                </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">
                     Public Contact Email
@@ -218,6 +285,50 @@ export default function ProfileSettings() {
                   className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
                   placeholder="Tell donors about your hospital/facility..."
                 />
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <h3 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <ImagePlus className="h-4 w-4" /> Public Profile Photos
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs text-slate-400">
+                      Hero Banner Image
+                    </label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      name="banner_image"
+                      onChange={handleFileChange}
+                      className="bg-slate-950 text-slate-400 file:text-rose-500 file:bg-rose-500/10 file:border-0 file:rounded-md file:mr-4 file:px-3 file:py-1 text-sm h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-slate-400">
+                      Gallery Photo 1
+                    </label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      name="gallery_photo_1"
+                      onChange={handleFileChange}
+                      className="bg-slate-950 text-slate-400 file:text-rose-500 file:bg-rose-500/10 file:border-0 file:rounded-md file:mr-4 file:px-3 file:py-1 text-sm h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-slate-400">
+                      Gallery Photo 2
+                    </label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      name="gallery_photo_2"
+                      onChange={handleFileChange}
+                      className="bg-slate-950 text-slate-400 file:text-rose-500 file:bg-rose-500/10 file:border-0 file:rounded-md file:mr-4 file:px-3 file:py-1 text-sm h-12"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Geographic Lock Warning */}
@@ -330,6 +441,54 @@ export default function ProfileSettings() {
                   </div>
                 </div>
               </div>
+
+              {(orgData.banner_image ||
+                orgData.gallery_photo_1 ||
+                orgData.gallery_photo_2) && (
+                <div className="mt-8 pt-6 border-t border-slate-800">
+                  <h4 className="text-sm text-slate-500 mb-4 flex items-center gap-2">
+                    <ImagePlus className="h-4 w-4" /> Uploaded Media
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {orgData.banner_image && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-slate-500 uppercase tracking-wider">
+                          Hero Banner
+                        </p>
+                        <img
+                          src={orgData.banner_image}
+                          alt="Banner"
+                          className="w-full h-28 object-cover rounded-lg border border-slate-700/50 shadow-md"
+                        />
+                      </div>
+                    )}
+                    {orgData.gallery_photo_1 && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-slate-500 uppercase tracking-wider">
+                          Gallery 1
+                        </p>
+                        <img
+                          src={orgData.gallery_photo_1}
+                          alt="Gallery 1"
+                          className="w-full h-28 object-cover rounded-lg border border-slate-700/50 shadow-md"
+                        />
+                      </div>
+                    )}
+                    {orgData.gallery_photo_2 && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-slate-500 uppercase tracking-wider">
+                          Gallery 2
+                        </p>
+                        <img
+                          src={orgData.gallery_photo_2}
+                          alt="Gallery 2"
+                          className="w-full h-28 object-cover rounded-lg border border-slate-700/50 shadow-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

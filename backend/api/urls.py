@@ -17,6 +17,7 @@ from .views import (
     MasterDistrictListView,
     ActiveAdvertisementView,
     ContactMessageCreateView,
+    PublicOrganizationDetailView,
     TenantPaymentView, 
     TenantStaffViewSet,
     TenantDonorViewSet,
@@ -82,6 +83,7 @@ urlpatterns = [
     path('public/contact/', ContactMessageCreateView.as_view(), name='public-contact'),
     path('donors/search/', PublicDonorSearchView.as_view(), name='public-donor-search'),
     path('public/ads/<int:pk>/click/', AdClickRedirectView.as_view(), name='public-ad-click'),
+    path('public/organizations/<slug:slug>/', PublicOrganizationDetailView.as_view(), name='public-org-detail'),
 
     # ==========================================
     # TENANT ENDPOINTS

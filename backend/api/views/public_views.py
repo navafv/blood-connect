@@ -7,10 +7,10 @@ from django.shortcuts import get_object_or_404
 from django.db.models import F
 from django.utils import timezone
 
-from ..models import MasterCountry, MasterState, MasterDistrict, Donor, Advertisement, ContactMessage
+from ..models import MasterCountry, MasterState, MasterDistrict, Donor, Advertisement, ContactMessage, Organization
 from ..serializers import (
     MasterCountrySerializer, MasterStateSerializer, MasterDistrictSerializer,
-    DonorSerializer, AdvertisementSerializer, ContactMessageSerializer, PublicDonorSearchSerializer
+    DonorSerializer, AdvertisementSerializer, ContactMessageSerializer, OrganizationSerializer, PublicDonorSearchSerializer
 )
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -72,8 +72,11 @@ class PublicDonorSearchView(generics.ListAPIView):
         country = self.request.query_params.get('country')
         state = self.request.query_params.get('state')
         district = self.request.query_params.get('district')
+        organization_id = self.request.query_params.get('organization')
 
         # Apply filters if the user provided them
+        if organization_id:
+            queryset = queryset.filter(organization_id=organization_id)
         if blood_group:
             queryset = queryset.filter(blood_group=blood_group)
         if country:
@@ -116,3 +119,15 @@ class AdClickRedirectView(APIView):
         Advertisement.objects.filter(pk=pk).update(clicks=F('clicks') + 1)
         
         return HttpResponseRedirect(redirect_to=ad.target_link)
+    
+
+class PublicOrganizationDetailView(generics.RetrieveAPIView):
+    """Fetches public details and photos for the hospital mini-website."""
+    serializer_class = OrganizationSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = 'slug'
+    
+    def get_queryset(self):
+        return Organization.objects.select_related(
+            'country', 'state', 'district'
+        ).filter(status='ACTIVE', is_searchable=True)

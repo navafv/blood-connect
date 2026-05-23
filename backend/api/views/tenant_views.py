@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from django.db import transaction
@@ -117,6 +117,7 @@ class TenantDashboardStatsView(APIView):
 class TenantOrganizationView(generics.RetrieveUpdateAPIView):
     serializer_class = OrganizationSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_object(self):
         if not self.request.user.organization:
