@@ -139,4 +139,4 @@ class SystemLogSerializer(serializers.ModelSerializer):
 class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
-        fields = ['id', 'name', 'email', 'subject', 'message', 'created_at']
+        fields = ['id', 'name', 'email', 'subject', 'message', 'created_at', 'is_resolved']

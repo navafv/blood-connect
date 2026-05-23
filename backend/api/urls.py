@@ -17,6 +17,7 @@ from .views import (
     SuperAdminOrganizationStatusUpdateView,
     SuperAdminDashboardStatsView,
     SuperAdminAdvertisementViewSet,
+    SuperAdminContactMessageViewSet,
     TenantDashboardStatsView,
     TenantBillingUpdateView,
     TenantOrganizationView,
@@ -32,6 +33,7 @@ router = DefaultRouter()
 router.register(r'tenant/donors', TenantDonorViewSet, basename='tenant-donor')
 router.register(r'tenant/staff', TenantStaffViewSet, basename='tenant-staff')
 router.register(r'superadmin/ads', SuperAdminAdvertisementViewSet, basename='superadmin-ads')
+router.register(r'superadmin/messages', SuperAdminContactMessageViewSet, basename='superadmin-messages')
 
 urlpatterns = [
     # ==========================================

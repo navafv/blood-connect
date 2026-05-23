@@ -694,6 +694,63 @@ class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
         ad.save()
         return Response({'message': 'Status updated', 'is_active': ad.is_active})
     
+class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
+    """
+    CRUD endpoints for Super Admins to manage and reply to public contact messages.
+    """
+    queryset = ContactMessage.objects.all().order_by('-created_at')
+    serializer_class = ContactMessageSerializer
+    permission_classes = [IsSuperAdmin]
+
+    @action(detail=True, methods=['post'])
+    def reply(self, request, pk=None):
+        """Sends an email reply to the user and marks the message as resolved."""
+        message = self.get_object()
+        reply_text = request.data.get('reply_text')
+        
+        if not reply_text:
+            return Response({"error": "Reply text is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        subject = f"Re: {message.subject} - BloodConnect Support"
+        plain_message = f"Hello {message.name},\n\n{reply_text}\n\nBest regards,\nThe BloodConnect Team"
+        
+        html_message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h3 style="color: #0f172a; margin-bottom: 20px;">BloodConnect Support</h3>
+            <p style="color: #475569; font-size: 15px; line-height: 1.6;">Hello {message.name},</p>
+            <div style="color: #475569; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">{reply_text}</div>
+            <br/>
+            <p style="color: #475569; font-size: 15px;">Best regards,<br/><strong>The BloodConnect Team</strong></p>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <p style="color: #94a3b8; font-size: 12px; font-style: italic;">
+                In response to your message:<br/>
+                "{message.message}"
+            </p>
+        </div>
+        """
+        
+        # Fire the Celery Task
+        send_async_email.delay(
+            subject=subject,
+            plain_message=plain_message,
+            recipient_list=[message.email],
+            html_message=html_message
+        )
+        
+        # Auto-resolve the message
+        message.is_resolved = True
+        message.save()
+        
+        return Response({"message": "Reply sent successfully and ticket resolved."})
+
+    @action(detail=True, methods=['post'])
+    def toggle(self, request, pk=None):
+        """Manually toggles the resolved status."""
+        message = self.get_object()
+        message.is_resolved = not message.is_resolved
+        message.save()
+        return Response({'message': 'Status updated', 'is_resolved': message.is_resolved})
+    
 
 class TenantDashboardStatsView(APIView):
     """
