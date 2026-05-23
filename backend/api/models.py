@@ -114,9 +114,10 @@ class Organization(models.Model):
     district = models.ForeignKey(MasterDistrict, on_delete=models.PROTECT)
     address_line = models.TextField()
 
-    # SaaS Management
+    # SaaS Management & Privacy
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', db_index=True)
     is_paid = models.BooleanField(default=False, help_text="True if the organization has an active paid subscription.")
+    is_searchable = models.BooleanField(default=True, help_text="If False, this organization's donors are hidden from public search.") # 🛡️ NEW
     subscription_expires_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

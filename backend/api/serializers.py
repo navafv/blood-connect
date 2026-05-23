@@ -108,6 +108,23 @@ class DonorSerializer(serializers.ModelSerializer):
             return obj.phone_number[:6] + 'XXXX'
         return "INVALID/HIDDEN"
 
+class PublicDonorSearchSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
+    organization_contact = serializers.CharField(source='organization.contact_phone', read_only=True)
+    country_name = serializers.CharField(source='country.name', read_only=True)
+    state_name = serializers.CharField(source='state.name', read_only=True)
+    district_name = serializers.CharField(source='district.name', read_only=True)
+    is_available_now = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Donor
+        fields = [
+            'id', 'full_name', 'blood_group', 'gender', 
+            'organization_name', 'organization_contact',
+            'country_name', 'state_name', 'district_name', 
+            'last_donation_date', 'is_available_now'
+        ]
+        
 
 # ==========================================
 # 5. ADVERTISEMENT SERIALIZER

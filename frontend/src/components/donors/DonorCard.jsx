@@ -1,81 +1,111 @@
-import { useState } from "react";
-import { MapPin, Phone, Calendar, Droplet } from "lucide-react";
-import { Card, CardContent } from "../ui/Card";
-import { Button } from "../ui/Button";
-import { StatusBadge } from "./StatusBadge";
+import React from "react";
+import {
+  Phone,
+  MapPin,
+  Building2,
+  CalendarClock,
+  ShieldCheck,
+} from "lucide-react";
+import { Card } from "../ui/Card";
+import { Badge } from "../ui/Badge";
 
 export function DonorCard({ donor }) {
-  const [showPhone, setShowPhone] = useState(false);
-
-  // Helper to calculate if donor is currently eligible based on last donation
-  // (In a real app, this logic often lives in the backend, but good for UI display)
-  const isEligible = donor.status === "AVAILABLE";
+  // Format the last donation date safely
+  const formattedLastDonation = donor.last_donation_date
+    ? new Date(donor.last_donation_date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "First Time Donor";
 
   return (
-    <Card className="overflow-hidden transition-all hover:border-slate-700 hover:shadow-2xl">
-      <CardContent className="p-0">
-        <div className="flex flex-col sm:flex-row">
-          {/* Blood Group Highlight Section */}
-          <div className="flex flex-col items-center justify-center bg-slate-950 p-6 sm:w-1/3 sm:border-r sm:border-slate-800">
-            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-rose-500/10 border border-rose-500/20">
-              <Droplet className="absolute h-12 w-12 text-rose-500 opacity-20" />
-              <span className="z-10 text-3xl font-bold text-rose-500">
-                {donor.bloodGroup}
+    <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md overflow-hidden hover:border-rose-500/50 transition-colors duration-300">
+      <div className="p-6">
+        {/* Header: Name & Blood Group */}
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-white mb-1">
+              {donor.full_name}
+            </h3>
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <span className="capitalize">
+                {donor.gender === "M"
+                  ? "Male"
+                  : donor.gender === "F"
+                    ? "Female"
+                    : "Other"}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {donor.district_name}, {donor.state_name}
               </span>
             </div>
-            <StatusBadge status={donor.status} className="mt-4" />
           </div>
 
-          {/* Donor Details Section */}
-          <div className="flex flex-1 flex-col justify-between p-6">
-            <div>
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold text-white">
-                    {donor.fullName}
-                  </h3>
-                  <div className="mt-2 space-y-2 text-sm text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>
-                        {donor.city}, {donor.district} - {donor.pincode}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        Last Donated:{" "}
-                        {new Date(donor.lastDonationDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Area */}
-            <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-slate-300">
-                <Phone className="h-4 w-4 text-emerald-500" />
-                <span className="font-mono font-medium tracking-wider">
-                  {showPhone
-                    ? donor.phone
-                    : `${donor.phone.substring(0, 3)}XXXXXXX`}
-                </span>
-              </div>
-
-              <Button
-                variant={showPhone ? "secondary" : "primary"}
-                size="sm"
-                disabled={!isEligible}
-                onClick={() => setShowPhone(true)}
-              >
-                {showPhone ? "Number Revealed" : "View Contact"}
-              </Button>
+          <div className="flex flex-col items-end gap-2">
+            <div className="h-12 w-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center font-bold text-rose-500 text-lg shadow-[0_0_15px_rgba(225,29,72,0.15)]">
+              {donor.blood_group}
             </div>
           </div>
         </div>
-      </CardContent>
+
+        {/* Status Badges */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {donor.is_available_now ? (
+            <Badge
+              variant="success"
+              className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 gap-1"
+            >
+              <ShieldCheck className="h-3 w-3" /> Eligible to Donate
+            </Badge>
+          ) : (
+            <Badge
+              variant="warning"
+              className="bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1"
+            >
+              <CalendarClock className="h-3 w-3" /> Cooling Period
+            </Badge>
+          )}
+
+          <Badge
+            variant="outline"
+            className="border-slate-700 text-slate-300 bg-slate-800/50"
+          >
+            Last Donated: {formattedLastDonation}
+          </Badge>
+        </div>
+
+        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div className="flex items-start gap-3">
+            <Building2 className="h-5 w-5 text-slate-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-0.5">
+                Managed By
+              </p>
+              <p className="text-sm text-slate-300 font-medium">
+                {donor.organization_name}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-3 border-t border-slate-800/50">
+            <a
+              href={`tel:${donor.organization_contact}`}
+              className="flex-1 flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Phone className="h-4 w-4" />
+              Contact Facility
+            </a>
+          </div>
+        </div>
+
+        <p className="text-[10px] text-slate-500 text-center mt-3">
+          For donor privacy, you will be connected directly to the managing
+          healthcare facility to request this blood unit.
+        </p>
+      </div>
     </Card>
   );
 }

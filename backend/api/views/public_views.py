@@ -10,7 +10,7 @@ from django.utils import timezone
 from ..models import MasterCountry, MasterState, MasterDistrict, Donor, Advertisement, ContactMessage
 from ..serializers import (
     MasterCountrySerializer, MasterStateSerializer, MasterDistrictSerializer,
-    DonorSerializer, AdvertisementSerializer, ContactMessageSerializer
+    DonorSerializer, AdvertisementSerializer, ContactMessageSerializer, PublicDonorSearchSerializer
 )
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -52,9 +52,9 @@ class MasterDistrictListView(generics.ListAPIView):
 class PublicDonorSearchView(generics.ListAPIView):
     """
     Handles the public cascading search. 
-    Only returns donors belonging to 'ACTIVE' organizations.
+    Only returns donors belonging to 'ACTIVE' and 'SEARCHABLE' organizations.
     """
-    serializer_class = DonorSerializer
+    serializer_class = PublicDonorSearchSerializer
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
     pagination_class = StandardResultsSetPagination
@@ -62,9 +62,12 @@ class PublicDonorSearchView(generics.ListAPIView):
     def get_queryset(self):
         queryset = Donor.objects.select_related(
             'organization', 'country', 'state', 'district'
-        ).filter(organization__status='ACTIVE')
+        ).filter(
+            organization__status='ACTIVE', 
+            organization__is_searchable=True
+        )
 
-        # Grab search parameters from the URL (e.g., ?blood_group=O+&district=5)
+        # Grab search parameters from the URL
         blood_group = self.request.query_params.get('blood_group')
         country = self.request.query_params.get('country')
         state = self.request.query_params.get('state')

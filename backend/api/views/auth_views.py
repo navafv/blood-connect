@@ -117,6 +117,7 @@ class RegisterOrganizationView(APIView):
                 state_id=data.get('state_id'),
                 district_id=data.get('district_id'),
                 address_line="Pending Address...",
+                is_searchable=data.get('is_searchable', True),
                 status='PENDING'
             )
 
@@ -132,7 +133,7 @@ class RegisterOrganizationView(APIView):
                 role='ORG_ADMIN',
                 organization=organization,
                 email_verification_otp=otp_code,
-                email_otp_expires_at=timezone.now() + timedelta(minutes=10) # Expires in 10 mins
+                email_otp_expires_at=timezone.now() + timedelta(minutes=10)
             )
 
             # 4. Fire Async Email to the User
