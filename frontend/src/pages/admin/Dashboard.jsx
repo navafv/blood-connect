@@ -19,13 +19,23 @@ import {
 import { Button } from "../../components/ui/Button";
 import api from "../../lib/axios";
 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  CartesianGrid,
+} from "recharts";
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch real statistics from Django
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -38,11 +48,9 @@ export default function Dashboard() {
         setIsLoading(false);
       }
     };
-
     fetchStats();
   }, []);
 
-  // Helper to get the correct icon and color for the activity feed
   const getActivityStyling = (action) => {
     switch (action) {
       case "DONATION_LOGGED":
@@ -89,11 +97,23 @@ export default function Dashboard() {
   }
 
   const { overview, bloodGroupDistribution, recentActivity } = stats;
-  // Calculate the maximum count to scale the custom bar chart properly
-  const maxBloodCount =
-    bloodGroupDistribution.length > 0
-      ? Math.max(...bloodGroupDistribution.map((b) => b.count))
-      : 1;
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl">
+          <p className="text-slate-300 font-medium mb-1">
+            Blood Group:{" "}
+            <span className="text-white">{payload[0].payload.group}</span>
+          </p>
+          <p className="text-rose-400 font-bold flex items-center gap-2">
+            <Droplet className="h-4 w-4" /> {payload[0].value} Donors
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -112,12 +132,11 @@ export default function Dashboard() {
           className="gap-2"
           onClick={() => navigate("/admin/add-donor")}
         >
-          <Plus className="h-4 w-4" />
-          Add New Donor
+          <Plus className="h-4 w-4" /> Add New Donor
         </Button>
       </div>
 
-      {/* --- Section 1: Key Metrics Grid --- */}
+      {/* Section 1: Key Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-slate-900/40">
           <CardContent className="p-6 flex items-center justify-between">
@@ -184,37 +203,57 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* --- Section 2: Charts and Activity --- */}
+      {/* Section 2: Charts and Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Blood Group Distribution (Custom Bar Chart) */}
         <Card className="lg:col-span-2">
           <CardHeader className="border-b border-slate-800 pb-4">
             <CardTitle>Blood Group Distribution</CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="pt-6 h-100">
             {bloodGroupDistribution.length === 0 ? (
-              <p className="text-slate-500 text-center py-8">
-                No donors registered yet.
-              </p>
+              <div className="flex h-full items-center justify-center">
+                <p className="text-slate-500">No donors registered yet.</p>
+              </div>
             ) : (
-              bloodGroupDistribution.map((item) => (
-                <div key={item.group} className="flex items-center gap-4">
-                  <div className="w-10 text-right font-bold text-slate-300">
-                    {item.group}
-                  </div>
-                  <div className="flex-1 h-3 bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-linear-to-r from-rose-600 to-rose-400 rounded-full transition-all duration-1000 ease-out"
-                      style={{
-                        width: `${(item.count / maxBloodCount) * 100}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="w-12 text-sm text-slate-400">
-                    {item.count}
-                  </div>
-                </div>
-              ))
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={bloodGroupDistribution}
+                  margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#1e293b"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="group"
+                    stroke="#64748b"
+                    tick={{ fill: "#94a3b8", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="#64748b"
+                    tick={{ fill: "#94a3b8", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    cursor={{ fill: "#1e293b", opacity: 0.4 }}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={50}>
+                    {bloodGroupDistribution.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.count > 0 ? "#e11d48" : "#334155"}
+                        className="hover:opacity-80 transition-opacity cursor-pointer"
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
@@ -237,17 +276,14 @@ export default function Dashboard() {
 
                   return (
                     <div key={activity.id} className="relative flex gap-4">
-                      {/* Visual Line for Timeline effect */}
                       {index !== recentActivity.length - 1 && (
                         <div className="absolute left-4 top-8 -bottom-6 w-px bg-slate-800" />
                       )}
-
                       <div
                         className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-800/50 ${style.bg}`}
                       >
                         <Icon className={`h-4 w-4 ${style.color}`} />
                       </div>
-
                       <div className="flex-1 pt-1">
                         <p className="text-sm font-medium text-slate-200">
                           {activity.message}
@@ -267,7 +303,6 @@ export default function Dashboard() {
                 })
               )}
             </div>
-
             <Button
               variant="outline"
               className="w-full mt-6 text-sm"
