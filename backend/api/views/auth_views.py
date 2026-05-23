@@ -5,6 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from datetime import timedelta
+from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
 from django.contrib.auth.tokens import default_token_generator
@@ -106,6 +108,7 @@ class RegisterOrganizationView(APIView):
     def post(self, request):
         data = request.data
         try:
+            # 1. Create Organization
             organization = Organization.objects.create(
                 name=data.get('orgName'),
                 org_type=data.get('orgType', 'NGO'),
@@ -117,22 +120,112 @@ class RegisterOrganizationView(APIView):
                 status='PENDING'
             )
 
+            # 2. Generate 6-Digit OTP
+            otp_code = str(random.randint(100000, 999999))
+
+            # 3. Create User with OTP attached
             admin_user = CustomUser.objects.create_user(
                 username=data.get('email'),
                 email=data.get('email'),
                 password=data.get('password'),
                 first_name=data.get('contactName', ''),
                 role='ORG_ADMIN',
-                organization=organization
+                organization=organization,
+                email_verification_otp=otp_code,
+                email_otp_expires_at=timezone.now() + timedelta(minutes=10) # Expires in 10 mins
+            )
+
+            # 4. Fire Async Email to the User
+            subject = f"Verify your BloodConnect Organization: {otp_code}"
+            plain_message = f"Your verification code is: {otp_code}. This code expires in 10 minutes."
+            html_message = f"""
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Welcome to BloodConnect! 🩸</h2>
+                <p>To complete your organization's registration, please enter the verification code below:</p>
+                <div style="font-size: 24px; font-weight: bold; letter-spacing: 5px; padding: 15px; background: #f1f5f9; display: inline-block; border-radius: 8px;">
+                    {otp_code}
+                </div>
+                <p style="color: #64748b; font-size: 12px; margin-top: 20px;">This code will expire in 10 minutes.</p>
+            </div>
+            """
+            send_async_email.delay(
+                subject=subject, 
+                plain_message=plain_message, 
+                recipient_list=[data.get('email')], 
+                html_message=html_message
             )
 
             return Response({
-                "message": "Organization registered successfully. Please check your email to verify your account.",
+                "message": "Organization registered successfully. Please check your email for the verification code.",
                 "organization_id": organization.id
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class VerifyEmailOTPView(APIView):
+    """Verifies the 6-digit OTP sent to the user during registration."""
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+
+        if not email or not otp:
+            return Response({"error": "Email and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = CustomUser.objects.filter(email=email).first()
+        if not user:
+            return Response({"error": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_email_verified:
+            return Response({"message": "Email is already verified."}, status=status.HTTP_200_OK)
+
+        if user.email_verification_otp != otp:
+            return Response({"error": "Invalid verification code."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.email_otp_expires_at and user.email_otp_expires_at < timezone.now():
+            return Response({"error": "Verification code has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # OTP is valid! Mark as verified and clean up.
+        user.is_email_verified = True
+        user.email_verification_otp = None
+        user.email_otp_expires_at = None
+        user.save()
+
+        return Response({"message": "Email verified successfully!"}, status=status.HTTP_200_OK)
+    
+class ResendEmailOTPView(APIView):
+    """Generates and emails a new 6-digit OTP."""
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request):
+        email = request.data.get('email')
+        user = CustomUser.objects.filter(email=email).first()
+
+        if not user:
+            return Response({"error": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_email_verified:
+            return Response({"error": "Email is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate new OTP and reset timer
+        new_otp = str(random.randint(100000, 999999))
+        user.email_verification_otp = new_otp
+        user.email_otp_expires_at = timezone.now() + timedelta(minutes=10)
+        user.save()
+
+        # Fire Email
+        send_async_email.delay(
+            subject=f"New Verification Code: {new_otp}", 
+            plain_message=f"Your new verification code is: {new_otp}", 
+            recipient_list=[email], 
+            html_message=f"<p>Your new verification code is <b>{new_otp}</b>. It expires in 10 minutes.</p>"
+        )
+
+        return Response({"message": "A new verification code has been sent."}, status=status.HTTP_200_OK)
 
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]

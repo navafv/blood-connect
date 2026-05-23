@@ -29,7 +29,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // 🛡️ SECURITY FIX 1: Prevent Infinite Loops
     // If the request that failed WAS the login or refresh request, immediately reject it.
     if (
       originalRequest.url.includes("/auth/refresh/") ||
@@ -40,7 +39,6 @@ api.interceptors.response.use(
 
     // If the error is 401 (Unauthorized) and we haven't tried to retry this specific request yet
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // 🛡️ SECURITY FIX 2: Handle Concurrent Requests (The Race Condition)
       // If a refresh is already in progress, put this failed request into a queue.
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {

@@ -63,6 +63,8 @@ class CustomUser(AbstractUser):
     # Verification Flags (For OTP Step)
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
+    email_verification_otp = models.CharField(max_length=6, null=True, blank=True)
+    email_otp_expires_at = models.DateTimeField(null=True, blank=True)
     
     # The organization this user belongs to (Null for SuperAdmins and Public Users)
     organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_members')

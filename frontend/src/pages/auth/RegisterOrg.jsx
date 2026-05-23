@@ -9,6 +9,7 @@ import {
   Droplet,
   Loader2,
   MapPin,
+  Globe,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -34,6 +35,7 @@ export default function RegisterOrg() {
     country_id: "",
     state_id: "",
     district_id: "",
+    is_searchable: true,
   });
 
   // 1. Fetch Whitelisted Countries on Load
@@ -91,7 +93,11 @@ export default function RegisterOrg() {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
     setError("");
   };
 
@@ -102,19 +108,18 @@ export default function RegisterOrg() {
     setError("");
 
     try {
-      // Hit the Django Registration View we created
+      // Hit the Django Registration View
       await api.post("/auth/register/", formData);
 
       setStatus("success");
 
-      // Redirect to login after 2 seconds
       setTimeout(() => {
-        navigate("/login");
+        navigate("/verify-email", { state: { email: formData.email } });
       }, 2000);
     } catch (err) {
       console.error(err);
       setStatus("idle");
-      // Show error from Django (e.g., "Email already exists")
+      // Show error from Django
       setError(
         err.response?.data?.error ||
           "Registration failed. Please check your details.",
@@ -159,15 +164,14 @@ export default function RegisterOrg() {
                 Registration Successful!
               </h3>
               <p className="text-slate-400 text-sm mb-6">
-                Your organization is pending SuperAdmin approval. Redirecting
-                you to login...
+                Redirecting you to verify your email address...
               </p>
               <Loader2 className="h-6 w-6 text-rose-500 animate-spin mx-auto" />
             </div>
           ) : (
             <form className="space-y-5" onSubmit={handleSubmit}>
               {error && (
-                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm p-3 rounded-lg text-center">
+                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm p-3 rounded-lg text-center animate-in fade-in">
                   {error}
                 </div>
               )}
@@ -183,7 +187,7 @@ export default function RegisterOrg() {
                     <Input
                       name="orgName"
                       placeholder="Organization Name"
-                      className="pl-10"
+                      className="pl-10 bg-slate-950"
                       required
                       value={formData.orgName}
                       onChange={handleChange}
@@ -194,7 +198,7 @@ export default function RegisterOrg() {
                     <Input
                       name="contactName"
                       placeholder="Admin Contact Name"
-                      className="pl-10"
+                      className="pl-10 bg-slate-950"
                       required
                       value={formData.contactName}
                       onChange={handleChange}
@@ -206,7 +210,7 @@ export default function RegisterOrg() {
                       name="email"
                       type="email"
                       placeholder="Official Email"
-                      className="pl-10"
+                      className="pl-10 bg-slate-950"
                       required
                       value={formData.email}
                       onChange={handleChange}
@@ -218,7 +222,7 @@ export default function RegisterOrg() {
                       name="password"
                       type="password"
                       placeholder="Password"
-                      className="pl-10"
+                      className="pl-10 bg-slate-950"
                       required
                       value={formData.password}
                       onChange={handleChange}
@@ -228,7 +232,7 @@ export default function RegisterOrg() {
               </div>
 
               {/* Geographic Locking Details */}
-              <div className="space-y-4 pt-2">
+              <div className="space-y-4 pt-2 pb-4 border-b border-slate-800">
                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-rose-500" /> 2. Geographic
                   Lock
@@ -242,6 +246,7 @@ export default function RegisterOrg() {
                   value={formData.country_id}
                   onChange={handleCountryChange}
                   required
+                  className="bg-slate-950"
                 >
                   <option value="">Select Country</option>
                   {countries.map((c) => (
@@ -257,6 +262,7 @@ export default function RegisterOrg() {
                     onChange={handleStateChange}
                     disabled={!formData.country_id}
                     required
+                    className="bg-slate-950"
                   >
                     <option value="">Select State</option>
                     {states.map((s) => (
@@ -272,6 +278,7 @@ export default function RegisterOrg() {
                     onChange={handleChange}
                     disabled={!formData.state_id}
                     required
+                    className="bg-slate-950"
                   >
                     <option value="">Select District</option>
                     {districts.map((d) => (
@@ -281,6 +288,36 @@ export default function RegisterOrg() {
                     ))}
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-4 pt-2">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-emerald-500" /> 3. Public
+                  Directory
+                </h3>
+
+                <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:bg-slate-800/50 transition-colors">
+                  <div className="flex h-6 items-center">
+                    <input
+                      id="is_searchable"
+                      name="is_searchable"
+                      type="checkbox"
+                      checked={formData.is_searchable}
+                      onChange={handleChange}
+                      className="h-5 w-5 rounded border-slate-600 bg-slate-950 text-rose-500 focus:ring-rose-500 focus:ring-offset-slate-900 transition-all cursor-pointer"
+                    />
+                  </div>
+                  <div className="text-sm leading-tight">
+                    <span className="font-medium text-white block mb-1">
+                      List our donors in the public search directory
+                    </span>
+                    <span className="text-slate-400 text-xs block">
+                      Allow public users to find your facility when searching
+                      for specific blood groups. Your donors' personal contact
+                      information will <strong>never</strong> be shown publicly.
+                    </span>
+                  </div>
+                </label>
               </div>
 
               <div className="pt-4">
@@ -297,7 +334,7 @@ export default function RegisterOrg() {
                     </>
                   ) : (
                     <>
-                      <span className="mr-2">Register & Lock Region</span>{" "}
+                      <span className="mr-2">Register Organization</span>
                       <ArrowRight className="h-5 w-5" />
                     </>
                   )}

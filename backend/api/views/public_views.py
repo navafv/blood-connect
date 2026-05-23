@@ -35,7 +35,6 @@ class MasterStateListView(generics.ListAPIView):
     def get_queryset(self):
         country_id = self.request.query_params.get('country')
         if country_id:
-            # 🛡️ OPTIMIZED: Joined country to prevent N+1 queries during serialization
             return MasterState.objects.select_related('country').filter(country_id=country_id)
         return MasterState.objects.none()
 
@@ -47,7 +46,6 @@ class MasterDistrictListView(generics.ListAPIView):
     def get_queryset(self):
         state_id = self.request.query_params.get('state')
         if state_id:
-            # 🛡️ OPTIMIZED: Joined state to prevent N+1 queries during serialization
             return MasterDistrict.objects.select_related('state').filter(state_id=state_id)
         return MasterDistrict.objects.none()
 
@@ -62,7 +60,6 @@ class PublicDonorSearchView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        # 🛡️ OPTIMIZED: Geographic and organization data explicitly joined
         queryset = Donor.objects.select_related(
             'organization', 'country', 'state', 'district'
         ).filter(organization__status='ACTIVE')

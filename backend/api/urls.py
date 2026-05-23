@@ -3,6 +3,8 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     LogoutView,
+    VerifyEmailOTPView,
+    ResendEmailOTPView,
     CookieTokenRefreshView,
     RegisterOrganizationView,
     PasswordResetRequestView,
@@ -59,6 +61,8 @@ urlpatterns = [
     # ==========================================
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/resend-otp/', ResendEmailOTPView.as_view(), name='resend_otp'),
+    path('auth/verify-email/', VerifyEmailOTPView.as_view(), name='verify_email'),
     path('auth/register/', RegisterOrganizationView.as_view(), name='register-org'),
     path('auth/login/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/password-reset-request/', PasswordResetRequestView.as_view(), name='password_reset_request'),

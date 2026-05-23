@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link, Navigate } from "react-router-dom";
 import {
   Droplet,
   MailCheck,
@@ -17,16 +17,26 @@ import {
 } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import api from "../../lib/axios";
 
 export default function VerifyEmail() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Grab the email passed via react-router state from the Register page
+  const email = location.state?.email;
+
   const [otp, setOtp] = useState("");
-  const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'success' | 'error'
+  const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [countdown, setCountdown] = useState(30);
   const [isResending, setIsResending] = useState(false);
 
-  // Handle countdown timer for the resend button
+  // If a user navigates directly to /verify-email without registering first, bounce them back.
+  if (!email) {
+    return <Navigate to="/register" replace />;
+  }
+
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -35,13 +45,12 @@ export default function VerifyEmail() {
   }, [countdown]);
 
   const handleChange = (e) => {
-    // Only allow numbers and limit to 6 characters
     const value = e.target.value.replace(/\D/g, "").slice(0, 6);
     setOtp(value);
     if (status === "error") setStatus("idle");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (otp.length !== 6) {
@@ -53,43 +62,56 @@ export default function VerifyEmail() {
     setStatus("loading");
     setErrorMessage("");
 
-    // Mock API call to verify the OTP
-    setTimeout(() => {
-      if (otp === "123456") {
-        // Mock "incorrect" code for testing error state
-        setStatus("error");
-        setErrorMessage("Invalid or expired code. Please try again.");
-      } else {
-        setStatus("success");
-        // Redirect to dashboard after showing success state
-        setTimeout(() => {
-          navigate("/admin");
-        }, 2000);
-      }
-    }, 1500);
+    try {
+      await api.post("/auth/verify-email/", { email, otp });
+
+      setStatus("success");
+
+      // Because their org is PENDING SuperAdmin approval, send them to login
+      // where they can try to log in and see their 'suspended/pending' state, or route them to a holding page.
+      setTimeout(() => {
+        navigate("/login", {
+          state: {
+            message:
+              "Email verified successfully! Your account is pending Super Admin approval. You will receive an email once activated.",
+          },
+        });
+      }, 3500);
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage(
+        err.response?.data?.error ||
+          "Invalid or expired code. Please try again.",
+      );
+    }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     setIsResending(true);
+    setErrorMessage("");
+    setStatus("idle");
 
-    // Mock API call to resend email
-    setTimeout(() => {
-      setIsResending(false);
-      setCountdown(30); // Reset timer to 30 seconds
+    try {
+      await api.post("/auth/resend-otp/", { email });
+      setCountdown(60); // Reset timer to 60 seconds to prevent spam
       setOtp("");
-      setStatus("idle");
-    }, 1000);
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage(
+        err.response?.data?.error ||
+          "Failed to resend code. Please try again later.",
+      );
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Background Decorative Elements */}
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-emerald-600/20 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Main Container */}
       <div className="w-full max-w-md z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        {/* Logo Header */}
         <div className="flex flex-col items-center mb-8">
           <Link
             to="/"
@@ -105,7 +127,6 @@ export default function VerifyEmail() {
 
         <Card className="border-slate-800 shadow-2xl bg-slate-900/80 backdrop-blur-xl">
           {status === "success" ? (
-            /* --- Success State --- */
             <CardContent className="pt-8 pb-8 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-500">
               <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 border border-emerald-500/20">
                 <CheckCircle2 className="h-8 w-8 text-emerald-500" />
@@ -114,15 +135,13 @@ export default function VerifyEmail() {
                 Email Verified!
               </h3>
               <p className="text-slate-400 text-sm mb-2 px-4">
-                Your organization account has been successfully verified and
-                activated.
+                Your organization account has been successfully verified.
               </p>
-              <p className="text-xs text-slate-500 animate-pulse">
-                Redirecting to your dashboard...
+              <p className="text-xs text-slate-500 animate-pulse mt-4">
+                Redirecting to login portal...
               </p>
             </CardContent>
           ) : (
-            /* --- Form State --- */
             <>
               <CardHeader className="text-center pb-2">
                 <div className="mx-auto h-12 w-12 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 border border-emerald-500/20">
@@ -132,14 +151,13 @@ export default function VerifyEmail() {
                   Verify Your Email
                 </CardTitle>
                 <p className="text-sm text-slate-400 mt-2 px-2">
-                  We've sent a 6-digit verification code to your organization's
-                  email address.
+                  We've sent a 6-digit verification code to{" "}
+                  <span className="font-medium text-white">{email}</span>.
                 </p>
               </CardHeader>
 
               <CardContent className="pt-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Error Message */}
                   {status === "error" && (
                     <div className="p-3 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg animate-in fade-in flex items-center gap-2">
                       <ShieldCheck className="h-4 w-4 shrink-0" />
@@ -147,7 +165,6 @@ export default function VerifyEmail() {
                     </div>
                   )}
 
-                  {/* OTP Input */}
                   <div className="space-y-2">
                     <Input
                       type="text"
@@ -160,7 +177,6 @@ export default function VerifyEmail() {
                     />
                   </div>
 
-                  {/* Submit Button */}
                   <Button
                     type="submit"
                     variant="primary"
@@ -169,13 +185,12 @@ export default function VerifyEmail() {
                   >
                     {status === "loading" ? (
                       <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
                         Verifying...
                       </>
                     ) : (
                       <>
-                        Verify Account
-                        <ArrowRight className="ml-2 h-5 w-5" />
+                        Verify Account <ArrowRight className="ml-2 h-5 w-5" />
                       </>
                     )}
                   </Button>
@@ -185,30 +200,23 @@ export default function VerifyEmail() {
           )}
         </Card>
 
-        {/* Resend Code Footer */}
         {status !== "success" && (
           <div className="mt-8 text-center space-y-4">
             <p className="text-sm text-slate-400">Didn't receive the code?</p>
             <button
               onClick={handleResend}
               disabled={countdown > 0 || isResending}
-              className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${
-                countdown > 0
-                  ? "text-slate-500 cursor-not-allowed"
-                  : "text-emerald-500 hover:text-emerald-400"
-              }`}
+              className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${countdown > 0 ? "text-slate-500 cursor-not-allowed" : "text-emerald-500 hover:text-emerald-400"}`}
             >
               {isResending ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  Sending...
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Sending...
                 </>
               ) : countdown > 0 ? (
                 `Resend code in ${countdown}s`
               ) : (
                 <>
-                  <RefreshCw className="h-4 w-4" />
-                  Resend Code Now
+                  <RefreshCw className="h-4 w-4" /> Resend Code Now
                 </>
               )}
             </button>
