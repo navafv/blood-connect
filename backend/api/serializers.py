@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     ContactMessage, MasterCountry, MasterState, MasterDistrict,
-    CustomUser, Organization, Donor, Advertisement, SystemLog
+    CustomUser, Organization, Donor, Advertisement, PaymentTransaction, SystemLog, TenantSupportTicket, TicketReply
 )
 
 # ==========================================
@@ -55,20 +55,21 @@ class CustomUserSerializer(serializers.ModelSerializer):
 # ==========================================
 
 class OrganizationSerializer(serializers.ModelSerializer):
-    # These read-only fields let React display the actual names instead of just IDs
     country_name = serializers.CharField(source='country.name', read_only=True)
     state_name = serializers.CharField(source='state.name', read_only=True)
     district_name = serializers.CharField(source='district.name', read_only=True)
+    has_active_subscription = serializers.ReadOnlyField()
 
     class Meta:
         model = Organization
         fields = [
             'id', 'name', 'org_type', 'contact_email', 'contact_phone', 
             'description', 'country', 'country_name', 'state', 'state_name', 
-            'district', 'district_name', 'address_line', 'plan_tier', 
+            'district', 'district_name', 'address_line', 
+            'is_paid', 'subscription_expires_at', 'has_active_subscription',
             'status', 'created_at'
         ]
-        read_only_fields = ['plan_tier', 'status', 'created_at']
+        read_only_fields = ['status', 'is_paid', 'subscription_expires_at', 'created_at']
 
 
 # ==========================================
@@ -140,3 +141,34 @@ class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
         fields = ['id', 'name', 'email', 'subject', 'message', 'created_at', 'is_resolved']
+
+class PaymentTransactionSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
+    submitted_by_name = serializers.CharField(source='submitted_by.get_full_name', read_only=True)
+    
+    class Meta:
+        model = PaymentTransaction
+        fields = '__all__'
+        read_only_fields = ['organization', 'amount', 'status', 'submitted_by', 'verified_at']
+
+class TicketReplySerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.get_full_name', read_only=True)
+    is_superadmin = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TicketReply
+        fields = '__all__'
+        read_only_fields = ['ticket', 'sender']
+
+    def get_is_superadmin(self, obj):
+        return obj.sender.role == 'SUPER_ADMIN'
+
+class TenantSupportTicketSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    replies = TicketReplySerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = TenantSupportTicket
+        fields = '__all__'
+        read_only_fields = ['organization', 'created_by', 'status']

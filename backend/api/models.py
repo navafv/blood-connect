@@ -94,12 +94,6 @@ class Organization(models.Model):
         ('CLINIC', 'Private Clinic'),
     )
     
-    PLAN_CHOICES = (
-        ('FREE', 'Free (NGO)'),
-        ('BASIC', 'Basic'),
-        ('PREMIUM', 'Premium'),
-    )
-    
     STATUS_CHOICES = (
         ('PENDING', 'Pending SuperAdmin Approval'),
         ('ACTIVE', 'Active'),
@@ -119,10 +113,17 @@ class Organization(models.Model):
     address_line = models.TextField()
 
     # SaaS Management
-    plan_tier = models.CharField(max_length=20, choices=PLAN_CHOICES, default='FREE')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', db_index=True)
+    is_paid = models.BooleanField(default=False, help_text="True if the organization has an active paid subscription.")
+    subscription_expires_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def has_active_subscription(self):
+        if not self.is_paid or not self.subscription_expires_at:
+            return False
+        return self.subscription_expires_at > timezone.now()
 
     def __str__(self):
         return f"{self.name} ({self.get_org_type_display()})"
@@ -296,3 +297,56 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.subject} - {self.email}"
+    
+
+# ==========================================
+# 8. SUBSCRIPTION & UPI PAYMENTS
+# ==========================================
+
+class PaymentTransaction(models.Model):
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending Verification'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected / Invalid UTR'),
+    )
+    
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=999.00)
+    upi_reference = models.CharField(max_length=100, help_text="UTR / Reference Number from UPI App")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    
+    submitted_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='submitted_payments')
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.organization.name} - ₹{self.amount} ({self.status})"
+
+
+# ==========================================
+# 9. TENANT DASHBOARD SUPPORT TICKETS
+# ==========================================
+
+class TenantSupportTicket(models.Model):
+    STATUS_CHOICES = (
+        ('OPEN', 'Open'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('RESOLVED', 'Resolved'),
+    )
+    
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='support_tickets')
+    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='OPEN')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"[{self.status}] {self.subject} - {self.organization.name}"
+
+class TicketReply(models.Model):
+    ticket = models.ForeignKey(TenantSupportTicket, on_delete=models.CASCADE, related_name='replies')
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)

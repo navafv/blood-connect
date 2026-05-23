@@ -28,6 +28,11 @@ from .views import (
     CookieTokenObtainPairView,
     CookieTokenRefreshView,
     LogoutView,
+    TenantPaymentView, 
+    TenantSupportTicketViewSet,
+    SuperAdminPaymentViewSet, 
+    SuperAdminExtendSubscriptionView, 
+    SuperAdminSupportTicketViewSet
 )
 
 router = DefaultRouter()
@@ -36,6 +41,9 @@ router.register(r'tenant/staff', TenantStaffViewSet, basename='tenant-staff')
 router.register(r'superadmin/ads', SuperAdminAdvertisementViewSet, basename='superadmin-ads')
 router.register(r'superadmin/messages', SuperAdminContactMessageViewSet, basename='superadmin-messages')
 router.register(r'superadmin/archived-donors', SuperAdminArchivedDonorViewSet, basename='superadmin-archived-donors')
+router.register(r'tenant/support-tickets', TenantSupportTicketViewSet, basename='tenant-support-tickets')
+router.register(r'superadmin/payments', SuperAdminPaymentViewSet, basename='superadmin-payments')
+router.register(r'superadmin/support-tickets', SuperAdminSupportTicketViewSet, basename='superadmin-support-tickets')
 
 urlpatterns = [
     # ==========================================
@@ -45,6 +53,7 @@ urlpatterns = [
     path('superadmin/organizations/', SuperAdminOrganizationListView.as_view(), name='superadmin-org-list'),
     path('superadmin/organizations/<int:pk>/status/', SuperAdminOrganizationStatusUpdateView.as_view(), name='superadmin-org-status'),
     path('superadmin/logs/', SuperAdminSystemLogListView.as_view(), name='superadmin-logs'),
+    path('superadmin/organizations/<int:pk>/extend-subscription/', SuperAdminExtendSubscriptionView.as_view(), name='superadmin-extend-sub'),
     
     # ==========================================
     # AUTHENTICATION ENDPOINTS (For React Login/Register)
@@ -78,5 +87,6 @@ urlpatterns = [
     path('tenant/dashboard-stats/', TenantDashboardStatsView.as_view(), name='tenant-dashboard-stats'),
     path('tenant/billing/plan/', TenantBillingUpdateView.as_view(), name='tenant-billing-plan'),
     path('tenant/donors/bulk-upload/', TenantDonorBulkUploadView.as_view(), name='tenant-donor-bulk-upload'),
+    path('tenant/billing/payments/', TenantPaymentView.as_view(), name='tenant-payments'),
     path('', include(router.urls)),
 ]

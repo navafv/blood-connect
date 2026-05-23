@@ -26,11 +26,11 @@ from datetime import datetime, timedelta
 from .tasks import send_async_email
 from .models import (
     ContactMessage, MasterCountry, MasterState, MasterDistrict,
-    CustomUser, Organization, Donor, Advertisement, SystemLog
+    CustomUser, Organization, Donor, Advertisement, PaymentTransaction, SystemLog, TenantSupportTicket
 )
 from .serializers import (
     ContactMessageSerializer, MasterCountrySerializer, MasterStateSerializer, MasterDistrictSerializer,
-    CustomUserSerializer, OrganizationSerializer, DonorSerializer, AdvertisementSerializer, SystemLogSerializer
+    CustomUserSerializer, OrganizationSerializer, DonorSerializer, AdvertisementSerializer, PaymentTransactionSerializer, SystemLogSerializer, TenantSupportTicketSerializer
 )
 
 
@@ -1008,6 +1008,146 @@ class ContactMessageCreateView(generics.CreateAPIView):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
     permission_classes = [permissions.AllowAny]
+
+
+# ==========================================
+# TENANT: BILLING & SUPPORT
+# ==========================================
+
+class TenantPaymentView(generics.ListCreateAPIView):
+    """Allows ORG_ADMINs to submit UPI UTRs and view their payment history."""
+    serializer_class = PaymentTransactionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if not self.request.user.organization:
+            return PaymentTransaction.objects.none()
+        return PaymentTransaction.objects.filter(organization=self.request.user.organization).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        if self.request.user.role != 'ORG_ADMIN':
+            raise PermissionDenied("Only Organization Admins can submit payments.")
+        if not self.request.user.organization:
+            raise PermissionDenied("You are not linked to an organization.")
+            
+        serializer.save(
+            organization=self.request.user.organization,
+            submitted_by=self.request.user,
+            amount=999.00 # Fixed price enforced by backend
+        )
+
+class TenantSupportTicketViewSet(viewsets.ModelViewSet):
+    """Allows tenants to create and reply to support tickets inside their dashboard."""
+    serializer_class = TenantSupportTicketSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if not self.request.user.organization:
+            return TenantSupportTicket.objects.none()
+        return TenantSupportTicket.objects.filter(organization=self.request.user.organization).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(organization=self.request.user.organization, created_by=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def reply(self, request, pk=None):
+        ticket = self.get_object()
+        message = request.data.get('message')
+        if not message:
+            return Response({"error": "Message is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        TicketReply.objects.create(ticket=ticket, sender=request.user, message=message)
+        # Automatically reopen the ticket if the tenant replies to a resolved one
+        if ticket.status == 'RESOLVED':
+            ticket.status = 'OPEN'
+            ticket.save()
+            
+        return Response({"message": "Reply sent successfully."})
+
+
+# ==========================================
+# SUPER ADMIN: BILLING & SUPPORT
+# ==========================================
+
+class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
+    """Super Admin endpoints to view and approve/reject UPI transactions."""
+    queryset = PaymentTransaction.objects.all().order_by('-created_at')
+    serializer_class = PaymentTransactionSerializer
+    permission_classes = [IsSuperAdmin]
+
+    @action(detail=True, methods=['post'])
+    def verify(self, request, pk=None):
+        payment = self.get_object()
+        action_type = request.data.get('action') # 'APPROVE' or 'REJECT'
+        
+        if payment.status != 'PENDING':
+            return Response({"error": "Payment is already processed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        payment.verified_at = timezone.now()
+        
+        if action_type == 'APPROVE':
+            payment.status = 'APPROVED'
+            payment.save()
+            
+            # Extend Organization Subscription by 1 Year
+            org = payment.organization
+            org.is_paid = True
+            
+            # If they already have active time left, add 365 days to it. Otherwise, start from today.
+            if org.subscription_expires_at and org.subscription_expires_at > timezone.now():
+                org.subscription_expires_at += timedelta(days=365)
+            else:
+                org.subscription_expires_at = timezone.now() + timedelta(days=365)
+            org.save()
+            
+            return Response({"message": "Payment approved and subscription extended by 1 year."})
+            
+        elif action_type == 'REJECT':
+            payment.status = 'REJECTED'
+            payment.save()
+            return Response({"message": "Payment rejected."})
+            
+        return Response({"error": "Invalid action."}, status=status.HTTP_400_BAD_REQUEST)
+
+class SuperAdminExtendSubscriptionView(APIView):
+    """Allows Super Admins to manually gift/extend a subscription by X years from the Org table."""
+    permission_classes = [IsSuperAdmin]
+    
+    def post(self, request, pk):
+        org = get_object_or_404(Organization, pk=pk)
+        years = int(request.data.get('years', 1))
+        
+        org.is_paid = True
+        if org.subscription_expires_at and org.subscription_expires_at > timezone.now():
+            org.subscription_expires_at += timedelta(days=365 * years)
+        else:
+            org.subscription_expires_at = timezone.now() + timedelta(days=365 * years)
+        org.save()
+        
+        return Response({
+            "message": f"Successfully extended {org.name}'s subscription by {years} year(s).",
+            "expires_at": org.subscription_expires_at
+        })
+
+class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
+    """Super Admin endpoints to manage and reply to Tenant Support Tickets."""
+    queryset = TenantSupportTicket.objects.all().order_by('-created_at')
+    serializer_class = TenantSupportTicketSerializer
+    permission_classes = [IsSuperAdmin]
+
+    @action(detail=True, methods=['post'])
+    def reply(self, request, pk=None):
+        ticket = self.get_object()
+        message = request.data.get('message')
+        new_status = request.data.get('status', 'IN_PROGRESS') # Default to marking it in progress
+        
+        if message:
+            TicketReply.objects.create(ticket=ticket, sender=request.user, message=message)
+            
+        ticket.status = new_status
+        ticket.save()
+        
+        return Response({"message": "Reply sent and status updated."})
 
 
 # ==========================================
