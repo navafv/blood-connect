@@ -8,6 +8,8 @@ import {
   LogOut,
   Droplet,
   X,
+  LifeBuoy,
+  CreditCard,
 } from "lucide-react";
 import api from "../../lib/axios";
 
@@ -20,12 +22,13 @@ export function Sidebar({ isOpen, setIsOpen }) {
     { name: "Manage Donors", path: "/admin/donors", icon: Users },
     { name: "Add Donor", path: "/admin/add-donor", icon: UserPlus },
     { name: "Settings", path: "/admin/settings", icon: Settings },
-    { name: "Staff Management", path: "/admin/settings/staff", icon: Settings },
+    { name: "Staff Management", path: "/admin/settings/staff", icon: Users },
     {
       name: "Billing & Subscription",
       path: "/admin/settings/billing",
-      icon: Settings,
+      icon: CreditCard,
     },
+    { name: "Help & Support", path: "/admin/support", icon: LifeBuoy },
   ];
 
   const handleLogout = async () => {

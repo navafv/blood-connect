@@ -27,6 +27,7 @@ const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const ManageDonors = lazy(() => import("./pages/admin/ManageDonors"));
 const AddDonor = lazy(() => import("./pages/admin/AddDonor"));
+import Support from "./pages/admin/Support";
 const ProfileSettings = lazy(
   () => import("./pages/admin/settings/ProfileSettings"),
 );
@@ -46,6 +47,7 @@ const ManageOrganizations = lazy(
 );
 const ManageAds = lazy(() => import("./pages/superadmin/ManageAds"));
 const ManageMessages = lazy(() => import("./pages/superadmin/ManageMessages"));
+const SupportTickets = lazy(() => import("./pages/superadmin/SupportTickets"));
 const ManageArchivedDonors = lazy(
   () => import("./pages/superadmin/ManageArchivedDonors"),
 );
@@ -96,6 +98,7 @@ function App() {
               <Route path="add-donor" element={<AddDonor />} />
               <Route path="settings" element={<ProfileSettings />} />
               <Route path="settings/staff" element={<StaffManagement />} />
+              <Route path="support" element={<Support />} />
               <Route
                 path="settings/billing"
                 element={<BillingSubscription />}
@@ -112,6 +115,7 @@ function App() {
               <Route path="organizations" element={<ManageOrganizations />} />
               <Route path="ads" element={<ManageAds />} />
               <Route path="messages" element={<ManageMessages />} />
+              <Route path="support" element={<SupportTickets />} />
               <Route path="archives" element={<ManageArchivedDonors />} />
               <Route path="logs" element={<SystemLogs />} />
             </Route>

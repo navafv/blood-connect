@@ -835,18 +835,16 @@ class TenantDashboardStatsView(APIView):
 
 class TenantOrganizationView(generics.RetrieveUpdateAPIView):
     """
-    Allows a tenant admin to retrieve and update their own organization's profile.
+    Allows a Tenant Admin to view and update their organization's profile settings.
     """
     serializer_class = OrganizationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        # Always return the organization linked to the JWT token's user.
-        # This guarantees Hospital A can never edit Hospital B's profile.
-        user = self.request.user
-        if not user.organization:
-            raise PermissionDenied("You are not linked to any organization.")
-        return user.organization
+        # This completely ignores any ID passed in the URL, preventing IDOR attacks.
+        if not self.request.user.organization:
+            raise PermissionDenied("You are not associated with any organization.")
+        return self.request.user.organization
     
 class TenantStaffViewSet(viewsets.ModelViewSet):
     """
@@ -953,48 +951,6 @@ class TenantStaffViewSet(viewsets.ModelViewSet):
             return Response({"error": "You cannot remove your own admin account."}, status=status.HTTP_400_BAD_REQUEST)
             
         return super().destroy(request, *args, **kwargs)
-    
-class TenantBillingUpdateView(APIView):
-    """
-    Allows an ORG_ADMIN to upgrade or downgrade their organization's subscription tier.
-    """
-    permission_classes = [permissions.IsAuthenticated]
-
-    def patch(self, request):
-        user = request.user
-
-        # 1. Ensure the user is an Admin
-        if user.role != 'ORG_ADMIN':
-            return Response(
-                {"error": "Only Organization Admins can modify billing plans."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        # 2. Ensure they are linked to an organization
-        if not user.organization:
-            return Response(
-                {"error": "No organization linked to this account."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        new_plan = request.data.get('plan_tier')
-        
-        # 3. Validate the plan choice
-        valid_plans = dict(Organization.PLAN_CHOICES).keys()
-        if new_plan not in valid_plans:
-            return Response(
-                {"error": "Invalid plan selected."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # 4. Update the organization's plan
-        user.organization.plan_tier = new_plan
-        user.organization.save()
-
-        return Response({
-            "message": f"Successfully updated to {new_plan} plan.",
-            "plan_tier": new_plan
-        }, status=status.HTTP_200_OK)
     
 
 # ==========================================

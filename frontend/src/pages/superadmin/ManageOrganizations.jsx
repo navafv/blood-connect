@@ -1,339 +1,402 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   Search,
-  Filter,
-  CheckCircle,
+  CheckCircle2,
   XCircle,
-  AlertTriangle,
-  MoreVertical,
   Loader2,
-  Mail,
-  MapPin,
-  Phone,
+  AlertCircle,
+  CreditCard,
+  Clock,
+  ShieldCheck,
+  Ban,
 } from "lucide-react";
-import { Button } from "../../components/ui/Button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../../components/ui/Card";
-import { Badge } from "../../components/ui/Badge";
+import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
+import { Button } from "../../components/ui/Button";
+import { Badge } from "../../components/ui/Badge";
+import { Select } from "../../components/ui/Select";
+import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
 export default function ManageOrganizations() {
-  const [organizations, setOrganizations] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("ALL"); // ALL, PENDING, ACTIVE, SUSPENDED
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [extendYears, setExtendYears] = useState("1");
 
-  // Fetch all organizations on mount
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
-
-  const fetchOrganizations = async () => {
-    setIsLoading(true);
-    setError("");
-    try {
-      // This endpoint requires Super Admin privileges
-      const response = await api.get("/superadmin/organizations/");
-      setOrganizations(response.data);
-    } catch (err) {
-      console.error("Error fetching organizations:", err);
-      setError(
-        "Failed to load organizations. Ensure you have Super Admin permissions.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle Approving or Suspending an Organization
-  const updateOrgStatus = async (id, newStatus, orgName) => {
-    const action = newStatus === "ACTIVE" ? "approve" : "suspend";
-    if (!window.confirm(`Are you sure you want to ${action} ${orgName}?`))
-      return;
-
-    try {
-      await api.patch(`/superadmin/organizations/${id}/status/`, {
-        status: newStatus,
-      });
-
-      // Update local state instantly
-      setOrganizations((prev) =>
-        prev.map((org) =>
-          org.id === id ? { ...org, status: newStatus } : org,
-        ),
-      );
-    } catch (err) {
-      alert(`Failed to ${action} organization. Please try again.`);
-    }
-  };
-
-  // Filter Logic
-  const filteredOrgs = organizations.filter((org) => {
-    const matchesSearch =
-      org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      org.contact_email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = filterStatus === "ALL" || org.status === filterStatus;
-
-    return matchesSearch && matchesStatus;
+  // 1. Fetch Organizations
+  const { data: organizations = [], isLoading: isOrgsLoading } = useQuery({
+    queryKey: ["superadmin-organizations"],
+    queryFn: async () => {
+      const res = await api.get("/superadmin/organizations/");
+      return res.data.results || res.data;
+    },
   });
 
-  // Calculate stats for the header
-  const pendingCount = organizations.filter(
-    (o) => o.status === "PENDING",
-  ).length;
-  const activeCount = organizations.filter((o) => o.status === "ACTIVE").length;
+  // 2. Fetch Payments (to check for Pending UTRs)
+  const { data: payments = [], isLoading: isPaymentsLoading } = useQuery({
+    queryKey: ["superadmin-payments"],
+    queryFn: async () => {
+      const res = await api.get("/superadmin/payments/");
+      return res.data.results || res.data;
+    },
+  });
+
+  // 3. Mutations
+  const verifyPaymentMutation = useMutation({
+    mutationFn: async ({ paymentId, action }) =>
+      api.post(`/superadmin/payments/${paymentId}/verify/`, { action }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["superadmin-organizations"]);
+      queryClient.invalidateQueries(["superadmin-payments"]);
+      setIsManageModalOpen(false);
+    },
+  });
+
+  const extendSubscriptionMutation = useMutation({
+    mutationFn: async () =>
+      api.post(
+        `/superadmin/organizations/${selectedOrg.id}/extend-subscription/`,
+        { years: extendYears },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["superadmin-organizations"]);
+      setIsManageModalOpen(false);
+    },
+  });
+
+  const toggleOrgStatusMutation = useMutation({
+    mutationFn: async ({ orgId, currentStatus }) => {
+      const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+      return api.patch(`/superadmin/organizations/${orgId}/status/`, {
+        status: newStatus,
+      });
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries(["superadmin-organizations"]),
+  });
+
+  // Helper Functions
+  const openManageModal = (org) => {
+    setSelectedOrg(org);
+    setExtendYears("1");
+    setIsManageModalOpen(true);
+  };
+
+  const getPendingPayment = (orgId) => {
+    return payments.find(
+      (p) => p.organization === orgId && p.status === "PENDING",
+    );
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Never";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const filteredOrgs = organizations.filter(
+    (org) =>
+      org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      org.contact_email.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header Section */}
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
             <Building2 className="h-6 w-6 text-rose-500" />
-            Tenant Organizations
+            Registered Hospitals & Organizations
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Approve, manage, and monitor hospitals and NGOs across the platform.
+            Manage tenant access, verify UPI payments, and extend subscriptions.
           </p>
         </div>
       </div>
 
-      {/* Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-              <AlertTriangle className="h-6 w-6 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Pending Approval</p>
-              <p className="text-2xl font-bold text-white">{pendingCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-              <CheckCircle className="h-6 w-6 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Active Tenants</p>
-              <p className="text-2xl font-bold text-white">{activeCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-              <Building2 className="h-6 w-6 text-blue-500" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Total Registered</p>
-              <p className="text-2xl font-bold text-white">
-                {organizations.length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Toolbar */}
+      <div className="flex items-center bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          <Input
+            placeholder="Search by hospital name or email..."
+            className="pl-10 bg-slate-950 border-slate-700"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
-      {/* Main Content Area */}
-      <Card className="border-slate-800 bg-slate-900/80 backdrop-blur-xl">
-        <CardHeader className="border-b border-slate-800 pb-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <CardTitle className="text-lg font-medium text-white">
-              Network Directory
-            </CardTitle>
-
-            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              {/* Status Filter */}
-              <div className="flex bg-slate-950/50 rounded-lg p-1 border border-slate-800">
-                {["ALL", "PENDING", "ACTIVE", "SUSPENDED"].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => setFilterStatus(status)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                      filterStatus === status
-                        ? "bg-slate-800 text-white"
-                        : "text-slate-400 hover:text-slate-200"
-                    }`}
+      {/* Organization Table */}
+      <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-slate-300">
+            <thead className="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-slate-800">
+              <tr>
+                <th className="px-6 py-4 font-medium">Organization Details</th>
+                <th className="px-6 py-4 font-medium">Platform Access</th>
+                <th className="px-6 py-4 font-medium">Subscription Status</th>
+                <th className="px-6 py-4 font-medium text-right">
+                  Billing Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/50">
+              {isOrgsLoading || isPaymentsLoading ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-6 py-12 text-center text-slate-500"
                   >
-                    {status}
-                  </button>
-                ))}
-              </div>
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-2" />
+                    Loading tenants...
+                  </td>
+                </tr>
+              ) : filteredOrgs.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-6 py-12 text-center text-slate-500"
+                  >
+                    No organizations found.
+                  </td>
+                </tr>
+              ) : (
+                filteredOrgs.map((org) => {
+                  const pendingPayment = getPendingPayment(org.id);
 
-              {/* Search Box */}
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                <Input
-                  placeholder="Search by name or email..."
-                  className="pl-9 h-9 bg-slate-950/50"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <Loader2 className="h-8 w-8 animate-spin mb-4 text-rose-500" />
-              <p>Loading tenant directory...</p>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <AlertTriangle className="h-8 w-8 mb-4 text-rose-500" />
-              <p>{error}</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={fetchOrganizations}
-              >
-                Retry
-              </Button>
-            </div>
-          ) : filteredOrgs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center px-4">
-              <div className="h-16 w-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                <Building2 className="h-8 w-8 text-slate-500" />
-              </div>
-              <h3 className="text-lg font-medium text-white mb-2">
-                No Organizations Found
-              </h3>
-              <p>No tenants match your current search or filter criteria.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400 bg-slate-950/30">
-                    <th className="px-6 py-4 font-semibold">Organization</th>
-                    <th className="px-6 py-4 font-semibold">Contact Info</th>
-                    <th className="px-6 py-4 font-semibold">Location Limit</th>
-                    <th className="px-6 py-4 font-semibold">Status</th>
-                    <th className="px-6 py-4 font-semibold text-right">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/50">
-                  {filteredOrgs.map((org) => (
+                  return (
                     <tr
                       key={org.id}
-                      className="hover:bg-slate-800/20 transition-colors"
+                      className="hover:bg-slate-800/30 transition-colors"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 flex items-center justify-center">
-                            <Building2 className="h-5 w-5" />
+                          <div className="h-10 w-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-400 uppercase">
+                            {org.name.substring(0, 2)}
                           </div>
                           <div>
                             <p className="font-medium text-white">{org.name}</p>
                             <p className="text-xs text-slate-500">
-                              {org.org_type}
+                              {org.contact_email}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 space-y-1">
-                        <p className="text-xs text-slate-300 flex items-center gap-1.5">
-                          <Mail className="h-3 w-3 text-slate-500" />{" "}
-                          {org.contact_email}
-                        </p>
-                        {org.contact_phone && (
-                          <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                            <Phone className="h-3 w-3 text-slate-500" />{" "}
-                            {org.contact_phone}
-                          </p>
-                        )}
-                      </td>
+
                       <td className="px-6 py-4">
-                        <p className="text-sm text-slate-300 flex items-start gap-1.5">
-                          <MapPin className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-                          <span>
-                            {org.district_name},<br />
-                            <span className="text-xs text-slate-500">
-                              {org.state_name}, {org.country_name}
-                            </span>
-                          </span>
-                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-7 px-2 text-xs border ${org.status === "ACTIVE" ? "text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10" : "text-rose-400 border-rose-500/20 hover:bg-rose-500/10"}`}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Are you sure you want to ${org.status === "ACTIVE" ? "suspend" : "activate"} access for ${org.name}?`,
+                              )
+                            ) {
+                              toggleOrgStatusMutation.mutate({
+                                orgId: org.id,
+                                currentStatus: org.status,
+                              });
+                            }
+                          }}
+                          disabled={toggleOrgStatusMutation.isPending}
+                        >
+                          {org.status === "ACTIVE" ? "Active" : "Suspended"}
+                        </Button>
                       </td>
+
                       <td className="px-6 py-4">
-                        {org.status === "ACTIVE" ? (
-                          <Badge
-                            variant="success"
-                            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          >
-                            Active
-                          </Badge>
-                        ) : org.status === "PENDING" ? (
+                        {pendingPayment ? (
                           <Badge
                             variant="warning"
-                            className="bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse"
+                            className="bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1"
                           >
-                            Pending
+                            <Clock className="h-3 w-3" /> Verification Pending
                           </Badge>
+                        ) : org.has_active_subscription ? (
+                          <div className="flex flex-col">
+                            <Badge
+                              variant="success"
+                              className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 w-fit gap-1 mb-1"
+                            >
+                              <ShieldCheck className="h-3 w-3" /> Active
+                            </Badge>
+                            <span className="text-xs text-slate-500">
+                              Exp: {formatDate(org.subscription_expires_at)}
+                            </span>
+                          </div>
                         ) : (
                           <Badge
                             variant="danger"
-                            className="bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            className="bg-rose-500/10 text-rose-400 border-rose-500/20 gap-1"
                           >
-                            Suspended
+                            <Ban className="h-3 w-3" /> Expired
                           </Badge>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {/* Approve Button (Only show if Pending or Suspended) */}
-                          {org.status !== "ACTIVE" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10"
-                              onClick={() =>
-                                updateOrgStatus(org.id, "ACTIVE", org.name)
-                              }
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" /> Approve
-                            </Button>
-                          )}
 
-                          {/* Suspend Button (Only show if Active) */}
-                          {org.status === "ACTIVE" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 border-rose-500/50 text-rose-500 hover:bg-rose-500/10"
-                              onClick={() =>
-                                updateOrgStatus(org.id, "SUSPENDED", org.name)
-                              }
-                            >
-                              <XCircle className="h-4 w-4 mr-1" /> Suspend
-                            </Button>
-                          )}
-                        </div>
+                      <td className="px-6 py-4 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`border-slate-700 bg-slate-900/50 hover:bg-slate-800 ${pendingPayment ? "border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]" : "text-slate-300"}`}
+                          onClick={() => openManageModal(org)}
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          {pendingPayment ? "Review Payment" : "Manage Billing"}
+                        </Button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
+
+      {/* --- Manage Subscription Modal --- */}
+      <Modal
+        isOpen={isManageModalOpen}
+        onClose={() => setIsManageModalOpen(false)}
+        title="Manage Subscription"
+      >
+        {selectedOrg && (
+          <div className="space-y-6">
+            {/* Organization Info Snapshot */}
+            <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+              <h3 className="text-white font-medium mb-1">
+                {selectedOrg.name}
+              </h3>
+              <p className="text-sm text-slate-400 flex justify-between">
+                <span>
+                  Status:{" "}
+                  {selectedOrg.has_active_subscription ? (
+                    <span className="text-emerald-400">Active</span>
+                  ) : (
+                    <span className="text-rose-400">Expired</span>
+                  )}
+                </span>
+                <span>
+                  Current Expiry:{" "}
+                  {formatDate(selectedOrg.subscription_expires_at)}
+                </span>
+              </p>
+            </div>
+
+            {/* If there is a pending payment UTR, show Verification UI */}
+            {getPendingPayment(selectedOrg.id) ? (
+              <div className="border-2 border-amber-500/30 bg-amber-500/5 p-4 rounded-xl space-y-4">
+                <div className="flex items-center gap-2 text-amber-500 font-medium pb-2 border-b border-amber-500/20">
+                  <Clock className="h-5 w-5" /> Pending UPI Verification
+                </div>
+
+                <div>
+                  <p className="text-sm text-slate-400">
+                    Submitted UTR / Reference Number:
+                  </p>
+                  <p className="text-2xl font-mono text-white tracking-wider my-1">
+                    {getPendingPayment(selectedOrg.id).upi_reference}
+                  </p>
+                  <p className="text-xs text-slate-500">Amount: ₹999.00</p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="ghost"
+                    className="flex-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20"
+                    onClick={() =>
+                      verifyPaymentMutation.mutate({
+                        paymentId: getPendingPayment(selectedOrg.id).id,
+                        action: "REJECT",
+                      })
+                    }
+                    disabled={verifyPaymentMutation.isPending}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" /> Reject (Invalid UTR)
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+                    onClick={() =>
+                      verifyPaymentMutation.mutate({
+                        paymentId: getPendingPayment(selectedOrg.id).id,
+                        action: "APPROVE",
+                      })
+                    }
+                    disabled={verifyPaymentMutation.isPending}
+                  >
+                    {verifyPaymentMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" /> Approve (+1
+                        Year)
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Otherwise, show Manual Override UI */
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-slate-300 font-medium pb-2 border-b border-slate-800">
+                  <ShieldCheck className="h-5 w-5 text-rose-500" /> Manual
+                  Subscription Override
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">
+                    Extend Time By:
+                  </label>
+                  <Select
+                    value={extendYears}
+                    onChange={(e) => setExtendYears(e.target.value)}
+                    className="bg-slate-950 border-slate-700"
+                  >
+                    <option value="1">1 Year (Standard)</option>
+                    <option value="2">2 Years</option>
+                    <option value="3">3 Years</option>
+                    <option value="5">5 Years (Lifetime/Sponsor)</option>
+                  </Select>
+                  <p className="text-xs text-slate-500">
+                    This will bypass the payment requirement and forcefully
+                    extend their access.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsManageModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => extendSubscriptionMutation.mutate()}
+                    disabled={extendSubscriptionMutation.isPending}
+                  >
+                    {extendSubscriptionMutation.isPending
+                      ? "Applying..."
+                      : "Apply Extension"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

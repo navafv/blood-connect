@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   Mail,
   Phone,
   MapPin,
+  Edit,
   Save,
+  X,
   Loader2,
-  CheckCircle2,
   AlertCircle,
+  CheckCircle2,
   FileText,
 } from "lucide-react";
 import {
@@ -16,258 +19,319 @@ import {
   CardTitle,
   CardContent,
 } from "../../../components/ui/Card";
-import { Input } from "../../../components/ui/Input";
-import { Select } from "../../../components/ui/Select";
 import { Button } from "../../../components/ui/Button";
+import { Input } from "../../../components/ui/Input";
 import api from "../../../lib/axios";
 
 export default function ProfileSettings() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [updateError, setUpdateError] = useState("");
 
-  // Keys updated to match Django's OrganizationSerializer
-  const [formData, setFormData] = useState({
-    name: "",
-    org_type: "HOSPITAL",
-    contact_email: "",
-    contact_phone: "",
-    address_line: "",
-    description: "",
+  // 1. Fetch Organization Data
+  const {
+    data: orgData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["tenant-org-profile"],
+    queryFn: async () => {
+      const response = await api.get("/tenant/organization/");
+      return response.data;
+    },
   });
 
-  // 1. Fetch current organization details on load
+  // Pre-fill form when data loads or edit mode is toggled
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await api.get("/tenant/organization/");
-        // Pre-fill the form with the database values
-        setFormData({
-          name: response.data.name || "",
-          org_type: response.data.org_type || "HOSPITAL",
-          contact_email: response.data.contact_email || "",
-          contact_phone: response.data.contact_phone || "",
-          address_line: response.data.address_line || "",
-          description: response.data.description || "",
-        });
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-        setError("Failed to load profile data.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProfile();
-  }, []);
+    if (orgData && !isEditing) {
+      setFormData({
+        name: orgData.name || "",
+        contact_email: orgData.contact_email || "",
+        contact_phone: orgData.contact_phone || "",
+        address_line: orgData.address_line || "",
+        description: orgData.description || "",
+      });
+    }
+  }, [orgData, isEditing]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (successMessage) setSuccessMessage("");
-    if (error) setError("");
-  };
-
-  // 2. Save changes to Django
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSuccessMessage("");
-    setError("");
-
-    try {
-      await api.patch("/tenant/organization/", formData);
-      setSuccessMessage("Organization profile successfully updated.");
-      setTimeout(() => setSuccessMessage(""), 4000);
-    } catch (err) {
-      console.error("Update failed:", err);
-      setError(
+  // 2. Update Mutation
+  const updateMutation = useMutation({
+    mutationFn: async (payload) => {
+      const response = await api.patch("/tenant/organization/", payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["tenant-org-profile"]);
+      setIsEditing(false);
+      setUpdateSuccess(true);
+      setUpdateError("");
+      setTimeout(() => setUpdateSuccess(false), 3000);
+    },
+    onError: (err) => {
+      setUpdateError(
         err.response?.data?.detail ||
           "Failed to update profile. Please check the fields.",
       );
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setUpdateError("");
+    updateMutation.mutate(formData);
   };
 
   if (isLoading) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
+      <div className="flex h-[50vh] items-center justify-center text-slate-400">
         <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
       </div>
     );
   }
 
-  return (
-    <div className="max-w-4xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Settings Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">
-          Profile Settings
-        </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Manage how your organization appears on the public directory.
-        </p>
+  if (isError) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto flex items-center gap-3 text-rose-400 bg-rose-500/10 rounded-xl">
+        <AlertCircle className="h-5 w-5" />
+        <p>Failed to load organization profile.</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <Building2 className="h-6 w-6 text-rose-500" /> Organization Profile
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Manage your hospital or blood bank's public details and contact
+            information.
+          </p>
+        </div>
+        {!isEditing && (
+          <Button
+            variant="outline"
+            className="gap-2 border-slate-700 hover:bg-slate-800 text-slate-300"
+            onClick={() => setIsEditing(true)}
+          >
+            <Edit className="h-4 w-4" /> Edit Profile
+          </Button>
+        )}
+      </div>
+
+      {updateSuccess && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 animate-in fade-in">
+          <CheckCircle2 className="h-5 w-5" />
+          <p className="text-sm font-medium">
+            Organization profile updated successfully.
+          </p>
+        </div>
+      )}
+
+      {updateError && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400 animate-in fade-in">
+          <AlertCircle className="h-5 w-5" />
+          <p className="text-sm font-medium">{updateError}</p>
+        </div>
+      )}
 
       <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md">
         <CardHeader className="border-b border-slate-800 pb-4">
-          <CardTitle className="flex items-center gap-2 text-rose-500">
-            <Building2 className="h-5 w-5" />
+          <CardTitle className="text-lg font-medium text-white">
             General Information
           </CardTitle>
         </CardHeader>
 
         <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {error && (
-              <div className="flex items-center gap-2 p-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg">
-                <AlertCircle className="h-5 w-5 shrink-0" />
-                <p>{error}</p>
-              </div>
-            )}
-
-            {/* --- Basic Information --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Organization Name
-                </label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+          {isEditing ? (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">
+                    Organization Name
+                  </label>
                   <Input
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="pl-10 bg-slate-950/50"
                     required
+                    className="bg-slate-950"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Organization Type
-                </label>
-                <Select
-                  name="org_type"
-                  value={formData.org_type}
-                  onChange={handleChange}
-                  className="bg-slate-950/50"
-                  required
-                >
-                  <option value="HOSPITAL">Hospital</option>
-                  <option value="BLOOD_BANK">Blood Bank</option>
-                  <option value="NGO">NGO / Volunteer Group</option>
-                  <option value="CLINIC">Private Clinic</option>
-                </Select>
-              </div>
-            </div>
-
-            {/* --- Contact Details --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-800/50">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Public Contact Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">
+                    Public Contact Email
+                  </label>
                   <Input
-                    type="email"
                     name="contact_email"
+                    type="email"
                     value={formData.contact_email}
                     onChange={handleChange}
-                    className="pl-10 bg-slate-950/50"
                     required
+                    className="bg-slate-950"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Public Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">
+                    Public Phone Number
+                  </label>
                   <Input
-                    type="tel"
                     name="contact_phone"
                     value={formData.contact_phone}
                     onChange={handleChange}
-                    className="pl-10 bg-slate-950/50"
                     required
+                    className="bg-slate-950"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Physical Address
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                  <textarea
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">
+                    Street Address
+                  </label>
+                  <Input
                     name="address_line"
                     value={formData.address_line}
                     onChange={handleChange}
-                    rows={2}
-                    className="flex w-full rounded-md border border-slate-700 bg-slate-950/50 pl-10 pr-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors resize-none"
                     required
+                    className="bg-slate-950"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* --- Additional Info --- */}
-            <div className="space-y-2 pt-6 border-t border-slate-800/50">
-              <label className="text-sm font-medium text-slate-300">
-                About Organization
-              </label>
-              <div className="relative">
-                <FileText className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-400">
+                  Organization Description
+                </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
                   rows={4}
-                  placeholder="Briefly describe your organization and services..."
-                  className="flex w-full rounded-md border border-slate-700 bg-slate-950/50 pl-10 pr-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors resize-none"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                  placeholder="Tell donors about your hospital/facility..."
                 />
               </div>
-              <p className="text-xs text-slate-500">
-                This description may be visible on your public profile.
-              </p>
-            </div>
 
-            {/* --- Actions --- */}
-            <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
-              <div className="flex-1">
-                {successMessage && (
-                  <div className="flex items-center gap-2 text-emerald-400 text-sm animate-in fade-in">
-                    <CheckCircle2 className="h-4 w-4" />
-                    {successMessage}
-                  </div>
-                )}
+              {/* Geographic Lock Warning */}
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-sm text-amber-400/90 flex gap-2">
+                <AlertCircle className="h-5 w-5 shrink-0" />
+                <p>
+                  Geographic regions (Country, State, District) are locked to
+                  maintain search integrity. If your facility has relocated,
+                  please contact Super Admin support to initiate a region
+                  transfer.
+                </p>
               </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                className="min-w-35 gap-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" /> Save Changes
-                  </>
-                )}
-              </Button>
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="text-slate-400 hover:text-white"
+                  onClick={() => setIsEditing(false)}
+                  disabled={updateMutation.isPending}
+                >
+                  <X className="h-4 w-4 mr-2" /> Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={updateMutation.isPending}
+                  className="min-w-32"
+                >
+                  {updateMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />{" "}
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" /> Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            // --- READ ONLY MODE ---
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Building2 className="h-5 w-5 text-slate-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-slate-500">
+                        Organization Name
+                      </p>
+                      <p className="text-white font-medium text-lg">
+                        {orgData.name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 text-slate-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-slate-500">Support Email</p>
+                      <p className="text-white font-medium">
+                        {orgData.contact_email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-5 w-5 text-slate-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-slate-500">Phone Hotline</p>
+                      <p className="text-white font-medium">
+                        {orgData.contact_phone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-slate-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-slate-500">
+                        Registered Location
+                      </p>
+                      <p className="text-white font-medium">
+                        {orgData.address_line}
+                      </p>
+                      <p className="text-slate-400 text-sm mt-1">
+                        {orgData.district_name}, {orgData.state_name}
+                      </p>
+                      <p className="text-slate-400 text-sm">
+                        {orgData.country_name}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 pt-2">
+                    <FileText className="h-5 w-5 text-slate-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-slate-500">About Facility</p>
+                      <p className="text-slate-300 text-sm mt-1 leading-relaxed max-w-md">
+                        {orgData.description || (
+                          <span className="italic text-slate-600">
+                            No description provided.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </form>
+          )}
         </CardContent>
       </Card>
     </div>

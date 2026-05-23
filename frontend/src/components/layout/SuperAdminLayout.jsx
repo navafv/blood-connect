@@ -12,6 +12,7 @@ import {
   Megaphone,
   Mail,
   Database,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 
@@ -30,6 +31,7 @@ export function SuperAdminLayout() {
     },
     { name: "Manage Ads", path: "/superadmin/ads", icon: Megaphone },
     { name: "Manage Messages", path: "/superadmin/messages", icon: Mail },
+    { name: "Support Tickets", path: "/superadmin/support", icon: LifeBuoy },
     {
       name: "Manage Archived Donors",
       path: "/superadmin/archives",
