@@ -46,6 +46,9 @@ const ManageOrganizations = lazy(
 );
 const ManageAds = lazy(() => import("./pages/superadmin/ManageAds"));
 const ManageMessages = lazy(() => import("./pages/superadmin/ManageMessages"));
+const ManageArchivedDonors = lazy(
+  () => import("./pages/superadmin/ManageArchivedDonors"),
+);
 const SystemLogs = lazy(() => import("./pages/superadmin/SystemLogs"));
 
 // --- Loading Fallback UI ---
@@ -109,6 +112,7 @@ function App() {
               <Route path="organizations" element={<ManageOrganizations />} />
               <Route path="ads" element={<ManageAds />} />
               <Route path="messages" element={<ManageMessages />} />
+              <Route path="archives" element={<ManageArchivedDonors />} />
               <Route path="logs" element={<SystemLogs />} />
             </Route>
           </Route>

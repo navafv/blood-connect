@@ -751,6 +751,33 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
         message.save()
         return Response({'message': 'Status updated', 'is_resolved': message.is_resolved})
     
+class SuperAdminArchivedDonorViewSet(viewsets.ModelViewSet):
+    """
+    Endpoints for Super Admins to view, restore, or permanently delete archived donors.
+    """
+    serializer_class = DonorSerializer
+    permission_classes = [IsSuperAdmin]
+
+    def get_queryset(self):
+        # We must use all_objects because the default objects manager hides is_deleted=True
+        return Donor.all_objects.filter(is_deleted=True).order_by('-deleted_at')
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """Restores a soft-deleted donor back to the active registry."""
+        donor = self.get_object()
+        donor.is_deleted = False
+        donor.deleted_at = None
+        donor.save()
+        return Response({"message": f"{donor.full_name} has been restored successfully."}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'])
+    def hard_delete_record(self, request, pk=None):
+        """Permanently purges the record from the database (GDPR Right to Erasure)."""
+        donor = self.get_object()
+        donor.hard_delete() # Calls the custom hard_delete method from your models.py
+        return Response({"message": "Donor record permanently erased."}, status=status.HTTP_200_OK)
+    
 
 class TenantDashboardStatsView(APIView):
     """

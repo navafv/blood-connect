@@ -11,6 +11,7 @@ import {
   Bell,
   Megaphone,
   Mail,
+  Database,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 
@@ -29,6 +30,11 @@ export function SuperAdminLayout() {
     },
     { name: "Manage Ads", path: "/superadmin/ads", icon: Megaphone },
     { name: "Manage Messages", path: "/superadmin/messages", icon: Mail },
+    {
+      name: "Manage Archived Donors",
+      path: "/superadmin/archives",
+      icon: Database,
+    },
     { name: "System Logs", path: "/superadmin/logs", icon: TerminalSquare },
   ];
 
