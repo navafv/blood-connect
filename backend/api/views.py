@@ -281,9 +281,11 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
             
         # Add select_related here too!
         return Donor.objects.select_related(
-            'organization', 'country', 'state', 'district'
-        ).filter(organization=user.organization)
-
+            'country', 
+            'state', 
+            'district'
+        ).filter(organization=self.request.user.organization).order_by('-created_at')
+    
     def perform_create(self, serializer):
         """
         When the ORG_ADMIN clicks 'Add Donor' on the frontend, 
@@ -518,9 +520,13 @@ class SuperAdminOrganizationListView(generics.ListAPIView):
     Returns a list of all registered organizations across the platform.
     Only accessible by Super Admins.
     """
-    queryset = Organization.objects.all().order_by('-created_at')
     serializer_class = OrganizationSerializer
     permission_classes = [IsSuperAdmin]
+    queryset = Organization.objects.select_related(
+        'country', 
+        'state', 
+        'district'
+    ).order_by('-created_at')
 
 
 class SuperAdminOrganizationStatusUpdateView(APIView):
@@ -760,7 +766,12 @@ class SuperAdminArchivedDonorViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # We must use all_objects because the default objects manager hides is_deleted=True
-        return Donor.all_objects.filter(is_deleted=True).order_by('-deleted_at')
+        return Donor.all_objects.select_related(
+            'organization',
+            'country', 
+            'state', 
+            'district'
+        ).filter(is_deleted=True).order_by('-deleted_at')
 
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
@@ -971,14 +982,16 @@ class ContactMessageCreateView(generics.CreateAPIView):
 # ==========================================
 
 class TenantPaymentView(generics.ListCreateAPIView):
-    """Allows ORG_ADMINs to submit UPI UTRs and view their payment history."""
     serializer_class = PaymentTransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         if not self.request.user.organization:
             return PaymentTransaction.objects.none()
-        return PaymentTransaction.objects.filter(organization=self.request.user.organization).order_by('-created_at')
+        return PaymentTransaction.objects.select_related(
+            'organization', 
+            'submitted_by'
+        ).filter(organization=self.request.user.organization).order_by('-created_at')
 
     def perform_create(self, serializer):
         if self.request.user.role != 'ORG_ADMIN':
@@ -993,14 +1006,18 @@ class TenantPaymentView(generics.ListCreateAPIView):
         )
 
 class TenantSupportTicketViewSet(viewsets.ModelViewSet):
-    """Allows tenants to create and reply to support tickets inside their dashboard."""
     serializer_class = TenantSupportTicketSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         if not self.request.user.organization:
             return TenantSupportTicket.objects.none()
-        return TenantSupportTicket.objects.filter(organization=self.request.user.organization).order_by('-created_at')
+        return TenantSupportTicket.objects.select_related(
+            'organization', 
+            'created_by'
+        ).prefetch_related(
+            'replies__sender'
+        ).filter(organization=self.request.user.organization).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(organization=self.request.user.organization, created_by=self.request.user)
@@ -1027,9 +1044,13 @@ class TenantSupportTicketViewSet(viewsets.ModelViewSet):
 
 class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
     """Super Admin endpoints to view and approve/reject UPI transactions."""
-    queryset = PaymentTransaction.objects.all().order_by('-created_at')
     serializer_class = PaymentTransactionSerializer
     permission_classes = [IsSuperAdmin]
+
+    queryset = PaymentTransaction.objects.select_related(
+        'organization', 
+        'submitted_by'
+    ).order_by('-created_at')
 
     @action(detail=True, methods=['post'])
     def verify(self, request, pk=None):
@@ -1087,9 +1108,15 @@ class SuperAdminExtendSubscriptionView(APIView):
 
 class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
     """Super Admin endpoints to manage and reply to Tenant Support Tickets."""
-    queryset = TenantSupportTicket.objects.all().order_by('-created_at')
     serializer_class = TenantSupportTicketSerializer
     permission_classes = [IsSuperAdmin]
+
+    queryset = TenantSupportTicket.objects.select_related(
+        'organization', 
+        'created_by'
+    ).prefetch_related(
+        'replies__sender'
+    ).order_by('-created_at')
 
     @action(detail=True, methods=['post'])
     def reply(self, request, pk=None):
