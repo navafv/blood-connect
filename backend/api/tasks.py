@@ -1,9 +1,9 @@
 from celery import shared_task
-from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-from datetime import timedelta
 from .models import Donor, SystemLog
+from django.core.mail import send_mail
+from dateutil.relativedelta import relativedelta
 
 @shared_task
 def send_async_email(subject, plain_message, recipient_list, html_message=None):
@@ -28,9 +28,9 @@ def send_async_email(subject, plain_message, recipient_list, html_message=None):
 def purge_old_deleted_records():
     """
     Permanently removes donor records that have been soft-deleted 
-    for more than 7 years (Retention Policy).
+    for more than 7 exact years (Retention Policy).
     """
-    seven_years_ago = timezone.now() - timedelta(days=7*365)
+    seven_years_ago = timezone.now() - relativedelta(years=7)
     
     # Query all records marked is_deleted=True older than 7 years
     old_records = Donor.all_objects.filter(
@@ -45,7 +45,6 @@ def purge_old_deleted_records():
             source='SYSTEM',
             message=f"Purged {count} donor records older than 7 years."
         )
-        # Perform the hard_delete() we defined in models.py
         old_records.delete() 
         return f"Successfully purged {count} old medical donor records."
     

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from datetime import timezone
 from .models import (
     ContactMessage, MasterCountry, MasterState, MasterDistrict,
     CustomUser, Organization, Donor, Advertisement, PaymentTransaction, SystemLog, TenantSupportTicket, TicketReply
@@ -108,6 +109,16 @@ class DonorSerializer(serializers.ModelSerializer):
             # Mask format logic for public safety
             return obj.phone_number[:6] + 'XXXX'
         return "INVALID/HIDDEN"
+    
+    def validate_date_of_birth(self, value):
+        if value > timezone.now().date():
+            raise serializers.ValidationError("Date of birth cannot be in the future.")
+        return value
+
+    def validate_last_donation_date(self, value):
+        if value and value > timezone.now().date():
+            raise serializers.ValidationError("Last donation date cannot be in the future.")
+        return value
 
 class PublicDonorSearchSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(source='organization.name', read_only=True)

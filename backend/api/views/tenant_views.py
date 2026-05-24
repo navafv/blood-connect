@@ -10,7 +10,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 from django.conf import settings
 
@@ -50,6 +50,16 @@ class TenantDonorBulkUploadView(APIView):
         file = request.FILES.get('file')
         if not file or not file.name.endswith('.csv'):
             return Response({"error": "Valid .csv file is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        def parse_flexible_date(date_str):
+            if not date_str or not date_str.strip(): return None
+            # Tries standard, US, and EU date formats
+            for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%d-%m-%Y', '%d/%m/%Y', '%Y/%m/%d'):
+                try:
+                    return datetime.strptime(date_str.strip(), fmt).date()
+                except ValueError:
+                    continue
+            raise ValueError(f"Invalid date format: {date_str}")
 
         org = user.organization
         try:
@@ -65,11 +75,11 @@ class TenantDonorBulkUploadView(APIView):
             
             for idx, row in enumerate(reader, start=2): 
                 try:
-                    parsed_dob = datetime.strptime(row.get('date_of_birth').strip(), '%Y-%m-%d').date()
-                    parsed_last_donation = None
-                    last_donation_str = row.get('last_donation_date')
-                    if last_donation_str and last_donation_str.strip():
-                        parsed_last_donation = datetime.strptime(last_donation_str.strip(), '%Y-%m-%d').date()
+                    parsed_dob = parse_flexible_date(row.get('date_of_birth'))
+                    if not parsed_dob:
+                        raise ValueError("Date of birth is required.")
+                        
+                    parsed_last_donation = parse_flexible_date(row.get('last_donation_date'))
 
                     donor = Donor(
                         organization=org,
@@ -103,24 +113,29 @@ class TenantDashboardStatsView(APIView):
                 return Response({"error": "No organization linked."}, status=status.HTTP_400_BAD_REQUEST)
                 
             donors = Donor.objects.filter(organization=user.organization)
-            thirty_days_ago = timezone.now().date() - timedelta(days=30)
+            today = timezone.now().date()
+            thirty_days_ago = today - timedelta(days=30)
             
             # 1. Total Donors
             total_donors = donors.count()
             
-            # 2. Available Donors (Safe Iteration)
-            available_donors = 0
-            for d in donors:
-                try:
-                    if getattr(d, 'is_available_now', False):
-                        available_donors += 1
-                except Exception:
-                    pass # Silently skip if the property date math fails on a corrupted record
+            # 2. Available Donors
+            male_threshold = today - timedelta(days=90)
+            female_threshold = today - timedelta(days=120)
+
+            available_donors = donors.filter(
+                is_permanently_deferred=False
+            ).filter(
+                Q(last_donation_date__isnull=True) |
+                Q(gender='M', last_donation_date__lte=male_threshold) |
+                Q(gender='F', last_donation_date__lte=female_threshold) |
+                Q(gender='O', last_donation_date__lte=female_threshold)
+            ).count()
                     
             # 3. Donations this month
             recent_donations = donors.filter(last_donation_date__gte=thirty_days_ago).count()
             
-            # 4. Blood Group Distribution (Safe Dictionary Access)
+            # 4. Blood Group Distribution
             bg_counts = donors.values('blood_group').annotate(count=Count('blood_group')).order_by('-count')
             blood_distribution = [
                 {
@@ -129,12 +144,10 @@ class TenantDashboardStatsView(APIView):
                 } for i in bg_counts
             ]
             
-            # 5. Recent Activity (Safe ISO Formatting)
+            # 5. Recent Activity
             recent_activity = []
             for d in donors.order_by('-created_at')[:5]:
-                # If a donor was bulk-uploaded and somehow lacks a created_at timestamp, we fallback safely.
                 safe_timestamp = d.created_at.isoformat() if getattr(d, 'created_at', None) else timezone.now().isoformat()
-                
                 recent_activity.append({
                     "id": f"donor_{d.id}",
                     "action": "DONOR_ADDED",

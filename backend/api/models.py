@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 
 # ==========================================
@@ -13,6 +14,10 @@ phone_regex = RegexValidator(
     regex=r'^\+?1?\d{9,15}$',
     message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
 )
+
+def validate_past_date(value):
+    if value > timezone.now().date():
+        raise ValidationError("This date cannot be in the future.")
 
 # ==========================================
 # 1. GEOGRAPHIC MASTER DATA (The "Locks")
@@ -125,7 +130,7 @@ class Organization(models.Model):
     # SaaS Management & Privacy
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', db_index=True)
     is_paid = models.BooleanField(default=False, help_text="True if the organization has an active paid subscription.")
-    is_searchable = models.BooleanField(default=True, help_text="If False, this organization's donors are hidden from public search.")
+    is_searchable = models.BooleanField(default=True, help_text="If False, this organization's donors are hidden from public search.", db_index=True)
     subscription_expires_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -198,16 +203,16 @@ class Donor(models.Model):
     full_name = models.CharField(max_length=255)
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, db_index=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(validators=[validate_past_date])
     phone_number = models.CharField(validators=[phone_regex], max_length=20)
     
     # Geographic Locking
-    country = models.ForeignKey(MasterCountry, on_delete=models.PROTECT)
-    state = models.ForeignKey(MasterState, on_delete=models.PROTECT)
-    district = models.ForeignKey(MasterDistrict, on_delete=models.PROTECT)
+    country = models.ForeignKey(MasterCountry, on_delete=models.PROTECT, db_index=True)
+    state = models.ForeignKey(MasterState, on_delete=models.PROTECT, db_index=True)
+    district = models.ForeignKey(MasterDistrict, on_delete=models.PROTECT, db_index=True)
     
     # Medical & Availability Tracking
-    last_donation_date = models.DateField(null=True, blank=True)
+    last_donation_date = models.DateField(null=True, blank=True, validators=[validate_past_date])
     is_permanently_deferred = models.BooleanField(default=False)
     deferral_reason = models.TextField(blank=True, null=True, help_text="e.g., Medical condition, recent tattoo")
     has_consented = models.BooleanField(default=False, help_text="Donor explicitly consented to data storage and contact.")
