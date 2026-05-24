@@ -13,6 +13,7 @@ import {
   Mail,
   Database,
   LifeBuoy,
+  MapPin,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 
@@ -29,6 +30,7 @@ export function SuperAdminLayout() {
       path: "/superadmin/organizations",
       icon: Building2,
     },
+    { name: "Manage Locations", path: "/superadmin/locations", icon: MapPin },
     { name: "Manage Ads", path: "/superadmin/ads", icon: Megaphone },
     { name: "Manage Messages", path: "/superadmin/messages", icon: Mail },
     { name: "Support Tickets", path: "/superadmin/support", icon: LifeBuoy },

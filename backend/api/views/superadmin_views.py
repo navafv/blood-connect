@@ -9,11 +9,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 from ..tasks import send_async_email
 from ..models import (
-    Organization, Donor, Advertisement, PaymentTransaction, 
+    MasterCountry, MasterDistrict, MasterState, Organization, Donor, Advertisement, PaymentTransaction, 
     SystemLog, TenantSupportTicket, TicketReply, ContactMessage
 )
 from ..serializers import (
-    OrganizationSerializer, DonorSerializer, AdvertisementSerializer, 
+    MasterCountrySerializer, MasterDistrictSerializer, MasterStateSerializer, OrganizationSerializer, DonorSerializer, AdvertisementSerializer, 
     PaymentTransactionSerializer, SystemLogSerializer, 
     TenantSupportTicketSerializer, ContactMessageSerializer
 )
@@ -31,7 +31,21 @@ class IsSuperAdmin(permissions.BasePermission):
             request.user.is_authenticated and 
             (request.user.role == 'SUPER_ADMIN' or request.user.is_superuser)
         )
+    
+class SuperAdminCountryViewSet(viewsets.ModelViewSet):
+    serializer_class = MasterCountrySerializer
+    permission_classes = [IsSuperAdmin]
+    queryset = MasterCountry.objects.all() # The model Meta handles the ordering
 
+class SuperAdminStateViewSet(viewsets.ModelViewSet):
+    serializer_class = MasterStateSerializer
+    permission_classes = [IsSuperAdmin]
+    queryset = MasterState.objects.all()
+
+class SuperAdminDistrictViewSet(viewsets.ModelViewSet):
+    serializer_class = MasterDistrictSerializer
+    permission_classes = [IsSuperAdmin]
+    queryset = MasterDistrict.objects.all()
 
 class SuperAdminOrganizationListView(generics.ListAPIView):
     """Returns a list of all registered organizations."""
@@ -40,7 +54,6 @@ class SuperAdminOrganizationListView(generics.ListAPIView):
     queryset = Organization.objects.select_related(
         'country', 'state', 'district'
     ).order_by('-created_at')
-
 
 class SuperAdminOrganizationStatusUpdateView(APIView):
     """Allows a Super Admin to Approve (ACTIVE) or Suspend an organization."""
@@ -107,7 +120,6 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
             html_message=html_message
         )
 
-
 class SuperAdminDashboardStatsView(APIView):
     """Returns platform-wide statistics for the Super Admin dashboard."""
     permission_classes = [IsSuperAdmin]
@@ -142,7 +154,6 @@ class SuperAdminDashboardStatsView(APIView):
             )
         }, status=status.HTTP_200_OK)
 
-
 class SuperAdminSystemLogListView(generics.ListAPIView):
     """Returns system logs for the Super Admin audit trail with pagination."""
     permission_classes = [IsSuperAdmin]
@@ -151,7 +162,6 @@ class SuperAdminSystemLogListView(generics.ListAPIView):
     
     def get_queryset(self):
         return SystemLog.objects.all().order_by('-timestamp')
-
 
 class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
     """CRUD endpoints for Super Admins to manage system-wide advertisements."""
@@ -189,7 +199,6 @@ class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
         ad.is_active = not ad.is_active
         ad.save()
         return Response({'message': 'Status updated', 'is_active': ad.is_active})
-
 
 class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
     """CRUD endpoints for Super Admins to manage and reply to public contact messages."""
@@ -241,7 +250,6 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
         message.save()
         return Response({'message': 'Status updated', 'is_resolved': message.is_resolved})
 
-
 class SuperAdminArchivedDonorViewSet(viewsets.ModelViewSet):
     """Endpoints for Super Admins to view, restore, or permanently delete archived donors."""
     serializer_class = DonorSerializer
@@ -265,7 +273,6 @@ class SuperAdminArchivedDonorViewSet(viewsets.ModelViewSet):
         donor = self.get_object()
         donor.hard_delete()
         return Response({"message": "Donor record permanently erased."}, status=status.HTTP_200_OK)
-
 
 class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
     """Super Admin endpoints to view and approve/reject UPI transactions."""
@@ -307,7 +314,6 @@ class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
             
         return Response({"error": "Invalid action parameter."}, status=status.HTTP_400_BAD_REQUEST)
 
-
 class SuperAdminExtendSubscriptionView(APIView):
     """Allows Super Admins to manually gift/extend a subscription by X years."""
     permission_classes = [IsSuperAdmin]
@@ -324,7 +330,6 @@ class SuperAdminExtendSubscriptionView(APIView):
             
         org.save()
         return Response({"message": f"Extended successfully by {years} year(s)."})
-
 
 class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
     """Super Admin endpoints to manage and reply to Tenant Support Tickets."""

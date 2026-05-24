@@ -48,6 +48,9 @@ const GlobalDashboard = lazy(
 const ManageOrganizations = lazy(
   () => import("./pages/superadmin/ManageOrganizations"),
 );
+const ManageLocations = lazy(
+  () => import("./pages/superadmin/ManageLocations"),
+);
 const ManageAds = lazy(() => import("./pages/superadmin/ManageAds"));
 const ManageMessages = lazy(() => import("./pages/superadmin/ManageMessages"));
 const SupportTickets = lazy(() => import("./pages/superadmin/SupportTickets"));
@@ -117,6 +120,7 @@ function App() {
             <Route path="/superadmin" element={<SuperAdminLayout />}>
               <Route index element={<GlobalDashboard />} />
               <Route path="organizations" element={<ManageOrganizations />} />
+              <Route path="locations" element={<ManageLocations />} />
               <Route path="ads" element={<ManageAds />} />
               <Route path="messages" element={<ManageMessages />} />
               <Route path="support" element={<SupportTickets />} />

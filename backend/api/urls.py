@@ -25,7 +25,10 @@ from .views import (
     TenantDashboardStatsView,
     TenantDonorBulkUploadView,
     TenantSupportTicketViewSet,
+    SuperAdminStateViewSet, 
     SuperAdminPaymentViewSet, 
+    SuperAdminCountryViewSet, 
+    SuperAdminDistrictViewSet,
     SuperAdminSystemLogListView,
     SuperAdminDashboardStatsView,
     SuperAdminOrganizationListView,
@@ -46,6 +49,9 @@ router.register(r'superadmin/payments', SuperAdminPaymentViewSet, basename='supe
 router.register(r'superadmin/messages', SuperAdminContactMessageViewSet, basename='superadmin-messages')
 router.register(r'superadmin/archived-donors', SuperAdminArchivedDonorViewSet, basename='superadmin-archived-donors')
 router.register(r'superadmin/support-tickets', SuperAdminSupportTicketViewSet, basename='superadmin-support-tickets')
+router.register(r'superadmin/locations/countries', SuperAdminCountryViewSet, basename='superadmin-countries')
+router.register(r'superadmin/locations/states', SuperAdminStateViewSet, basename='superadmin-states')
+router.register(r'superadmin/locations/districts', SuperAdminDistrictViewSet, basename='superadmin-districts')
 
 urlpatterns = [
     # ==========================================

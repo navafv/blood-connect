@@ -34,6 +34,7 @@ class MasterCountry(models.Model):
     
     class Meta:
         verbose_name_plural = "Master Countries"
+        ordering = ['name']
 
 
 class MasterState(models.Model):
@@ -42,6 +43,9 @@ class MasterState(models.Model):
 
     def __str__(self):
         return f"{self.name}, {self.country.code}"
+        
+    class Meta:
+        ordering = ['name']
 
 
 class MasterDistrict(models.Model):
@@ -50,6 +54,9 @@ class MasterDistrict(models.Model):
 
     def __str__(self):
         return self.name
+        
+    class Meta:
+        ordering = ['name']
 
 
 # ==========================================
