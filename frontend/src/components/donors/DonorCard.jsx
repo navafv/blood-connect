@@ -19,6 +19,26 @@ export function DonorCard({ donor }) {
       })
     : "First Time Donor";
 
+  let daysLeft = 0;
+  if (donor.last_donation_date && !donor.is_available_now) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Strip time for accurate day calculation
+
+    const lastDonation = new Date(donor.last_donation_date);
+    lastDonation.setHours(0, 0, 0, 0);
+
+    // Rule: Men = 90 Days | Women = 120 Days
+    const waitDays = donor.gender === "M" ? 90 : 120;
+
+    // Calculate the exact date they become eligible again
+    const nextEligible = new Date(lastDonation);
+    nextEligible.setDate(nextEligible.getDate() + waitDays);
+
+    // Calculate the difference in days
+    const diffTime = nextEligible - today;
+    daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
   return (
     <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md overflow-hidden hover:border-rose-500/50 transition-colors duration-300">
       <div className="p-6">
@@ -51,21 +71,23 @@ export function DonorCard({ donor }) {
           </div>
         </div>
 
-        {/* Status Badges */}
         <div className="flex flex-wrap gap-2 mb-6">
           {donor.is_available_now ? (
             <Badge
               variant="success"
               className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 gap-1"
             >
-              <ShieldCheck className="h-3 w-3" /> Eligible to Donate
+              <ShieldCheck className="h-3 w-3" /> Eligible
             </Badge>
           ) : (
             <Badge
               variant="warning"
               className="bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1"
             >
-              <CalendarClock className="h-3 w-3" /> Cooling Period
+              <CalendarClock className="h-3 w-3" />
+              {daysLeft > 0
+                ? `Cooling Period (${daysLeft} Days Left)`
+                : "Permanently Deferred"}
             </Badge>
           )}
 
@@ -77,6 +99,7 @@ export function DonorCard({ donor }) {
           </Badge>
         </div>
 
+        {/* Privacy Section: Organization Proxy Details */}
         <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
           <div className="flex items-start gap-3">
             <Building2 className="h-5 w-5 text-slate-500 mt-0.5 shrink-0" />

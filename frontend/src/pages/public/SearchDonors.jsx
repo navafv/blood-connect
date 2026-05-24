@@ -2,23 +2,19 @@ import React, { useState, useEffect } from "react";
 import {
   Search,
   MapPin,
-  Droplet,
-  Phone,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Eye,
   Globe2,
   Loader2,
+  AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Navigation,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Select } from "../../components/ui/Select";
-import { Badge } from "../../components/ui/Badge";
 import api from "../../lib/axios";
 import { AdBanner } from "../../components/ads/AdBanner";
+import { DonorCard } from "../../components/donors/DonorCard";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -34,11 +30,11 @@ export default function SearchDonors() {
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedBloodGroup, setSelectedBloodGroup] = useState("");
 
-  // Search Results State
+  // Search & Geolocation States
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [results, setResults] = useState([]);
-  const [revealedContacts, setRevealedContacts] = useState(new Set());
 
   // Pagination State
   const [nextPageUrl, setNextPageUrl] = useState(null);
@@ -58,7 +54,78 @@ export default function SearchDonors() {
     fetchCountries();
   }, []);
 
-  // --- 2. Handlers for Cascading Dropdowns ---
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+
+          // Free reverse geocoding via OpenStreetMap
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+          );
+          const data = await res.json();
+
+          const detectedCountry = data.address?.country;
+          const detectedState = data.address?.state;
+
+          if (detectedCountry) {
+            // Find matching country in our database array
+            const matchedCountry = countries.find(
+              (c) => c.name.toLowerCase() === detectedCountry.toLowerCase(),
+            );
+
+            if (matchedCountry) {
+              setSelectedCountry(matchedCountry);
+
+              // Fetch states for the matched country
+              const stateRes = await api.get(
+                `/locations/states/?country=${matchedCountry.id}`,
+              );
+              setStates(stateRes.data);
+
+              if (detectedState) {
+                // Find matching state in the newly fetched states array
+                const matchedState = stateRes.data.find(
+                  (s) => s.name.toLowerCase() === detectedState.toLowerCase(),
+                );
+
+                if (matchedState) {
+                  setSelectedState(matchedState);
+
+                  // Fetch districts for the matched state
+                  const distRes = await api.get(
+                    `/locations/districts/?state=${matchedState.id}`,
+                  );
+                  setDistricts(distRes.data);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Failed to reverse geocode coordinates:", error);
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        console.error(
+          "User denied geolocation access or timeout occurred:",
+          error,
+        );
+        setIsLocating(false);
+      },
+      { timeout: 10000 }, // 10 second timeout
+    );
+  };
+
+  // --- 3. Handlers for Cascading Dropdowns ---
   const handleCountryChange = async (e) => {
     const countryId = e.target.value;
     const countryObj = countries.find((c) => c.id.toString() === countryId);
@@ -107,7 +174,7 @@ export default function SearchDonors() {
     setSelectedDistrict(districtObj || null);
   };
 
-  // --- 3. Execute Search ---
+  // --- 4. Execute Search ---
   const fetchDonors = async (url = null) => {
     setIsSearching(true);
     setHasSearched(true);
@@ -115,7 +182,6 @@ export default function SearchDonors() {
     try {
       let endpoint = url;
 
-      // If no URL is provided, build the base search URL from the form parameters
       if (!endpoint) {
         const params = new URLSearchParams();
         if (selectedCountry) params.append("country", selectedCountry.name);
@@ -125,7 +191,6 @@ export default function SearchDonors() {
           params.append("blood_group", selectedBloodGroup);
         endpoint = `/donors/search/?${params.toString()}`;
       } else {
-        // Strip the baseURL if DRF provides an absolute URL
         endpoint = endpoint.replace(api.defaults.baseURL, "") || endpoint;
       }
 
@@ -134,9 +199,6 @@ export default function SearchDonors() {
       setNextPageUrl(response.data.next);
       setPrevPageUrl(response.data.previous);
       setTotalCount(response.data.count);
-
-      // Reset revealed contacts on every page load
-      setRevealedContacts(new Set());
     } catch (error) {
       console.error("Search failed:", error);
     } finally {
@@ -146,15 +208,7 @@ export default function SearchDonors() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchDonors(); // Fetch page 1
-  };
-
-  const revealContact = (donorId) => {
-    setRevealedContacts((prev) => {
-      const next = new Set(prev);
-      next.add(donorId);
-      return next;
-    });
+    fetchDonors();
   };
 
   return (
@@ -178,6 +232,26 @@ export default function SearchDonors() {
       <div className="container mx-auto max-w-5xl px-4 -mt-6 relative z-20">
         <Card className="bg-slate-900/90 backdrop-blur-xl border-slate-700 shadow-2xl">
           <CardContent className="p-6">
+            <div className="flex justify-end mb-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleLocateMe}
+                disabled={isLocating || countries.length === 0}
+                className="bg-slate-950/50 border-slate-700 hover:bg-slate-800 text-rose-400 hover:text-rose-300"
+              >
+                {isLocating ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Navigation className="h-4 w-4 mr-2" />
+                )}
+                {isLocating
+                  ? "Detecting location..."
+                  : "Auto-Detect My Location"}
+              </Button>
+            </div>
+
             <form
               onSubmit={handleSearch}
               className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end"
@@ -278,7 +352,6 @@ export default function SearchDonors() {
         </Card>
       </div>
 
-      {/* --- Advertisement Banner --- */}
       <div className="container mx-auto max-w-5xl px-4 mt-8">
         <AdBanner />
       </div>
@@ -286,7 +359,6 @@ export default function SearchDonors() {
       {/* --- Search Results --- */}
       <div className="container mx-auto max-w-5xl px-4 mt-12">
         {!hasSearched ? (
-          // Pre-search state
           <div className="text-center py-20 text-slate-500">
             <Globe2 className="h-16 w-16 mx-auto mb-4 text-slate-800" />
             <p className="text-lg">
@@ -294,13 +366,11 @@ export default function SearchDonors() {
             </p>
           </div>
         ) : isSearching ? (
-          // Loading state
           <div className="text-center py-20 text-slate-500">
             <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-rose-500" />
             <p className="text-lg">Scanning local registries...</p>
           </div>
         ) : results.length === 0 ? (
-          // No results state
           <div className="text-center py-20 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-slate-700" />
             <h3 className="text-xl font-semibold text-white mb-2">
@@ -312,7 +382,6 @@ export default function SearchDonors() {
             </p>
           </div>
         ) : (
-          // Results Grid
           <div className="space-y-6">
             <div className="flex justify-between items-center border-b border-slate-800 pb-2">
               <h3 className="text-lg font-medium text-white">
@@ -321,102 +390,11 @@ export default function SearchDonors() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {results.map((donor) => {
-                const isRevealed = revealedContacts.has(donor.id);
-                const isAvailable = donor.is_available_now;
-
-                return (
-                  <Card
-                    key={donor.id}
-                    className="bg-slate-900/60 border-slate-800 hover:border-slate-700 transition-colors"
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`h-12 w-12 rounded-full flex items-center justify-center text-xl font-bold border ${isAvailable ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-slate-800 text-slate-400 border-slate-700"}`}
-                          >
-                            {donor.blood_group}
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-lg text-white">
-                              {donor.full_name}
-                            </h4>
-                            <p className="text-sm text-slate-400 flex items-center gap-1 mt-0.5">
-                              <MapPin className="h-3 w-3" />{" "}
-                              {donor.district_name}, {donor.state_name}
-                            </p>
-                          </div>
-                        </div>
-
-                        {isAvailable ? (
-                          <Badge
-                            variant="success"
-                            className="gap-1 bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          >
-                            <CheckCircle2 className="h-3 w-3" /> Available
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="warning"
-                            className="gap-1 bg-amber-500/10 text-amber-400 border-amber-500/20"
-                          >
-                            <Clock className="h-3 w-3" /> Unavailable
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="space-y-3 pt-4 border-t border-slate-800/50">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">Registered By:</span>
-                          <span className="text-slate-300 font-medium">
-                            {donor.organization_name}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">Last Donation:</span>
-                          <span className="text-slate-300">
-                            {donor.last_donation_date || "Never donated"}
-                          </span>
-                        </div>
-
-                        {/* Privacy Masked Phone Field */}
-                        <div className="flex items-center justify-between text-sm pt-2">
-                          <span className="text-slate-500 flex items-center gap-2">
-                            <Phone className="h-4 w-4" /> Contact
-                          </span>
-
-                          {isRevealed ? (
-                            <a
-                              href={`tel:${donor.phone_number}`}
-                              className="font-bold text-rose-400 hover:text-rose-300 transition-colors"
-                            >
-                              {donor.phone_number}
-                            </a>
-                          ) : (
-                            <div className="flex items-center gap-3">
-                              <span className="font-mono text-slate-400 tracking-wider">
-                                {donor.masked_phone || "Not provided"}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => revealContact(donor.id)}
-                                className="h-7 text-xs border-slate-700 hover:bg-slate-800"
-                              >
-                                <Eye className="h-3 w-3 mr-1" /> View
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {results.map((donor) => (
+                <DonorCard key={donor.id} donor={donor} />
+              ))}
             </div>
 
-            {/* --- Pagination Controls --- */}
             {totalCount > 0 && (
               <div className="flex items-center justify-between mt-8 border-t border-slate-800 pt-6">
                 <span className="text-sm text-slate-400">
