@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
-import { Select } from "../../components/ui/Select";
+import { SearchableSelect } from "../../components/ui/SearchableSelect";
 import api from "../../lib/axios";
 import { AdBanner } from "../../components/ads/AdBanner";
 import { DonorCard } from "../../components/donors/DonorCard";
@@ -19,24 +19,20 @@ import { DonorCard } from "../../components/donors/DonorCard";
 const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
 export default function SearchDonors() {
-  // Cascading Form State
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [districts, setDistricts] = useState([]);
 
-  // Selected Object States
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedBloodGroup, setSelectedBloodGroup] = useState("");
 
-  // Search & Geolocation States
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [results, setResults] = useState([]);
 
-  // Pagination State
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [prevPageUrl, setPrevPageUrl] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
@@ -55,51 +51,35 @@ export default function SearchDonors() {
   }, []);
 
   const handleLocateMe = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
-    }
-
+    if (!navigator.geolocation) return;
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-
-          // Free reverse geocoding via OpenStreetMap
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
           );
           const data = await res.json();
-
           const detectedCountry = data.address?.country;
           const detectedState = data.address?.state;
 
           if (detectedCountry) {
-            // Find matching country in our database array
             const matchedCountry = countries.find(
               (c) => c.name.toLowerCase() === detectedCountry.toLowerCase(),
             );
-
             if (matchedCountry) {
               setSelectedCountry(matchedCountry);
-
-              // Fetch states for the matched country
               const stateRes = await api.get(
                 `/locations/states/?country=${matchedCountry.id}`,
               );
               setStates(stateRes.data);
-
               if (detectedState) {
-                // Find matching state in the newly fetched states array
                 const matchedState = stateRes.data.find(
                   (s) => s.name.toLowerCase() === detectedState.toLowerCase(),
                 );
-
                 if (matchedState) {
                   setSelectedState(matchedState);
-
-                  // Fetch districts for the matched state
                   const distRes = await api.get(
                     `/locations/districts/?state=${matchedState.id}`,
                   );
@@ -109,68 +89,43 @@ export default function SearchDonors() {
             }
           }
         } catch (error) {
-          console.error("Failed to reverse geocode coordinates:", error);
+          console.error(error);
         } finally {
           setIsLocating(false);
         }
       },
-      (error) => {
-        console.error(
-          "User denied geolocation access or timeout occurred:",
-          error,
-        );
-        setIsLocating(false);
-      },
-      { timeout: 10000 }, // 10 second timeout
+      () => setIsLocating(false),
+      { timeout: 10000 },
     );
   };
 
-  // --- 3. Handlers for Cascading Dropdowns ---
-  const handleCountryChange = async (e) => {
-    const countryId = e.target.value;
-    const countryObj = countries.find((c) => c.id.toString() === countryId);
-
+  // --- Handlers for SearchableSelect ---
+  const handleCountryChange = async (val) => {
+    const countryObj = countries.find((c) => c.id.toString() === val);
     setSelectedCountry(countryObj || null);
     setSelectedState(null);
     setSelectedDistrict(null);
     setStates([]);
     setDistricts([]);
-
-    if (countryId) {
-      try {
-        const response = await api.get(
-          `/locations/states/?country=${countryId}`,
-        );
-        setStates(response.data);
-      } catch (error) {
-        console.error("Failed to fetch states:", error);
-      }
+    if (val) {
+      const response = await api.get(`/locations/states/?country=${val}`);
+      setStates(response.data);
     }
   };
 
-  const handleStateChange = async (e) => {
-    const stateId = e.target.value;
-    const stateObj = states.find((s) => s.id.toString() === stateId);
-
+  const handleStateChange = async (val) => {
+    const stateObj = states.find((s) => s.id.toString() === val);
     setSelectedState(stateObj || null);
     setSelectedDistrict(null);
     setDistricts([]);
-
-    if (stateId) {
-      try {
-        const response = await api.get(
-          `/locations/districts/?state=${stateId}`,
-        );
-        setDistricts(response.data);
-      } catch (error) {
-        console.error("Failed to fetch districts:", error);
-      }
+    if (val) {
+      const response = await api.get(`/locations/districts/?state=${val}`);
+      setDistricts(response.data);
     }
   };
 
-  const handleDistrictChange = (e) => {
-    const districtId = e.target.value;
-    const districtObj = districts.find((d) => d.id.toString() === districtId);
+  const handleDistrictChange = (val) => {
+    const districtObj = districts.find((d) => d.id.toString() === val);
     setSelectedDistrict(districtObj || null);
   };
 
@@ -178,29 +133,17 @@ export default function SearchDonors() {
   const fetchDonors = async (url = null) => {
     setIsSearching(true);
     setHasSearched(true);
-
     try {
-      let endpoint = url;
-
-      if (!endpoint) {
-        const params = new URLSearchParams();
-        if (selectedCountry) params.append("country", selectedCountry.name);
-        if (selectedState) params.append("state", selectedState.name);
-        if (selectedDistrict) params.append("district", selectedDistrict.name);
-        if (selectedBloodGroup)
-          params.append("blood_group", selectedBloodGroup);
-        endpoint = `/donors/search/?${params.toString()}`;
-      } else {
-        endpoint = endpoint.replace(api.defaults.baseURL, "") || endpoint;
-      }
-
-      const response = await api.get(endpoint);
+      let endpoint =
+        url ||
+        `/donors/search/?country=${selectedCountry?.name || ""}&state=${selectedState?.name || ""}&district=${selectedDistrict?.name || ""}&blood_group=${selectedBloodGroup}`;
+      const response = await api.get(
+        endpoint.replace(api.defaults.baseURL, ""),
+      );
       setResults(response.data.results);
       setNextPageUrl(response.data.next);
       setPrevPageUrl(response.data.previous);
       setTotalCount(response.data.count);
-    } catch (error) {
-      console.error("Search failed:", error);
     } finally {
       setIsSearching(false);
     }
@@ -238,100 +181,82 @@ export default function SearchDonors() {
                 variant="outline"
                 size="sm"
                 onClick={handleLocateMe}
-                disabled={isLocating || countries.length === 0}
-                className="bg-slate-950/50 border-slate-700 hover:bg-slate-800 text-rose-400 hover:text-rose-300"
+                disabled={isLocating}
+                className="bg-slate-950/50 border-slate-700 text-rose-400"
               >
                 {isLocating ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Navigation className="h-4 w-4 mr-2" />
                 )}
-                {isLocating
-                  ? "Detecting location..."
-                  : "Auto-Detect My Location"}
+                Auto-Detect Location
               </Button>
             </div>
 
             <form
-              onSubmit={handleSearch}
+              onSubmit={(e) => {
+                e.preventDefault();
+                fetchDonors();
+              }}
               className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end"
             >
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
                   Country
                 </label>
-                <Select
-                  value={selectedCountry?.id || ""}
+                <SearchableSelect
+                  options={countries.map((c) => ({
+                    label: c.name,
+                    value: c.id.toString(),
+                  }))}
+                  value={selectedCountry?.id?.toString() || ""}
                   onChange={handleCountryChange}
-                  className="bg-slate-950/50"
-                  required
-                >
-                  <option value="">Select Country</option>
-                  {countries.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
+                  placeholder="Select Country"
+                />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  State / Province
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  State
                 </label>
-                <Select
-                  value={selectedState?.id || ""}
+                <SearchableSelect
+                  options={states.map((s) => ({
+                    label: s.name,
+                    value: s.id.toString(),
+                  }))}
+                  value={selectedState?.id?.toString() || ""}
                   onChange={handleStateChange}
-                  className="bg-slate-950/50"
+                  placeholder="Select State"
                   disabled={!selectedCountry}
-                  required
-                >
-                  <option value="">Select State</option>
-                  {states.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </Select>
+                />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  District / City
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  District
                 </label>
-                <Select
-                  value={selectedDistrict?.id || ""}
+                <SearchableSelect
+                  options={districts.map((d) => ({
+                    label: d.name,
+                    value: d.id.toString(),
+                  }))}
+                  value={selectedDistrict?.id?.toString() || ""}
                   onChange={handleDistrictChange}
-                  className="bg-slate-950/50"
+                  placeholder="Select District"
                   disabled={!selectedState}
-                  required
-                >
-                  <option value="">Select District</option>
-                  {districts.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </Select>
+                />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
                   Blood Group
                 </label>
-                <Select
+                <SearchableSelect
+                  options={bloodGroups.map((bg) => ({ label: bg, value: bg }))}
                   value={selectedBloodGroup}
-                  onChange={(e) => setSelectedBloodGroup(e.target.value)}
-                  className="bg-slate-950/50"
-                  required
-                >
-                  <option value="">Any Group</option>
-                  {bloodGroups.map((bg) => (
-                    <option key={bg} value={bg}>
-                      {bg}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={setSelectedBloodGroup}
+                  placeholder="Any Group"
+                />
               </div>
 
               <Button
@@ -345,7 +270,7 @@ export default function SearchDonors() {
                 ) : (
                   <Search className="h-4 w-4" />
                 )}
-                {isSearching ? "Searching..." : "Search"}
+                Search
               </Button>
             </form>
           </CardContent>

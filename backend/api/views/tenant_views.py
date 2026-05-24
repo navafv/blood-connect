@@ -96,23 +96,70 @@ class TenantDashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        if not user.organization:
-            return Response({"error": "No organization linked."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = request.user
             
-        donors = Donor.objects.filter(organization=user.organization)
-        thirty_days_ago = timezone.now().date() - timedelta(days=30)
-        
-        return Response({
-            "overview": {
-                "totalDonors": donors.count(),
-                "availableDonors": sum(1 for d in donors if d.is_available_now),
-                "donationsThisMonth": donors.filter(last_donation_date__gte=thirty_days_ago).count(),
-                "pendingRequests": 0
-            },
-            "bloodGroupDistribution": [{"group": i['blood_group'], "count": i['count']} for i in donors.values('blood_group').annotate(count=Count('blood_group')).order_by('-count')],
-            "recentActivity": [{"id": f"donor_{d.id}", "action": "DONOR_ADDED", "message": f"Registered new donor: {d.full_name} ({d.blood_group})", "timestamp": d.created_at.isoformat()} for d in donors.order_by('-created_at')[:5]]
-        }, status=status.HTTP_200_OK)
+            if not hasattr(user, 'organization') or not user.organization:
+                return Response({"error": "No organization linked."}, status=status.HTTP_400_BAD_REQUEST)
+                
+            donors = Donor.objects.filter(organization=user.organization)
+            thirty_days_ago = timezone.now().date() - timedelta(days=30)
+            
+            # 1. Total Donors
+            total_donors = donors.count()
+            
+            # 2. Available Donors (Safe Iteration)
+            available_donors = 0
+            for d in donors:
+                try:
+                    if getattr(d, 'is_available_now', False):
+                        available_donors += 1
+                except Exception:
+                    pass # Silently skip if the property date math fails on a corrupted record
+                    
+            # 3. Donations this month
+            recent_donations = donors.filter(last_donation_date__gte=thirty_days_ago).count()
+            
+            # 4. Blood Group Distribution (Safe Dictionary Access)
+            bg_counts = donors.values('blood_group').annotate(count=Count('blood_group')).order_by('-count')
+            blood_distribution = [
+                {
+                    "group": i.get('blood_group') or "Unknown", 
+                    "count": i.get('count', 0)
+                } for i in bg_counts
+            ]
+            
+            # 5. Recent Activity (Safe ISO Formatting)
+            recent_activity = []
+            for d in donors.order_by('-created_at')[:5]:
+                # If a donor was bulk-uploaded and somehow lacks a created_at timestamp, we fallback safely.
+                safe_timestamp = d.created_at.isoformat() if getattr(d, 'created_at', None) else timezone.now().isoformat()
+                
+                recent_activity.append({
+                    "id": f"donor_{d.id}",
+                    "action": "DONOR_ADDED",
+                    "message": f"Registered new donor: {d.full_name or 'Unknown'} ({d.blood_group or '?'})",
+                    "timestamp": safe_timestamp
+                })
+
+            return Response({
+                "overview": {
+                    "totalDonors": total_donors,
+                    "availableDonors": available_donors,
+                    "donationsThisMonth": recent_donations,
+                    "pendingRequests": 0
+                },
+                "bloodGroupDistribution": blood_distribution,
+                "recentActivity": recent_activity
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": f"Server Crash: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class TenantOrganizationView(generics.RetrieveUpdateAPIView):
     serializer_class = OrganizationSerializer

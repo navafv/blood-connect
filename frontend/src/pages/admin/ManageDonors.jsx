@@ -26,6 +26,7 @@ import {
 import { Badge } from "../../components/ui/Badge";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
+import { DonorFilters } from "../../components/donors/DonorFilters";
 import api from "../../lib/axios";
 
 export default function ManageDonors() {
@@ -38,6 +39,11 @@ export default function ManageDonors() {
 
   // 1. Initialize Query Client for cache invalidation
   const queryClient = useQueryClient();
+
+  const [activeFilters, setActiveFilters] = useState({
+    bloodGroup: "",
+    searchQuery: "",
+  });
 
   // 2. Fetch Donors using React Query (Replaces useEffect & useState)
   const {
@@ -132,12 +138,19 @@ export default function ManageDonors() {
   };
 
   // Local Search Filtering (runs instantly on cached query data)
-  const filteredDonors = donors.filter(
-    (donor) =>
-      donor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      donor.blood_group.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      donor.phone_number.includes(searchTerm),
-  );
+  const filteredDonors = donors.filter((donor) => {
+    const matchesBloodGroup = activeFilters.bloodGroup
+      ? donor.blood_group === activeFilters.bloodGroup
+      : true;
+
+    const searchLower = activeFilters.searchQuery.toLowerCase();
+    const matchesSearch = activeFilters.searchQuery
+      ? donor.full_name.toLowerCase().includes(searchLower) ||
+        donor.phone_number.includes(searchLower)
+      : true;
+
+    return matchesBloodGroup && matchesSearch;
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -223,27 +236,9 @@ export default function ManageDonors() {
             <CardTitle className="text-lg font-medium text-white">
               Registered Donors
             </CardTitle>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                <Input
-                  placeholder="Search name, phone, group..."
-                  className="pl-9 h-9 bg-slate-950/50"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  aria-label="Search Donors"
-                />
-              </div>
-              <Button
-                variant="outline"
-                className="h-9 px-3 bg-slate-950/50"
-                aria-label="Filter Donors"
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
+
+          <DonorFilters onFilter={setActiveFilters} />
         </CardHeader>
 
         <CardContent className="p-0">

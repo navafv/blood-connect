@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
+import { SearchableSelect } from "../../components/ui/SearchableSelect";
 import api from "../../lib/axios";
 
 export default function RegisterOrg() {
@@ -242,51 +242,52 @@ export default function RegisterOrg() {
                   this specific region.
                 </p>
 
-                <Select
+                <SearchableSelect
                   value={formData.country_id}
-                  onChange={handleCountryChange}
-                  required
+                  onChange={(val) =>
+                    handleCountryChange({ target: { value: val } })
+                  }
+                  options={countries.map((c) => ({
+                    label: c.name,
+                    value: c.id.toString(),
+                  }))}
+                  placeholder="Select Country"
                   className="bg-slate-950"
-                >
-                  <option value="">Select Country</option>
-                  {countries.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
+                  required
+                />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Select
+                  <SearchableSelect
                     value={formData.state_id}
-                    onChange={handleStateChange}
+                    onChange={(val) =>
+                      handleStateChange({ target: { value: val } })
+                    }
+                    options={states.map((s) => ({
+                      label: s.name,
+                      value: s.id.toString(),
+                    }))}
+                    placeholder="Select State"
                     disabled={!formData.country_id}
-                    required
                     className="bg-slate-950"
-                  >
-                    <option value="">Select State</option>
-                    {states.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </Select>
+                    required
+                  />
 
-                  <Select
-                    name="district_id"
+                  <SearchableSelect
                     value={formData.district_id}
-                    onChange={handleChange}
+                    onChange={(val) =>
+                      handleChange({
+                        target: { name: "district_id", value: val },
+                      })
+                    }
+                    options={districts.map((d) => ({
+                      label: d.name,
+                      value: d.id.toString(),
+                    }))}
+                    placeholder="Select District"
                     disabled={!formData.state_id}
-                    required
                     className="bg-slate-950"
-                  >
-                    <option value="">Select District</option>
-                    {districts.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </Select>
+                    required
+                  />
                 </div>
               </div>
 

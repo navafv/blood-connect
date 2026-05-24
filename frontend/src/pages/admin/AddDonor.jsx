@@ -20,6 +20,7 @@ import {
 } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
+import { SearchableSelect } from "../../components/ui/SearchableSelect";
 import api from "../../lib/axios";
 
 const BLOOD_GROUPS = [
@@ -329,68 +330,57 @@ export default function AddDonor() {
                   <label className="text-sm font-medium text-slate-400">
                     Country *
                   </label>
-                  <Select
-                    name="country"
+                  <SearchableSelect
+                    placeholder="Select Country"
                     className="bg-slate-950/50"
                     value={formData.country}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="" disabled>
-                      Select Country
-                    </option>
-                    {countries.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
+                    options={countries.map((c) => ({
+                      label: c.name,
+                      value: c.id.toString(),
+                    }))}
+                    onChange={(val) =>
+                      handleChange({ target: { name: "country", value: val } })
+                    }
+                    disabled={countries.length === 0}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">
                     State *
                   </label>
-                  <Select
-                    name="state"
+                  <SearchableSelect
+                    placeholder="Select State"
                     className="bg-slate-950/50"
                     value={formData.state}
-                    onChange={handleChange}
-                    required
+                    options={states.map((s) => ({
+                      label: s.name,
+                      value: s.id.toString(),
+                    }))}
+                    onChange={(val) =>
+                      handleChange({ target: { name: "state", value: val } })
+                    }
                     disabled={!formData.country || states.length === 0}
-                  >
-                    <option value="" disabled>
-                      Select State
-                    </option>
-                    {states.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-400">
                     District *
                   </label>
-                  <Select
-                    name="district"
+                  <SearchableSelect
+                    placeholder="Select District"
                     className="bg-slate-950/50"
                     value={formData.district}
-                    onChange={handleChange}
-                    required
+                    options={districts.map((d) => ({
+                      label: d.name,
+                      value: d.id.toString(),
+                    }))}
+                    onChange={(val) =>
+                      handleChange({ target: { name: "district", value: val } })
+                    }
                     disabled={!formData.state || districts.length === 0}
-                  >
-                    <option value="" disabled>
-                      Select District
-                    </option>
-                    {districts.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </div>
               </div>
             </div>
