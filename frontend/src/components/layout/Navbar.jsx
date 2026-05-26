@@ -81,7 +81,7 @@ export function Navbar() {
           <div className="lg:hidden flex items-center">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-slate-300 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-700 active:scale-95"
+              className="text-slate-300 hover:text-white p-3 rounded-xl hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-700 active:scale-95 flex items-center justify-center min-h-11 min-w-11"
               aria-expanded={isMobileMenuOpen}
               aria-label="Toggle Navigation Menu"
             >

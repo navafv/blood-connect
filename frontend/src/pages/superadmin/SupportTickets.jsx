@@ -417,6 +417,7 @@ export default function SupportTickets() {
                   placeholder="Type a response to the tenant organization..."
                   className="w-full rounded-xl border border-slate-700 bg-slate-950/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all resize-none shadow-inner"
                   disabled={replyMutation.isPending}
+                  autoFocus
                 />
               </div>
 

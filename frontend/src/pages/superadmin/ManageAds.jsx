@@ -505,6 +505,7 @@ export default function ManageAds() {
               }
               placeholder="e.g., Summer Blood Drive 2026"
               className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500"
+              autoFocus
             />
           </div>
 

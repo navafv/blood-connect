@@ -94,6 +94,21 @@ class CookieTokenRefreshView(TokenRefreshView):
             
         return response
     
+class CurrentUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # request.user is automatically populated by Django's AuthenticationMiddleware
+        # when using JWT or session authentication
+        user = request.user
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "role": getattr(user, 'role', 'PUBLIC_USER'), # Assumes 'role' field exists
+            # Add any other fields your frontend needs
+        }, status=status.HTTP_200_OK)
+    
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     

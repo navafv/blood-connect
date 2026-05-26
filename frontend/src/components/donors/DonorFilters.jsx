@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Droplet, UserSearch, XCircle } from "lucide-react";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
@@ -15,20 +15,64 @@ export function DonorFilters({ onFilter }) {
     searchQuery: "",
   });
 
-  const bloodGroups = ["A+", "A-", "A1+", "A1-", "A1B+", "A1B-", "A2+", "A2-", "A2B+", "A2B-", "AB+", "AB-", "B+", "B-", "BBG", "INRA", "O+", "O-"];
+  // Ref to hold the debounce timeout
+  const filterTimeoutRef = useRef(null);
+
+  const bloodGroups = [
+    "A+",
+    "A-",
+    "A1+",
+    "A1-",
+    "A1B+",
+    "A1B-",
+    "A2+",
+    "A2-",
+    "A2B+",
+    "A2B-",
+    "AB+",
+    "AB-",
+    "B+",
+    "B-",
+    "BBG",
+    "INRA",
+    "O+",
+    "O-",
+  ];
+
+  // Cleanup timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (filterTimeoutRef.current) clearTimeout(filterTimeoutRef.current);
+    };
+  }, []);
 
   // Trigger parent filter immediately on state change for a snappy UX
   const handleChange = (e) => {
     const { name, value } = e.target;
     const newFilters = { ...filters, [name]: value };
+
+    // 1. Update local UI state instantly so typing feels responsive
     setFilters(newFilters);
-    onFilter(newFilters);
+
+    // 2. Clear the previous timeout
+    if (filterTimeoutRef.current) {
+      clearTimeout(filterTimeoutRef.current);
+    }
+
+    // 3. Set a new timeout to delay the heavy filtering logic
+    filterTimeoutRef.current = setTimeout(() => {
+      onFilter(newFilters);
+    }, 300); // 300ms debounce
   };
 
   const handleReset = () => {
     const cleared = { bloodGroup: "", searchQuery: "" };
     setFilters(cleared);
     onFilter(cleared);
+
+    if (filterTimeoutRef.current) {
+      clearTimeout(filterTimeoutRef.current);
+    }
   };
 
   const hasActiveFilters =

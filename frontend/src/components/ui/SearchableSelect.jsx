@@ -85,7 +85,7 @@ export const SearchableSelect = React.forwardRef(
             </div>
 
             {/* Options List */}
-            <div className="max-h-60 overflow-y-auto p-1.5 custom-scrollbar">
+            <div className="max-h-[30vh] overflow-y-auto p-1.5 custom-scrollbar">
               {filteredOptions.length === 0 ? (
                 <p className="py-6 text-center text-sm font-medium text-slate-500">
                   No results found.

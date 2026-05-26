@@ -371,59 +371,177 @@ export default function ManageDonors() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-800/80 text-xs uppercase tracking-wider text-slate-500 font-bold bg-slate-950/40">
-                    <th className="px-6 py-5">Donor Identity</th>
-                    <th className="px-6 py-5">Contact Vector</th>
-                    <th className="px-6 py-5">Location Lock</th>
-                    <th className="px-6 py-5">Operational Status</th>
-                    <th className="px-6 py-5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/50">
-                  {filteredDonors.map((donor) => (
-                    <tr
-                      key={donor.id}
-                      className="hover:bg-slate-800/30 transition-colors group"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-black text-sm shadow-inner group-hover:bg-rose-500/20 transition-colors">
-                            {donor.blood_group}
+            <>
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800/80 text-xs uppercase tracking-wider text-slate-500 font-bold bg-slate-950/40">
+                      <th className="px-6 py-5">Donor Identity</th>
+                      <th className="px-6 py-5">Contact Vector</th>
+                      <th className="px-6 py-5">Location Lock</th>
+                      <th className="px-6 py-5">Operational Status</th>
+                      <th className="px-6 py-5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50">
+                    {filteredDonors.map((donor) => (
+                      <tr
+                        key={donor.id}
+                        className="hover:bg-slate-800/30 transition-colors group"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-black text-sm shadow-inner group-hover:bg-rose-500/20 transition-colors">
+                              {donor.blood_group}
+                            </div>
+                            <div>
+                              <p className="font-bold text-white text-sm">
+                                {donor.full_name}
+                              </p>
+                              <p className="text-xs font-medium text-slate-500 mt-0.5">
+                                {donor.gender === "M"
+                                  ? "Male"
+                                  : donor.gender === "F"
+                                    ? "Female"
+                                    : "Other"}{" "}
+                                • {donor.date_of_birth}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-white text-sm">
-                              {donor.full_name}
-                            </p>
-                            <p className="text-xs font-medium text-slate-500 mt-0.5">
-                              {donor.gender === "M"
-                                ? "Male"
-                                : donor.gender === "F"
-                                  ? "Female"
-                                  : "Other"}{" "}
-                              • {donor.date_of_birth}
-                            </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-semibold text-slate-300 font-mono tracking-tight">
+                            {donor.phone_number}
+                          </p>
+                          <p className="text-xs font-medium text-slate-500 mt-1">
+                            Last Donated:{" "}
+                            {donor.last_donation_date || "No History"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300">
+                            <MapPin className="h-3 w-3 text-slate-500" />
+                            {donor.district_name || "Unknown"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {donor.is_permanently_deferred ? (
+                            <Badge
+                              variant="danger"
+                              className="bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            >
+                              Deferred
+                            </Badge>
+                          ) : donor.is_available_now ? (
+                            <Badge
+                              variant="success"
+                              className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            >
+                              Available
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="warning"
+                              className="bg-amber-500/10 text-amber-400 border-amber-500/20"
+                            >
+                              Resting
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
+                              aria-label={`Edit ${donor.full_name}`}
+                              onClick={() => {
+                                setEditingDonor(donor);
+                                setIsEditModalOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Archive Record"
+                              aria-label={`Archive ${donor.full_name}`}
+                              className="h-8 w-8 p-0 text-amber-500/70 hover:text-amber-400 hover:bg-amber-500/10 disabled:opacity-50 transition-colors"
+                              onClick={() =>
+                                handleDelete(donor.id, donor.full_name)
+                              }
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending &&
+                              deleteMutation.variables === donor.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Archive className="h-4 w-4" />
+                              )}
+                            </Button>
                           </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="md:hidden flex flex-col gap-4 p-4">
+                {filteredDonors.map((donor) => (
+                  <div
+                    key={donor.id}
+                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 flex flex-col gap-4 shadow-sm"
+                  >
+                    {/* Identity & Status Row */}
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-black text-sm shadow-inner shrink-0">
+                          {donor.blood_group}
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-semibold text-slate-300 font-mono tracking-tight">
-                          {donor.phone_number}
-                        </p>
-                        <p className="text-xs font-medium text-slate-500 mt-1">
-                          Last Donated:{" "}
-                          {donor.last_donation_date || "No History"}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300">
-                          <MapPin className="h-3 w-3 text-slate-500" />
-                          {donor.district_name || "Unknown"}
+                        <div>
+                          <p className="font-bold text-white text-[15px] leading-tight">
+                            {donor.full_name}
+                          </p>
+                          <p className="text-xs font-medium text-slate-500 mt-0.5">
+                            {donor.gender === "M"
+                              ? "Male"
+                              : donor.gender === "F"
+                                ? "Female"
+                                : "Other"}{" "}
+                            • {donor.date_of_birth}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Meta Details Grid */}
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80">
+                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                          Contact
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
+                        <span className="font-semibold text-slate-300 font-mono tracking-tight">
+                          {donor.phone_number}
+                        </span>
+                      </div>
+                      <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80">
+                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                          Location
+                        </span>
+                        <span className="font-semibold text-slate-300 flex items-center gap-1.5 truncate">
+                          <MapPin className="h-3 w-3 text-slate-500 shrink-0" />
+                          <span className="truncate">
+                            {donor.district_name || "Unknown"}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Status & Actions Row */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
+                      <div>
                         {donor.is_permanently_deferred ? (
                           <Badge
                             variant="danger"
@@ -446,47 +564,41 @@ export default function ManageDonors() {
                             Resting
                           </Badge>
                         )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
-                            aria-label={`Edit ${donor.full_name}`}
-                            onClick={() => {
-                              setEditingDonor(donor);
-                              setIsEditModalOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            title="Archive Record"
-                            aria-label={`Archive ${donor.full_name}`}
-                            className="h-8 w-8 p-0 text-amber-500/70 hover:text-amber-400 hover:bg-amber-500/10 disabled:opacity-50 transition-colors"
-                            onClick={() =>
-                              handleDelete(donor.id, donor.full_name)
-                            }
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending &&
-                            deleteMutation.variables === donor.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Archive className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-9 p-0 text-slate-400 bg-slate-800/50 hover:bg-slate-800"
+                          onClick={() => {
+                            setEditingDonor(donor);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-9 p-0 text-amber-500/80 bg-amber-500/10 border border-amber-500/20"
+                          onClick={() =>
+                            handleDelete(donor.id, donor.full_name)
+                          }
+                          disabled={deleteMutation.isPending}
+                        >
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables === donor.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Archive className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -513,6 +625,7 @@ export default function ManageDonors() {
                   onChange={handleEditChange}
                   className="bg-slate-950/50"
                   required
+                  autoFocus
                 />
               </div>
 

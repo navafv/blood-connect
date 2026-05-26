@@ -136,7 +136,7 @@ export default function SystemLogs() {
               <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
             </div>
-            <span className="text-xs text-slate-500 ml-3 font-mono tracking-tight uppercase">
+            <span className="text-xs text-slate-400 ml-3 font-mono tracking-tight uppercase">
               root@bloodconnect:~# tail -f audit.log
             </span>
           </div>
@@ -150,7 +150,7 @@ export default function SystemLogs() {
           </Button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left font-mono text-sm">
             <thead className="bg-slate-950/40 text-xs uppercase text-slate-500 font-bold border-b border-slate-800/50">
               <tr>
@@ -203,7 +203,7 @@ export default function SystemLogs() {
                       key={log.id}
                       className="hover:bg-slate-900/50 transition-colors"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-slate-500 font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-400 font-medium">
                         {log.timestamp}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -226,12 +226,83 @@ export default function SystemLogs() {
             </tbody>
           </table>
         </div>
+        <div className="md:hidden flex flex-col">
+          <div className="divide-y divide-slate-800/50 text-slate-300">
+            {isLoading ? (
+              <tr>
+                <td
+                  colSpan="4"
+                  className="px-6 py-24 text-center text-slate-500"
+                >
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-4" />
+                  <p className="text-sm tracking-widest uppercase">
+                    Connecting to stream...
+                  </p>
+                </td>
+              </tr>
+            ) : isError ? (
+              <tr>
+                <td colSpan="4" className="px-6 py-24 text-center">
+                  <div className="h-16 w-16 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <ServerCrash className="h-8 w-8 text-rose-500" />
+                  </div>
+                  <p className="text-rose-400 font-medium">
+                    Failed to read log stream.
+                  </p>
+                </td>
+              </tr>
+            ) : logs.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="4"
+                  className="px-6 py-24 text-center text-slate-500"
+                >
+                  No log entries match your criteria.
+                </td>
+              </tr>
+            ) : (
+              logs.map((log) => {
+                const config = getLevelConfig(log.level);
+                const Icon = config.icon;
+
+                return (
+                  <div
+                    key={log.id}
+                    className="p-4 hover:bg-slate-900/50 transition-colors flex flex-col gap-2.5 font-mono text-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <Badge
+                        className={`${config.badge} gap-1.5 font-bold uppercase`}
+                      >
+                        <Icon className="h-3 w-3" /> {log.level}
+                      </Badge>
+                      <span className="text-xs text-slate-400 font-medium">
+                        {log.timestamp}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block mb-1">
+                        Source
+                      </span>
+                      <span className="text-slate-400 font-medium bg-slate-950/50 px-2 py-1 rounded-md border border-slate-800/80 break-all">
+                        [{log.source}]
+                      </span>
+                    </div>
+                    <div className="text-slate-200 mt-1 leading-relaxed bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 shadow-inner wrap-break-word">
+                      {log.message}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </Card>
 
       {/* --- Pagination --- */}
       {totalCount > 0 && (
         <div className="flex items-center justify-between border-t border-slate-800/80 pt-6">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
             Showing logs from {totalCount} total entries
           </span>
           <div className="flex gap-2">

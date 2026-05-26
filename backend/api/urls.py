@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     LogoutView,
+    CurrentUserView,
     VerifyEmailOTPView,
     ResendEmailOTPView,
     CookieTokenRefreshView,
@@ -78,6 +79,7 @@ urlpatterns = [
     # AUTHENTICATION & IDENTITY
     # JWT issuance, invalidation, and credential recovery.
     # ==========================================
+    path('auth/me/', CurrentUserView.as_view(), name='current-user'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     path('auth/resend-otp/', ResendEmailOTPView.as_view(), name='resend_otp'),

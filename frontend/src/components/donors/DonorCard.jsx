@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Phone,
+  Copy,
   MapPin,
   Building2,
   CalendarClock,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
+import { toast } from "react-hot-toast";
 
 /**
  * Public Donor Card
@@ -49,6 +51,11 @@ export function DonorCard({ donor }) {
     const diffTime = nextEligible - today;
     daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
+
+  const handleCopyPhone = () => {
+    navigator.clipboard.writeText(donor.organization_contact);
+    toast.success("Phone number copied to clipboard!", { icon: "📋" });
+  };
 
   return (
     <Card className="group relative border-slate-800/80 bg-slate-900/40 backdrop-blur-xl overflow-hidden hover:border-rose-500/50 hover:shadow-[0_8px_30px_rgb(225,29,72,0.1)] transition-all duration-500 hover:-translate-y-1 flex flex-col">
@@ -144,13 +151,22 @@ export function DonorCard({ donor }) {
               </div>
             </div>
 
-            <a
-              href={`tel:${donor.organization_contact}`}
-              className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-rose-600 text-white py-2.5 rounded-lg text-sm font-bold transition-all shadow-md group-hover:bg-rose-500"
-            >
-              <Phone className="h-4 w-4" />
-              Contact Facility
-            </a>
+            <div className="flex gap-3 mt-4 pt-3 border-t border-slate-800/50">
+              <a
+                href={`tel:${donor.organization_contact}`}
+                className="w-full flex md:hidden items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded-lg text-sm font-bold transition-all shadow-md"
+              >
+                <Phone className="h-4 w-4" />
+                Call Facility
+              </a>
+              <button
+                onClick={handleCopyPhone}
+                className="w-full hidden md:flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-lg text-sm font-bold transition-all shadow-md border border-slate-700 hover:border-slate-600"
+              >
+                <Copy className="h-4 w-4 text-slate-400" />
+                Copy Contact Number
+              </button>
+            </div>
           </div>
 
           <p className="text-[10px] font-medium text-slate-500 text-center mt-3 leading-relaxed px-2">

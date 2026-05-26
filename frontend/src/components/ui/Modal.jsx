@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -19,21 +20,17 @@ export function Modal({ isOpen, onClose, title, children, className }) {
   useEffect(() => {
     if (!isOpen) return;
 
-    // 1. Store the element that had focus before the modal opened
     previousFocusRef.current = document.activeElement;
 
-    // 2. Focus the modal container itself so screen readers start reading the title
     requestAnimationFrame(() => {
       if (modalRef.current) {
         modalRef.current.focus();
       }
     });
 
-    // Prevent background scrolling while modal is open
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = "hidden";
 
-    // 3. Handle keyboard events (Tab trapping and Escape to close)
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         onCloseRef.current();
@@ -42,7 +39,6 @@ export function Modal({ isOpen, onClose, title, children, className }) {
 
       if (e.key === "Tab") {
         if (!modalRef.current) return;
-
         const focusableElements = modalRef.current.querySelectorAll(
           'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
         );
@@ -75,7 +71,6 @@ export function Modal({ isOpen, onClose, title, children, className }) {
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      // 4. Cleanup: Remove listener, restore scroll, and return focus
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = originalStyle;
 
@@ -87,8 +82,9 @@ export function Modal({ isOpen, onClose, title, children, className }) {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+  // Render the modal into the document body to escape parent stacking contexts
+  return createPortal(
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-0">
       {/* Dimmed Glassmorphic Backdrop */}
       <div
         className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300"
@@ -104,7 +100,7 @@ export function Modal({ isOpen, onClose, title, children, className }) {
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-2xl border border-slate-700/60 bg-slate-900/95 backdrop-blur-xl p-6 sm:p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in zoom-in-95 fade-in duration-300 focus:outline-none",
+          "relative z-101 w-full max-w-lg rounded-2xl border border-slate-700/60 bg-slate-900/95 backdrop-blur-xl p-6 sm:p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in zoom-in-95 fade-in duration-300 focus:outline-none",
           className,
         )}
       >
@@ -122,6 +118,7 @@ export function Modal({ isOpen, onClose, title, children, className }) {
         </div>
         <div>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
