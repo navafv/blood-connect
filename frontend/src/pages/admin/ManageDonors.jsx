@@ -4,8 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users,
   Plus,
-  Search,
-  Filter,
   Edit,
   Archive,
   Calendar,
@@ -15,7 +13,12 @@ import {
   FileUp,
   Download,
   CheckCircle2,
+  SearchX,
+  MapPin,
+  Save,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
 import { Button } from "../../components/ui/Button";
 import {
   Card,
@@ -24,57 +27,86 @@ import {
   CardTitle,
 } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
-import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
+import { Input } from "../../components/ui/Input";
 import { DonorFilters } from "../../components/donors/DonorFilters";
 import api from "../../lib/axios";
 
+/**
+ * Registry Management Interface
+ * Permits authorized tenant staff to execute CRUD operations on their geographically
+ * locked donor pool. Includes client-side filtering, inline editing, and bulk ingest capabilities.
+ */
 export default function ManageDonors() {
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Bulk Upload State
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploadResult, setUploadResult] = useState(null);
-
-  // 1. Initialize Query Client for cache invalidation
   const queryClient = useQueryClient();
 
+  // --- Filtering & Bulk Upload State ---
   const [activeFilters, setActiveFilters] = useState({
     bloodGroup: "",
     searchQuery: "",
   });
 
-  // 2. Fetch Donors using React Query (Replaces useEffect & useState)
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadResult, setUploadResult] = useState(null);
+
+  // --- Edit Donor State ---
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDonor, setEditingDonor] = useState(null);
+
+  // --- Query Pipeline: Fetch Registry ---
   const {
     data: donors = [],
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["tenantDonors"],
     queryFn: async () => {
       const response = await api.get("/tenant/donors/");
-      // Using .results just in case Pagination is enabled on this endpoint
       return response.data.results || response.data;
     },
   });
 
-  // 3. Delete/Archive Mutation (Replaces standard async function)
-  const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      await api.delete(`/tenant/donors/${id}/`);
+  // --- Mutation Pipeline: Edit Record ---
+  const editMutation = useMutation({
+    mutationFn: async (updatedData) => {
+      // Use PATCH to execute a partial update securely
+      const response = await api.patch(
+        `/tenant/donors/${updatedData.id}/`,
+        updatedData,
+      );
+      return response.data;
     },
     onSuccess: () => {
-      // Instantly triggers a background refetch to update the table
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+      toast.success("Donor record updated successfully.");
+      setIsEditModalOpen(false);
+      setEditingDonor(null);
     },
-    onError: () => {
-      alert("Failed to archive donor. Please try again.");
+    onError: (err) => {
+      toast.error(
+        err.response?.data?.error ||
+          err.response?.data?.detail ||
+          "Failed to update record. Check server logs.",
+      );
     },
   });
 
-  // 4. Bulk Upload Mutation (Replaces manual isUploading state)
+  // --- Mutation Pipeline: Archive Record ---
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => await api.delete(`/tenant/donors/${id}/`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+      toast.success("Donor record archived successfully.");
+    },
+    onError: () => {
+      toast.error("Failed to archive record. Please verify permissions.");
+    },
+  });
+
+  // --- Mutation Pipeline: Bulk Ingest ---
   const uploadMutation = useMutation({
     mutationFn: async (formData) => {
       const response = await api.post("/tenant/donors/bulk-upload/", formData, {
@@ -88,28 +120,62 @@ export default function ManageDonors() {
         message: data.message,
         errors: data.errors,
       });
-      // Invalidate cache to show new donors immediately
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
       setUploadFile(null);
+      toast.success("Batch import processed successfully.");
     },
     onError: (err) => {
       setUploadResult({
         success: false,
         message:
-          err.response?.data?.error || "An error occurred during upload.",
+          err.response?.data?.error ||
+          "A critical error occurred during the ingestion sequence.",
       });
+      toast.error("Batch import failed.");
     },
   });
 
-  // --- Handlers ---
+  // --- Action Handlers ---
+  const handleEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditingDonor((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  /**
+   * 🛡️ SANITIZED EDIT SUBMISSION
+   * We explicitly construct the payload to prevent Django from crashing (500 Error)
+   * when it tries to deserialize read-only or relational properties.
+   */
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    if (!editingDonor) return;
+
+    const payload = {
+      id: editingDonor.id,
+      full_name: editingDonor.full_name,
+      phone_number: editingDonor.phone_number,
+      blood_group: editingDonor.blood_group,
+      gender: editingDonor.gender, // Added missing gender field
+      date_of_birth: editingDonor.date_of_birth,
+      // Convert empty strings to strict null to satisfy PostgreSQL DateField constraints
+      last_donation_date: editingDonor.last_donation_date || null,
+      is_permanently_deferred: editingDonor.is_permanently_deferred || false,
+    };
+
+    editMutation.mutate(payload);
+  };
+
   const handleDelete = (id, name) => {
     if (
       !window.confirm(
-        `Are you sure you want to archive ${name}? This will remove them from the active registry.`,
+        `Are you sure you want to archive ${name}? This will suspend them from the active public registry.`,
       )
-    )
+    ) {
       return;
-    // Trigger the mutation
+    }
     deleteMutation.mutate(id);
   };
 
@@ -120,8 +186,6 @@ export default function ManageDonors() {
     setUploadResult(null);
     const formData = new FormData();
     formData.append("file", uploadFile);
-
-    // Trigger the mutation
     uploadMutation.mutate(formData);
   };
 
@@ -135,9 +199,10 @@ export default function ManageDonors() {
     a.href = url;
     a.download = "bloodconnect_donor_import_template.csv";
     a.click();
+    toast("Template downloaded.", { icon: "📥" });
   };
 
-  // Local Search Filtering (runs instantly on cached query data)
+  // --- Client-Side Search & Filter Engine ---
   const filteredDonors = donors.filter((donor) => {
     const matchesBloodGroup = activeFilters.bloodGroup
       ? donor.blood_group === activeFilters.bloodGroup
@@ -154,70 +219,81 @@ export default function ManageDonors() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
+      {/* --- Workspace Header --- */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Users className="h-6 w-6 text-rose-500" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
+            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+              <Users className="h-5 w-5 text-rose-500" />
+            </div>
             Donor Registry
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Manage your organization's verified blood donors
+          <p className="text-sm text-slate-400 mt-2">
+            Administer your organization's verified blood donor pool.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
             variant="outline"
-            className="gap-2 border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300"
+            className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 w-full sm:w-auto transition-colors"
             onClick={() => setIsUploadModalOpen(true)}
           >
             <FileUp className="h-4 w-4" /> Bulk Import
           </Button>
-          <Link to="/admin/add-donor">
-            <Button variant="primary" className="gap-2">
-              <Plus className="h-4 w-4" /> Add New Donor
+          <Link to="/admin/add-donor" className="w-full sm:w-auto">
+            <Button
+              variant="primary"
+              className="gap-2 shadow-lg w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4" /> Register Donor
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Analytics / Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+      {/* --- High-Level Analytics Matrix --- */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+        <Card className="bg-slate-900/40 border-slate-800/60 shadow-md">
+          <CardContent className="p-5 flex items-center gap-5">
+            <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shrink-0">
               <Users className="h-6 w-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Total Donors</p>
-              <p className="text-2xl font-bold text-white">{donors.length}</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">
+                Total Records
+              </p>
+              <p className="text-2xl font-black text-white">{donors.length}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+        <Card className="bg-slate-900/40 border-emerald-500/20 shadow-md">
+          <CardContent className="p-5 flex items-center gap-5">
+            <div className="h-12 w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
               <Droplet className="h-6 w-6 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Available Now</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-0.5">
+                Available Now
+              </p>
+              <p className="text-2xl font-black text-white">
                 {donors.filter((d) => d.is_available_now).length}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+        <Card className="bg-slate-900/40 border-amber-500/20 shadow-md">
+          <CardContent className="p-5 flex items-center gap-5">
+            <div className="h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
               <Calendar className="h-6 w-6 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Resting / Waiting</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-0.5">
+                Resting Period
+              </p>
+              <p className="text-2xl font-black text-white">
                 {
                   donors.filter(
                     (d) => !d.is_available_now && !d.is_permanently_deferred,
@@ -229,106 +305,123 @@ export default function ManageDonors() {
         </Card>
       </div>
 
-      {/* Main Content Area */}
-      <Card className="border-slate-800 bg-slate-900/80 backdrop-blur-xl">
-        <CardHeader className="border-b border-slate-800 pb-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <CardTitle className="text-lg font-medium text-white">
-              Registered Donors
+      {/* --- Primary Data Table Area --- */}
+      <Card className="border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
+        <CardHeader className="border-b border-slate-800/60 pb-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <CardTitle className="text-lg font-bold text-white tracking-tight">
+              Active Registry
             </CardTitle>
           </div>
-
           <DonorFilters onFilter={setActiveFilters} />
         </CardHeader>
 
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <Loader2 className="h-8 w-8 animate-spin mb-4 text-rose-500" />
-              <p>Loading your registry...</p>
+            <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+              <p className="text-sm font-medium tracking-widest uppercase">
+                Fetching Records...
+              </p>
             </div>
           ) : isError ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <AlertCircle className="h-8 w-8 mb-4 text-rose-500" />
-              <p>{error?.message || "Failed to load registry."}</p>
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <AlertCircle className="h-10 w-10 mb-4 text-rose-500" />
+              <p className="text-slate-300 font-medium mb-4">
+                {error?.message ||
+                  "Failed to establish connection with registry database."}
+              </p>
               <Button
                 variant="outline"
-                className="mt-4"
-                onClick={() => queryClient.invalidateQueries(["tenantDonors"])}
+                className="border-slate-700 bg-slate-900/50"
+                onClick={() => refetch()}
               >
-                Try Again
+                Retry Connection
               </Button>
             </div>
-          ) : filteredDonors.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 text-center px-4">
-              <div className="h-16 w-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-slate-500" />
+          ) : donors.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center px-4 animate-in fade-in duration-500">
+              <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+                <Users className="h-10 w-10 text-slate-500" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">
-                No Donors Found
+              <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                Registry is Empty
               </h3>
-              <p className="max-w-sm mb-6">
-                {searchTerm
-                  ? `We couldn't find any donors matching "${searchTerm}".`
-                  : "Your registry is currently empty. Start building your local network by adding a donor."}
+              <p className="text-slate-400 max-w-sm mb-8 leading-relaxed text-sm">
+                Your organizational pool has no active donors. Begin by
+                registering an individual or executing a bulk import.
               </p>
-              {!searchTerm && (
-                <Link to="/admin/add-donor">
-                  <Button variant="primary">Add Your First Donor</Button>
-                </Link>
-              )}
+              <Link to="/admin/add-donor">
+                <Button variant="primary" className="shadow-lg">
+                  Initialize Registry
+                </Button>
+              </Link>
+            </div>
+          ) : filteredDonors.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center px-4 animate-in fade-in duration-300">
+              <SearchX className="h-12 w-12 text-slate-600 mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">
+                No Matches Found
+              </h3>
+              <p className="text-slate-400 text-sm max-w-sm">
+                No records in the active registry match the query:{" "}
+                <strong className="text-slate-300">
+                  "{activeFilters.searchQuery}"
+                </strong>
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400 bg-slate-950/30">
-                    <th className="px-6 py-4 font-semibold">Donor Profile</th>
-                    <th className="px-6 py-4 font-semibold">Contact</th>
-                    <th className="px-6 py-4 font-semibold">Location</th>
-                    <th className="px-6 py-4 font-semibold">Status</th>
-                    <th className="px-6 py-4 font-semibold text-right">
-                      Actions
-                    </th>
+                  <tr className="border-b border-slate-800/80 text-xs uppercase tracking-wider text-slate-500 font-bold bg-slate-950/40">
+                    <th className="px-6 py-5">Donor Identity</th>
+                    <th className="px-6 py-5">Contact Vector</th>
+                    <th className="px-6 py-5">Location Lock</th>
+                    <th className="px-6 py-5">Operational Status</th>
+                    <th className="px-6 py-5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50">
                   {filteredDonors.map((donor) => (
                     <tr
                       key={donor.id}
-                      className="hover:bg-slate-800/20 transition-colors"
+                      className="hover:bg-slate-800/30 transition-colors group"
                     >
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-bold text-sm">
+                        <div className="flex items-center gap-4">
+                          <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-black text-sm shadow-inner group-hover:bg-rose-500/20 transition-colors">
                             {donor.blood_group}
                           </div>
                           <div>
-                            <p className="font-medium text-white">
+                            <p className="font-bold text-white text-sm">
                               {donor.full_name}
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs font-medium text-slate-500 mt-0.5">
                               {donor.gender === "M"
                                 ? "Male"
                                 : donor.gender === "F"
                                   ? "Female"
-                                  : "Other"}
+                                  : "Other"}{" "}
+                              • {donor.date_of_birth}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-slate-300 font-mono">
+                        <p className="text-sm font-semibold text-slate-300 font-mono tracking-tight">
                           {donor.phone_number}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Last Donated: {donor.last_donation_date || "Never"}
+                        <p className="text-xs font-medium text-slate-500 mt-1">
+                          Last Donated:{" "}
+                          {donor.last_donation_date || "No History"}
                         </p>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-slate-300">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300">
+                          <MapPin className="h-3 w-3 text-slate-500" />
                           {donor.district_name || "Unknown"}
-                        </p>
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         {donor.is_permanently_deferred ? (
@@ -355,27 +448,31 @@ export default function ManageDonors() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-slate-400 hover:text-white"
+                            className="h-8 w-8 p-0 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
                             aria-label={`Edit ${donor.full_name}`}
+                            onClick={() => {
+                              setEditingDonor(donor);
+                              setIsEditModalOpen(true);
+                            }}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
+
                           <Button
                             variant="ghost"
                             size="sm"
                             title="Archive Record"
                             aria-label={`Archive ${donor.full_name}`}
-                            className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 disabled:opacity-50"
+                            className="h-8 w-8 p-0 text-amber-500/70 hover:text-amber-400 hover:bg-amber-500/10 disabled:opacity-50 transition-colors"
                             onClick={() =>
                               handleDelete(donor.id, donor.full_name)
                             }
                             disabled={deleteMutation.isPending}
                           >
-                            {/* Show loading spinner only on the specific item being deleted */}
                             {deleteMutation.isPending &&
                             deleteMutation.variables === donor.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -394,39 +491,203 @@ export default function ManageDonors() {
         </CardContent>
       </Card>
 
-      {/* --- Bulk Upload Modal --- */}
+      {/* --- Edit Donor Modal (NEW) --- */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingDonor(null);
+        }}
+        title="Edit Donor Record"
+      >
+        {editingDonor && (
+          <form onSubmit={handleEditSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Full Name
+                </label>
+                <Input
+                  name="full_name"
+                  value={editingDonor.full_name || ""}
+                  onChange={handleEditChange}
+                  className="bg-slate-950/50"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Phone Number
+                </label>
+                <Input
+                  name="phone_number"
+                  value={editingDonor.phone_number || ""}
+                  onChange={handleEditChange}
+                  className="bg-slate-950/50"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Blood Group
+                </label>
+                <select
+                  name="blood_group"
+                  value={editingDonor.blood_group || ""}
+                  onChange={handleEditChange}
+                  className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors"
+                  required
+                >
+                  <option value="" disabled>
+                    Select Group
+                  </option>
+                  {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map(
+                    (bg) => (
+                      <option key={bg} value={bg}>
+                        {bg}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+              {/* Added missing gender field here */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Gender
+                </label>
+                <select
+                  name="gender"
+                  value={editingDonor.gender || ""}
+                  onChange={handleEditChange}
+                  className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors"
+                  required
+                >
+                  <option value="" disabled>
+                    Select Gender
+                  </option>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                  <option value="O">Other</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Date of Birth
+                </label>
+                <Input
+                  name="date_of_birth"
+                  type="date"
+                  value={editingDonor.date_of_birth || ""}
+                  onChange={handleEditChange}
+                  className="bg-slate-950/50"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Last Donation Date
+                </label>
+                <Input
+                  name="last_donation_date"
+                  type="date"
+                  value={editingDonor.last_donation_date || ""}
+                  onChange={handleEditChange}
+                  className="bg-slate-950/50"
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label className="flex items-center gap-3 p-4 rounded-xl border border-rose-500/20 bg-rose-500/5 cursor-pointer hover:bg-rose-500/10 transition-colors">
+                  <input
+                    type="checkbox"
+                    name="is_permanently_deferred"
+                    checked={editingDonor.is_permanently_deferred || false}
+                    onChange={handleEditChange}
+                    className="h-5 w-5 rounded border-slate-600 bg-slate-950 text-rose-500 focus:ring-rose-500"
+                  />
+                  <div className="text-sm">
+                    <span className="font-semibold text-rose-400 block mb-1">
+                      Permanently Deferred
+                    </span>
+                    <span className="text-slate-400 text-xs">
+                      Mark this donor as medically ineligible for future
+                      donations. They will no longer appear in public search
+                      results.
+                    </span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingDonor(null);
+                }}
+                className="text-slate-400 hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={editMutation.isPending}
+                className="gap-2 shadow-lg"
+              >
+                {editMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Save Changes
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* --- Batch Import Modal --- */}
       <Modal
         isOpen={isUploadModalOpen}
         onClose={() => {
           setIsUploadModalOpen(false);
           setUploadResult(null);
         }}
-        title="Bulk Import Donors (CSV)"
+        title="Batch Record Ingestion"
       >
         <div className="space-y-6">
-          <p className="text-sm text-slate-400">
-            Upload an Excel/CSV file to instantly import your existing donor
-            database. All imported donors will automatically be assigned to your
-            organization's geographic region.
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Upload an authorized CSV payload to map legacy records to your
+            current tenant workspace. All imported entities are automatically
+            locked to your organizational jurisdiction.
           </p>
 
-          <div className="p-4 bg-slate-900 border border-slate-700 rounded-lg flex items-center justify-between">
+          <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between shadow-inner">
             <div className="flex items-center gap-3">
               <Download className="h-5 w-5 text-emerald-500" />
               <div className="text-sm text-white font-medium">
-                Need the correct format?
+                Standard Ingestion Matrix
               </div>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={downloadTemplate}
-              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+              className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
             >
               Download Template
             </Button>
           </div>
 
+          {/* Ingestion Telemetry Feedback */}
           {uploadResult && (
             <div
               className={`p-4 rounded-xl text-sm border ${
@@ -449,8 +710,9 @@ export default function ManageDonors() {
                     <li key={i}>{err}</li>
                   ))}
                   {uploadResult.errors.length > 5 && (
-                    <li>
-                      ...and {uploadResult.errors.length - 5} more warnings.
+                    <li className="font-semibold pt-1">
+                      ...and {uploadResult.errors.length - 5} additional
+                      warnings suppressed.
                     </li>
                   )}
                 </ul>
@@ -458,9 +720,10 @@ export default function ManageDonors() {
             </div>
           )}
 
+          {/* Upload Input Target */}
           <form onSubmit={handleFileUpload}>
             <div className="space-y-4">
-              <label className="block w-full cursor-pointer">
+              <label className="block w-full cursor-pointer group">
                 <input
                   type="file"
                   accept=".csv"
@@ -468,24 +731,24 @@ export default function ManageDonors() {
                   onChange={(e) => setUploadFile(e.target.files[0])}
                 />
                 <div
-                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl transition-colors ${
+                  className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl transition-all duration-300 ${
                     uploadFile
                       ? "border-emerald-500 bg-emerald-500/5"
-                      : "border-slate-700 hover:border-slate-600 bg-slate-900/50"
+                      : "border-slate-700 group-hover:border-rose-500/50 bg-slate-900/50 group-hover:bg-slate-900/80"
                   }`}
                 >
                   {uploadFile ? (
                     <>
-                      <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
-                      <span className="text-emerald-400 font-medium">
+                      <CheckCircle2 className="h-10 w-10 text-emerald-500 mb-3" />
+                      <span className="text-emerald-400 font-semibold tracking-wide">
                         {uploadFile.name}
                       </span>
                     </>
                   ) : (
                     <>
-                      <FileUp className="h-8 w-8 text-slate-500 mb-2" />
-                      <span className="text-slate-400 text-sm">
-                        Click to browse or drag and drop a .csv file
+                      <FileUp className="h-10 w-10 text-slate-500 mb-3 group-hover:text-rose-500 transition-colors" />
+                      <span className="text-slate-400 text-sm font-medium">
+                        Click to browse or drop CSV payload
                       </span>
                     </>
                   )}
@@ -493,28 +756,31 @@ export default function ManageDonors() {
               </label>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-800">
+            <div className="flex justify-end gap-3 mt-8 pt-5 border-t border-slate-800">
               <Button
                 type="button"
                 variant="ghost"
                 className="text-slate-400 hover:text-white"
-                onClick={() => setIsUploadModalOpen(false)}
+                onClick={() => {
+                  setIsUploadModalOpen(false);
+                  setUploadResult(null);
+                }}
               >
-                Cancel
+                Abort
               </Button>
               <Button
                 type="submit"
                 variant="primary"
                 disabled={!uploadFile || uploadMutation.isPending}
-                className="min-w-32"
+                className="min-w-40 font-semibold shadow-lg"
               >
                 {uploadMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />{" "}
-                    Uploading...
+                    Processing...
                   </>
                 ) : (
-                  "Import Data"
+                  "Execute Import"
                 )}
               </Button>
             </div>

@@ -1,109 +1,179 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Phone, Mail, Building2, Loader2, Droplet } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Building2,
+  Loader2,
+  Droplet,
+  ArrowLeft,
+  HeartPulse,
+} from "lucide-react";
 import api from "../../lib/axios";
 import { DonorCard } from "../../components/donors/DonorCard";
+import { Button } from "../../components/ui/Button";
 
+/**
+ * Organization Public Profile (Tenant Mini-Site)
+ * Dynamically generated public page for registered organizations. Displays
+ * institutional details and a scoped directory of their active donors.
+ */
 export default function OrganizationProfile() {
   const { slug } = useParams();
 
-  // 1. Fetch Hospital Details
-  const { data: org, isLoading: orgLoading } = useQuery({
+  // --- 1. Institutional Identity Query ---
+  const {
+    data: org,
+    isLoading: orgLoading,
+    isError: orgError,
+  } = useQuery({
     queryKey: ["public-org", slug],
     queryFn: async () => {
       const res = await api.get(`/public/organizations/${slug}/`);
       return res.data;
     },
+    retry: 1,
   });
 
-  // 2. Fetch Donors ONLY belonging to this Hospital
+  // --- 2. Scoped Donor Directory Query ---
   const { data: donorData, isLoading: donorsLoading } = useQuery({
     queryKey: ["org-donors", org?.id],
     queryFn: async () => {
-      const res = await api.get(`/donors/search/?organization=${org.id}`);
+      // 🛡️ Corrected namespace to hit the public API layer
+      const res = await api.get(
+        `/public/donors/search/?organization=${org.id}`,
+      );
       return res.data.results || res.data;
     },
-    enabled: !!org?.id,
+    enabled: !!org?.id, // Only execute once the Organization ID is resolved
   });
 
-  if (orgLoading)
+  // --- State: Loading ---
+  if (orgLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
+        <span className="text-sm font-medium tracking-widest text-slate-500 animate-pulse">
+          RESOLVING PROFILE...
+        </span>
       </div>
     );
-  if (!org)
+  }
+
+  // --- State: 404 / Inactive ---
+  if (orgError || !org) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-400">
-        Organization not found or inactive.
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 text-center">
+        <Building2 className="h-20 w-20 text-slate-800 mb-6" />
+        <h2 className="text-2xl font-bold text-white mb-2">
+          Organization Unavailable
+        </h2>
+        <p className="text-slate-400 max-w-md mb-8">
+          The facility you are looking for does not exist, or their directory
+          has been temporarily suspended.
+        </p>
+        <Link to="/search">
+          <Button variant="outline" className="rounded-full gap-2">
+            <ArrowLeft className="h-4 w-4" /> Return to Global Search
+          </Button>
+        </Link>
       </div>
     );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Hero Banner Section */}
-      <div className="relative h-64 md:h-96 w-full bg-slate-900 border-b border-slate-800 overflow-hidden">
+    <div className="min-h-screen bg-slate-950 pb-24">
+      {/* --- Dynamic Hero Banner --- */}
+      <div className="relative h-75 md:h-100 w-full bg-slate-900 border-b border-slate-800 overflow-hidden animate-in fade-in duration-700">
         {org.banner_image ? (
           <img
             src={org.banner_image}
             alt={org.name}
-            className="w-full h-full object-cover opacity-60"
+            className="w-full h-full object-cover opacity-50 scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-linear-to-r from-slate-900 to-slate-800">
-            <Building2 className="h-24 w-24 text-slate-800" />
+          <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+            <Building2 className="h-32 w-32 text-slate-950 opacity-50" />
           </div>
         )}
-        <div className="absolute bottom-0 left-0 w-full bg-linear-to-t from-slate-950 to-transparent p-8">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-4xl font-bold text-white mb-2">{org.name}</h1>
-            <div className="flex items-center gap-4 text-slate-300 text-sm">
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4 text-rose-500" /> {org.district_name}
-                , {org.state_name}
-              </span>
-              <span className="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-md border border-rose-500/30">
-                {org.org_type}
-              </span>
+
+        {/* Vignette Overlays */}
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/60 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-slate-950/80 to-transparent" />
+
+        <div className="absolute bottom-0 left-0 w-full p-6 md:p-10">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="animate-in slide-in-from-left-8 duration-700 delay-100">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4">
+                Verified {org.org_type}
+              </div>
+              <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-3">
+                {org.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-4 text-slate-300 font-medium">
+                <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/50">
+                  <MapPin className="h-4 w-4 text-rose-500" />
+                  {org.district_name}, {org.state_name}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Details & Photos */}
-        <div className="lg:col-span-1 space-y-8">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm">
-            <h3 className="text-lg font-bold text-white mb-4 border-b border-slate-800 pb-2">
-              Contact Facility
+      {/* --- Main Content Grid --- */}
+      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Left Column: Institutional Details */}
+        <div className="lg:col-span-1 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+          <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <Phone className="h-5 w-5 text-blue-500" /> Contact Details
             </h3>
-            <div className="space-y-4 text-sm text-slate-300">
-              <p className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-emerald-500" />{" "}
-                {org.contact_phone}
-              </p>
-              <p className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-blue-500" /> {org.contact_email}
-              </p>
-              <p className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-rose-500 shrink-0" />{" "}
-                <span>
+            <div className="space-y-6 text-sm text-slate-300">
+              <div className="group">
+                <p className="text-xs text-slate-500 font-semibold uppercase mb-1">
+                  Direct Line
+                </p>
+                <a
+                  href={`tel:${org.contact_phone}`}
+                  className="text-base text-slate-200 hover:text-blue-400 transition-colors font-medium"
+                >
+                  {org.contact_phone}
+                </a>
+              </div>
+              <div className="group">
+                <p className="text-xs text-slate-500 font-semibold uppercase mb-1">
+                  Email
+                </p>
+                <a
+                  href={`mailto:${org.contact_email}`}
+                  className="text-base text-slate-200 hover:text-blue-400 transition-colors font-medium"
+                >
+                  {org.contact_email}
+                </a>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-semibold uppercase mb-1">
+                  Physical Address
+                </p>
+                <p className="text-base text-slate-200 leading-relaxed">
                   {org.address_line}
                   <br />
-                  {org.district_name}, {org.state_name}, {org.country_name}
-                </span>
-              </p>
+                  {org.district_name}, {org.state_name}
+                  <br />
+                  {org.country_name}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm">
-            <h3 className="text-lg font-bold text-white mb-4 border-b border-slate-800 pb-2">
-              About Us
-            </h3>
-            <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap">
+          <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-4">About Us</h3>
+            <p className="text-base text-slate-400 leading-relaxed whitespace-pre-wrap">
               {org.description ||
-                "Committed to saving lives through secure and managed blood donations."}
+                "Committed to saving lives through secure, community-driven blood donation management."}
             </p>
           </div>
 
@@ -111,47 +181,66 @@ export default function OrganizationProfile() {
           {(org.gallery_photo_1 || org.gallery_photo_2) && (
             <div className="grid grid-cols-2 gap-4">
               {org.gallery_photo_1 && (
-                <img
-                  src={org.gallery_photo_1}
-                  alt="Gallery 1"
-                  className="w-full h-32 object-cover rounded-xl border border-slate-800 shadow-lg"
-                />
+                <div className="aspect-square rounded-2xl overflow-hidden border border-slate-800 shadow-xl group">
+                  <img
+                    src={org.gallery_photo_1}
+                    alt="Facility Area 1"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
               )}
               {org.gallery_photo_2 && (
-                <img
-                  src={org.gallery_photo_2}
-                  alt="Gallery 2"
-                  className="w-full h-32 object-cover rounded-xl border border-slate-800 shadow-lg"
-                />
+                <div className="aspect-square rounded-2xl overflow-hidden border border-slate-800 shadow-xl group">
+                  <img
+                    src={org.gallery_photo_2}
+                    alt="Facility Area 2"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Right Column: Local Donor Search */}
-        <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Droplet className="h-6 w-6 text-rose-500" /> Local Donor
-              Directory
-            </h2>
+        {/* Right Column: Embedded Donor Directory */}
+        <div className="lg:col-span-2 animate-in fade-in slide-in-from-right-8 duration-700 delay-300">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-800/50">
+            <div>
+              <h2 className="text-2xl font-extrabold text-white flex items-center gap-3">
+                <HeartPulse className="h-7 w-7 text-rose-500" /> Institutional
+                Directory
+              </h2>
+              <p className="text-slate-400 mt-2 text-sm">
+                Actively managed and medically vetted donors registered at this
+                facility.
+              </p>
+            </div>
           </div>
 
           {donorsLoading ? (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex flex-col items-center justify-center h-64 gap-4 bg-slate-900/20 rounded-3xl border border-slate-800/30">
               <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+              <p className="text-slate-500 font-medium">
+                Loading local registry...
+              </p>
             </div>
           ) : donorData && donorData.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {donorData.map((donor) => (
                 <DonorCard key={donor.id} donor={donor} />
               ))}
             </div>
           ) : (
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center">
-              <Droplet className="h-12 w-12 text-slate-700 mx-auto mb-4" />
-              <p className="text-slate-400">
-                No active donors currently registered at this facility.
+            <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-16 text-center backdrop-blur-sm shadow-inner">
+              <div className="mx-auto h-20 w-20 bg-slate-800/50 rounded-2xl flex items-center justify-center mb-6">
+                <Droplet className="h-10 w-10 text-slate-600" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                No Active Donors
+              </h3>
+              <p className="text-slate-400 max-w-sm mx-auto">
+                This facility currently does not have any eligible donors
+                published in the public directory.
               </p>
             </div>
           )}

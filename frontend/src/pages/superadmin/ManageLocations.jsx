@@ -9,7 +9,11 @@ import {
   AlertCircle,
   Globe2,
   Map,
+  MapPinOff,
+  ServerCrash,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
 import {
   Card,
   CardHeader,
@@ -22,33 +26,53 @@ import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 import api from "../../lib/axios";
 
+/**
+ * SuperAdmin Location Master Data Workspace
+ * Manages the geographic regions (Countries, States, Districts) available
+ * for tenant registration and donor jurisdiction locking.
+ */
 export default function ManageLocations() {
   const queryClient = useQueryClient();
+
+  // --- UI Transition State ---
   const [activeTab, setActiveTab] = useState("countries"); // 'countries' | 'states' | 'districts'
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // --- Payload State ---
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
-  const [errorMsg, setErrorMsg] = useState("");
 
-  // --- Data Fetching ---
-  const { data: countries = [], isLoading: loadingC } = useQuery({
+  // --- Query Pipeline: Fetch Geographic Data ---
+  const {
+    data: countries = [],
+    isLoading: loadingC,
+    isError: isErrorC,
+  } = useQuery({
     queryKey: ["admin-countries"],
     queryFn: async () =>
       (await api.get("/superadmin/locations/countries/")).data,
   });
 
-  const { data: states = [], isLoading: loadingS } = useQuery({
+  const {
+    data: states = [],
+    isLoading: loadingS,
+    isError: isErrorS,
+  } = useQuery({
     queryKey: ["admin-states"],
     queryFn: async () => (await api.get("/superadmin/locations/states/")).data,
   });
 
-  const { data: districts = [], isLoading: loadingD } = useQuery({
+  const {
+    data: districts = [],
+    isLoading: loadingD,
+    isError: isErrorD,
+  } = useQuery({
     queryKey: ["admin-districts"],
     queryFn: async () =>
       (await api.get("/superadmin/locations/districts/")).data,
   });
 
-  // --- Mutations ---
+  // --- Mutation Pipeline: Upsert Location ---
   const saveMutation = useMutation({
     mutationFn: async (payload) => {
       const endpoint = `/superadmin/locations/${activeTab}/`;
@@ -59,31 +83,37 @@ export default function ManageLocations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries([`admin-${activeTab}`]);
+      toast.success(`${activeTab.slice(0, -1)} data saved successfully.`, {
+        className: "capitalize",
+      });
       closeModal();
     },
-    onError: (err) =>
-      setErrorMsg(
+    onError: (err) => {
+      toast.error(
         err.response?.data?.detail ||
           "Failed to save location. Check your inputs.",
-      ),
+      );
+    },
   });
 
+  // --- Mutation Pipeline: Delete Location ---
   const deleteMutation = useMutation({
     mutationFn: async ({ id, tab }) =>
       await api.delete(`/superadmin/locations/${tab}/${id}/`),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries([`admin-${variables.tab}`]);
+      toast.success("Location deleted permanently.");
     },
-    onError: (err) =>
-      alert(
+    onError: (err) => {
+      toast.error(
         err.response?.data?.detail ||
-          "Cannot delete this location. It is currently in use by an organization or donor.",
-      ),
+          "Cannot delete this location. It is actively bound to a tenant or donor.",
+      );
+    },
   });
 
-  // --- Handlers ---
+  // --- Action Handlers ---
   const openModal = (item = null) => {
-    setErrorMsg("");
     setEditingItem(item);
     if (item) {
       setFormData({ ...item });
@@ -104,34 +134,87 @@ export default function ManageLocations() {
     saveMutation.mutate(formData);
   };
 
+  // --- UI Transition States ---
   const isLoading = loadingC || loadingS || loadingD;
+  const isError = isErrorC || isErrorS || isErrorD;
 
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+      <div className="flex flex-col h-[60vh] items-center justify-center text-slate-400 gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
+        <span className="text-sm font-semibold tracking-widest uppercase">
+          Fetching Geographic Data...
+        </span>
       </div>
     );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col h-[60vh] items-center justify-center text-center animate-in fade-in duration-500">
+        <div className="h-20 w-20 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 mb-6 shadow-inner">
+          <ServerCrash className="h-10 w-10 text-rose-500" />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-2">
+          Telemetry Failure
+        </h3>
+        <p className="text-slate-400 max-w-md mb-6 leading-relaxed">
+          Unable to establish connection with the central location database.
+        </p>
+        <Button
+          variant="outline"
+          className="border-slate-700 bg-slate-900/50"
+          onClick={() => window.location.reload()}
+        >
+          Reload Workspace
+        </Button>
+      </div>
+    );
+  }
+
+  // --- Helper to determine current dataset ---
+  const getCurrentData = () => {
+    switch (activeTab) {
+      case "countries":
+        return countries;
+      case "states":
+        return states;
+      case "districts":
+        return districts;
+      default:
+        return [];
+    }
+  };
+  const currentData = getCurrentData();
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+      {/* --- Workspace Header --- */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-rose-500" /> Location Master Data
+          <h1 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
+            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+              <MapPin className="h-5 w-5 text-rose-500" />
+            </div>
+            Location Master Data
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Manage geographic locks and regions available for registration.
+          <p className="text-sm text-slate-400 mt-2">
+            Manage global geographic locks and regions available for tenant
+            registration.
           </p>
         </div>
-        <Button variant="primary" className="gap-2" onClick={() => openModal()}>
-          <Plus className="h-4 w-4" /> Add New {activeTab.slice(0, -1)}
+        <Button
+          variant="primary"
+          className="gap-2 shadow-lg"
+          onClick={() => openModal()}
+        >
+          <Plus className="h-4 w-4" /> Add New{" "}
+          {activeTab.slice(0, -1).replace(/^\w/, (c) => c.toUpperCase())}
         </Button>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 p-1 bg-slate-900/50 rounded-lg w-fit border border-slate-800">
+      {/* --- Segmented Tab Navigation --- */}
+      <div className="flex gap-2 p-1.5 bg-slate-900/40 backdrop-blur-md rounded-xl w-fit border border-slate-800/60 shadow-sm">
         {[
           { id: "countries", label: "Countries", icon: Globe2 },
           { id: "states", label: "States", icon: Map },
@@ -140,187 +223,190 @@ export default function ManageLocations() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all ${
               activeTab === tab.id
-                ? "bg-rose-500 text-white shadow-md"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                ? "bg-slate-800 text-white shadow-md border border-slate-700"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent"
             }`}
           >
-            <tab.icon className="h-4 w-4" /> {tab.label}
+            <tab.icon
+              className={`h-4 w-4 ${activeTab === tab.id ? "text-rose-500" : ""}`}
+            />{" "}
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Data Table */}
-      <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md">
+      {/* --- Primary Data Table Area --- */}
+      <Card className="overflow-hidden border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-950/50 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <thead className="bg-slate-950/40 text-xs uppercase text-slate-500 font-bold border-b border-slate-800/80">
               <tr>
-                <th className="px-6 py-4 font-semibold">Name</th>
+                <th className="px-6 py-5">Nomenclature</th>
                 {activeTab === "countries" && (
-                  <th className="px-6 py-4 font-semibold">Code / TZ</th>
+                  <th className="px-6 py-5">ISO Code / Timezone</th>
                 )}
                 {activeTab === "states" && (
-                  <th className="px-6 py-4 font-semibold">Country</th>
+                  <th className="px-6 py-5">Sovereign Parent</th>
                 )}
                 {activeTab === "districts" && (
-                  <th className="px-6 py-4 font-semibold">State</th>
+                  <th className="px-6 py-5">State Parent</th>
                 )}
-                <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                <th className="px-6 py-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
-              {activeTab === "countries" &&
-                countries.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="hover:bg-slate-800/30 transition-colors"
+            <tbody className="divide-y divide-slate-800/50">
+              {currentData.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
-                    <td className="px-6 py-4 font-medium text-slate-200">
-                      {c.name}
+                    <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <MapPinOff className="h-10 w-10 text-slate-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                      No {activeTab} Found
+                    </h3>
+                    <p className="text-slate-400 max-w-sm mx-auto leading-relaxed text-sm">
+                      The active database contains no entries for this
+                      geographic tier.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                currentData.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-slate-800/30 transition-colors group"
+                  >
+                    <td className="px-6 py-4 font-bold text-white text-base">
+                      {item.name}
                     </td>
-                    <td className="px-6 py-4 text-slate-400">
-                      {c.code} <span className="opacity-50 mx-2">|</span>{" "}
-                      {c.timezone_offset}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openModal(c)}
-                      >
-                        <Edit className="h-4 w-4 text-blue-400" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          deleteMutation.mutate({ id: c.id, tab: activeTab })
-                        }
-                      >
-                        <Trash2 className="h-4 w-4 text-rose-400" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
 
-              {activeTab === "states" &&
-                states.map((s) => (
-                  <tr
-                    key={s.id}
-                    className="hover:bg-slate-800/30 transition-colors"
-                  >
-                    <td className="px-6 py-4 font-medium text-slate-200">
-                      {s.name}
-                    </td>
-                    <td className="px-6 py-4 text-slate-400">
-                      {countries.find((c) => c.id === s.country)?.name ||
-                        "Unknown"}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openModal(s)}
-                      >
-                        <Edit className="h-4 w-4 text-blue-400" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          deleteMutation.mutate({ id: s.id, tab: activeTab })
-                        }
-                      >
-                        <Trash2 className="h-4 w-4 text-rose-400" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                    {activeTab === "countries" && (
+                      <td className="px-6 py-4 text-slate-400 font-mono tracking-tight font-medium">
+                        <span className="text-blue-400">{item.code}</span>
+                        <span className="opacity-30 mx-3">|</span>
+                        {item.timezone_offset}
+                      </td>
+                    )}
 
-              {activeTab === "districts" &&
-                districts.map((d) => (
-                  <tr
-                    key={d.id}
-                    className="hover:bg-slate-800/30 transition-colors"
-                  >
-                    <td className="px-6 py-4 font-medium text-slate-200">
-                      {d.name}
-                    </td>
-                    <td className="px-6 py-4 text-slate-400">
-                      {states.find((s) => s.id === d.state)?.name || "Unknown"}
-                    </td>
+                    {activeTab === "states" && (
+                      <td className="px-6 py-4 text-slate-400 font-medium">
+                        {countries.find((c) => c.id === item.country)?.name || (
+                          <span className="italic opacity-50">Orphaned</span>
+                        )}
+                      </td>
+                    )}
+
+                    {activeTab === "districts" && (
+                      <td className="px-6 py-4 text-slate-400 font-medium">
+                        {states.find((s) => s.id === item.state)?.name || (
+                          <span className="italic opacity-50">Orphaned</span>
+                        )}
+                      </td>
+                    )}
+
                     <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openModal(d)}
-                      >
-                        <Edit className="h-4 w-4 text-blue-400" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          deleteMutation.mutate({ id: d.id, tab: activeTab })
-                        }
-                      >
-                        <Trash2 className="h-4 w-4 text-rose-400" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Edit Location"
+                          className="h-8 w-8 p-0 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                          onClick={() => openModal(item)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Delete Location"
+                          className="h-8 w-8 p-0 text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 disabled:opacity-50 transition-colors"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Are you sure you want to permanently delete ${item.name}?`,
+                              )
+                            ) {
+                              deleteMutation.mutate({
+                                id: item.id,
+                                tab: activeTab,
+                              });
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables?.id === item.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </Card>
 
-      {/* CRUD Modal */}
+      {/* --- CRUD Modal --- */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={`${editingItem ? "Edit" : "Add"} ${activeTab.slice(0, -1)}`}
+        title={`${editingItem ? "Edit" : "Add"} ${activeTab.slice(0, -1).replace(/^\w/, (c) => c.toUpperCase())}`}
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {errorMsg && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm rounded flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" /> {errorMsg}
-            </div>
-          )}
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm text-slate-400">Name</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Nomenclature
+            </label>
             <Input
-              className="bg-slate-950"
+              className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500"
               required
+              placeholder="e.g. Kerala"
               value={formData.name || ""}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
+              disabled={saveMutation.isPending}
             />
           </div>
 
           {activeTab === "countries" && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-sm text-slate-400">ISO Code</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  ISO Code
+                </label>
                 <Input
-                  className="bg-slate-950"
+                  className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500 font-mono"
                   required
-                  placeholder="e.g. US"
+                  placeholder="e.g. IN"
                   value={formData.code || ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, code: e.target.value })
+                    setFormData({
+                      ...formData,
+                      code: e.target.value.toUpperCase(),
+                    })
                   }
+                  disabled={saveMutation.isPending}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm text-slate-400">Timezone</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Timezone Offset
+                </label>
                 <Input
-                  className="bg-slate-950"
+                  className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500 font-mono"
                   required
-                  placeholder="e.g. UTC"
+                  placeholder="e.g. UTC+5:30"
                   value={formData.timezone_offset || ""}
                   onChange={(e) =>
                     setFormData({
@@ -328,6 +414,7 @@ export default function ManageLocations() {
                       timezone_offset: e.target.value,
                     })
                   }
+                  disabled={saveMutation.isPending}
                 />
               </div>
             </div>
@@ -335,11 +422,11 @@ export default function ManageLocations() {
 
           {activeTab === "states" && (
             <div className="space-y-2">
-              <label className="text-sm text-slate-400">
-                Belongs to Country
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Sovereign Parent (Country)
               </label>
               <Select
-                className="bg-slate-950"
+                className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500"
                 required
                 value={formData.country || ""}
                 onChange={(e) =>
@@ -348,8 +435,11 @@ export default function ManageLocations() {
                     country: parseInt(e.target.value),
                   })
                 }
+                disabled={saveMutation.isPending}
               >
-                <option value="">Select Country</option>
+                <option value="" disabled>
+                  Select Parent Country
+                </option>
                 {countries.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -361,16 +451,21 @@ export default function ManageLocations() {
 
           {activeTab === "districts" && (
             <div className="space-y-2">
-              <label className="text-sm text-slate-400">Belongs to State</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                State Parent
+              </label>
               <Select
-                className="bg-slate-950"
+                className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500"
                 required
                 value={formData.state || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, state: parseInt(e.target.value) })
                 }
+                disabled={saveMutation.isPending}
               >
-                <option value="">Select State</option>
+                <option value="" disabled>
+                  Select Parent State
+                </option>
                 {states.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -380,17 +475,27 @@ export default function ManageLocations() {
             </div>
           )}
 
-          <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={closeModal}>
-              Cancel
+          <div className="pt-6 border-t border-slate-800 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={closeModal}
+              className="text-slate-400 hover:text-white"
+              disabled={saveMutation.isPending}
+            >
+              Abort
             </Button>
             <Button
               type="submit"
               variant="primary"
               disabled={saveMutation.isPending}
+              className="shadow-lg min-w-32"
             >
               {saveMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />{" "}
+                  Committing...
+                </>
               ) : (
                 "Save Data"
               )}

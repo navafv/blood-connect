@@ -1,31 +1,63 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "react-hot-toast";
+
 import App from "./App.jsx";
 import "./index.css";
 
-// 1. Import React Query
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-// 2. Initialize the Client with default caching rules
+/**
+ * Global Query Client Configuration
+ * Establishes baseline caching and invalidation strategies for server state.
+ */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // Data is considered "fresh" for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Unused data is kept in memory for 30 minutes
-      retry: 1, // Only retry failed requests once
-      refetchOnWindowFocus: true, // Auto-update data if the user switches browser tabs
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
+      retry: 1,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
     },
   },
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {/* 3. Wrap the App */}
     <QueryClientProvider client={queryClient}>
+      {/*
+        Global Notification Boundary
+        Statically styled to inherit the application's dark mode design system.
+      */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className:
+            "bg-slate-800 text-slate-100 border border-slate-700 shadow-2xl",
+          style: {
+            background: "#1e293b",
+            color: "#f1f5f9",
+            border: "1px solid #334155",
+            borderRadius: "12px",
+          },
+          success: {
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#1e293b",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#e11d48",
+              secondary: "#1e293b",
+            },
+          },
+        }}
+      />
+
       <App />
 
-      {/* 4. Add the Devtools (only visible in development mode) */}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </React.StrictMode>,

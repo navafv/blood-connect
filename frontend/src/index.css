@@ -1,7 +1,83 @@
 @import "tailwindcss";
 
-/* You can define your global modern dark theme variables here later */
+/* * 1. Global Theme Configuration (Tailwind v4 specification)
+ * Extending the base theme with our primary brand colors.
+ */
 @theme {
-  --color-primary: #e11d48; /* Rose 600 - Good for blood donation theme */
-  --color-background-dark: #0f172a;
+  --color-primary: #e11d48; /* Rose 600 - Core brand color */
+  --color-primary-hover: #be123c; /* Rose 700 - Hover state */
+  --color-background-dark: #0f172a; /* Slate 900 */
+  --color-background-darker: #020617; /* Slate 950 */
+}
+
+/* * 2. Base Browser Resets & Enhancements
+ * Using @layer base allows Tailwind to properly order these rules
+ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Forces high-quality font rendering on Windows & Linux */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-background-darker);
+    color: #e2e8f0; /* slate-200 */
+    overflow-x: hidden; /* Prevent horizontal scroll bouncing */
+  }
+
+  /* * 3. Branded Text Selection
+   * Changes the highlight color from default blue to our brand Rose 
+   */
+  ::selection {
+    background-color: rgba(225, 29, 72, 0.3); /* Rose 600 at 30% opacity */
+    color: #fecdd3; /* Rose 200 */
+  }
+
+  /* * 4. Premium Custom Scrollbars (Webkit)
+   * Replaces the ugly default scrollbar with a sleek, dark-mode integrated one
+   */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: var(--color-background-darker);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #1e293b; /* slate-800 */
+    border-radius: 9999px;
+    border: 2px solid var(--color-background-darker);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #334155; /* slate-700 */
+  }
+
+  /* * 5. Chrome Autofill Dark Mode Fix
+   * Prevents Chrome from aggressively making autofilled inputs bright white/yellow
+   */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--color-background-dark) inset !important;
+    -webkit-text-fill-color: #f1f5f9 !important; /* slate-100 */
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* * 6. Clean Number Inputs
+   * Hides the native up/down stepper arrows on type="number" inputs
+   */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield; /* Firefox fallback */
+  }
 }

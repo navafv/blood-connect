@@ -13,7 +13,12 @@ import {
   Play,
   Pause,
   Clock,
+  MegaphoneOff,
+  ServerCrash,
+  RefreshCw,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -22,16 +27,21 @@ import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
+/**
+ * SuperAdmin Advertisement Manager
+ * Controls global platform banners, tracking click-through rates,
+ * campaign durations, and visibility states.
+ */
 export default function ManageAds() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
 
-  // Modals State
+  // --- UI Transition States ---
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null);
 
-  // Form State
+  // --- Payload States ---
   const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -39,15 +49,19 @@ export default function ManageAds() {
     duration_months: "1",
     image: null,
   });
-
   const [extendMonths, setExtendMonths] = useState("1");
 
   const baseURL =
     import.meta.env.VITE_API_URL?.replace("/api", "") ||
     "http://localhost:8000";
 
-  // --- API QUERIES & MUTATIONS ---
-  const { data: ads = [], isLoading } = useQuery({
+  // --- Query Pipeline: Fetch Campaigns ---
+  const {
+    data: ads = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["superadmin-ads"],
     queryFn: async () => {
       const res = await api.get("/superadmin/ads/");
@@ -55,6 +69,7 @@ export default function ManageAds() {
     },
   });
 
+  // --- Mutation Pipeline: Upsert Campaign ---
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = new FormData();
@@ -64,12 +79,10 @@ export default function ManageAds() {
       if (formData.image) payload.append("image", formData.image);
 
       if (selectedAd) {
-        // Edit Existing Ad
         return api.patch(`/superadmin/ads/${selectedAd.id}/`, payload, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
-        // Create New Ad
         payload.append("duration_months", formData.duration_months);
         return api.post("/superadmin/ads/", payload, {
           headers: { "Content-Type": "multipart/form-data" },
@@ -79,14 +92,32 @@ export default function ManageAds() {
     onSuccess: () => {
       queryClient.invalidateQueries(["superadmin-ads"]);
       closeFormModal();
+      toast.success(
+        selectedAd
+          ? "Campaign updated successfully."
+          : "Campaign launched successfully.",
+      );
+    },
+    onError: (err) => {
+      toast.error(
+        err.response?.data?.detail ||
+          err.response?.data?.error ||
+          "Failed to process campaign data.",
+      );
     },
   });
 
+  // --- Mutation Pipeline: Toggle Visibility ---
   const toggleMutation = useMutation({
     mutationFn: async (id) => api.post(`/superadmin/ads/${id}/toggle/`),
-    onSuccess: () => queryClient.invalidateQueries(["superadmin-ads"]),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["superadmin-ads"]);
+      toast.success("Campaign visibility updated.");
+    },
+    onError: () => toast.error("Failed to toggle campaign visibility."),
   });
 
+  // --- Mutation Pipeline: Extend Duration ---
   const extendMutation = useMutation({
     mutationFn: async () =>
       api.post(`/superadmin/ads/${selectedAd.id}/extend/`, {
@@ -96,15 +127,22 @@ export default function ManageAds() {
       queryClient.invalidateQueries(["superadmin-ads"]);
       setIsExtendModalOpen(false);
       setSelectedAd(null);
+      toast.success("Campaign duration extended.");
     },
+    onError: () => toast.error("Failed to extend campaign duration."),
   });
 
+  // --- Mutation Pipeline: Delete Campaign ---
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.delete(`/superadmin/ads/${id}/`),
-    onSuccess: () => queryClient.invalidateQueries(["superadmin-ads"]),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["superadmin-ads"]);
+      toast.success("Campaign deleted permanently.");
+    },
+    onError: () => toast.error("Failed to delete campaign."),
   });
 
-  // --- HANDLERS ---
+  // --- Action Handlers ---
   const openCreateModal = () => {
     setSelectedAd(null);
     setFormData({
@@ -150,105 +188,148 @@ export default function ManageAds() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+      {/* --- Workspace Header --- */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Megaphone className="h-6 w-6 text-rose-500" /> Advertisement
-            Manager
+          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+              <Megaphone className="h-5 w-5 text-rose-500" />
+            </div>
+            Advertisement Manager
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Upload banners, control visibility, and extend ad durations.
+          <p className="text-sm text-slate-400 mt-2">
+            Upload banners, control global visibility, and extend active
+            campaign durations.
           </p>
         </div>
-        <Button variant="primary" className="gap-2" onClick={openCreateModal}>
+        <Button
+          variant="primary"
+          className="gap-2 shadow-lg w-full sm:w-auto"
+          onClick={openCreateModal}
+        >
           <Plus className="h-4 w-4" /> Create New Ad
         </Button>
       </div>
 
-      {/* Ad Table */}
-      <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md">
+      {/* --- Primary Data Table Area --- */}
+      <Card className="border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <thead className="bg-slate-950/40 text-xs uppercase text-slate-500 font-bold border-b border-slate-800/80">
               <tr>
-                <th className="px-6 py-4 font-medium">Banner & Campaign</th>
-                <th className="px-6 py-4 font-medium">Performance</th>
-                <th className="px-6 py-4 font-medium">Duration / Expiry</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                <th className="px-6 py-5">Banner & Campaign</th>
+                <th className="px-6 py-5">Performance</th>
+                <th className="px-6 py-5">Duration & Expiry</th>
+                <th className="px-6 py-5">Status</th>
+                <th className="px-6 py-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {isLoading ? (
                 <tr>
+                  <td colSpan="5" className="px-6 py-24 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-4" />
+                    <p className="text-sm font-medium tracking-widest uppercase text-slate-400">
+                      Loading Campaigns...
+                    </p>
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr>
                   <td
                     colSpan="5"
-                    className="px-6 py-12 text-center text-slate-500"
+                    className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-2" />{" "}
-                    Loading campaigns...
+                    <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <ServerCrash className="h-10 w-10 text-rose-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                      Telemetry Failure
+                    </h3>
+                    <p className="text-slate-400 max-w-sm mx-auto leading-relaxed text-sm mb-6">
+                      Unable to synchronize advertisement data from the central
+                      database.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="border-slate-700 bg-slate-900/50"
+                      onClick={() => refetch()}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" /> Retry Connection
+                    </Button>
                   </td>
                 </tr>
               ) : ads.length === 0 ? (
                 <tr>
                   <td
                     colSpan="5"
-                    className="px-6 py-12 text-center text-slate-500"
+                    className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
-                    No ads found. Create one to get started.
+                    <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <MegaphoneOff className="h-10 w-10 text-slate-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                      No Active Campaigns
+                    </h3>
+                    <p className="text-slate-400 max-w-sm mx-auto leading-relaxed text-sm">
+                      There are no active or expired advertisements on the
+                      platform. Create your first campaign to get started.
+                    </p>
                   </td>
                 </tr>
               ) : (
                 ads.map((ad) => (
                   <tr
                     key={ad.id}
-                    className="hover:bg-slate-800/30 transition-colors"
+                    className="hover:bg-slate-800/30 transition-colors group"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <img
-                          src={
-                            ad.image.startsWith("http")
-                              ? ad.image
-                              : `${baseURL}${ad.image}`
-                          }
-                          alt={ad.title}
-                          className="h-14 w-24 object-cover rounded border border-slate-700"
-                        />
+                        <div className="h-14 w-24 shrink-0 rounded-lg overflow-hidden border border-slate-700/50 shadow-sm bg-slate-950">
+                          <img
+                            src={
+                              ad.image.startsWith("http")
+                                ? ad.image
+                                : `${baseURL}${ad.image}`
+                            }
+                            alt={ad.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                         <div>
-                          <p className="font-medium text-white text-base">
+                          <p className="font-bold text-white text-sm">
                             {ad.title}
                           </p>
                           <a
                             href={ad.target_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1"
+                            className="text-xs font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1.5 mt-1 transition-colors w-fit"
                           >
-                            Target Link <ExternalLink className="h-3 w-3" />
+                            Target URL <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>
                       </div>
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 font-mono text-emerald-400 font-bold bg-emerald-500/10 w-fit px-3 py-1 rounded-lg border border-emerald-500/20">
+                      <div className="flex items-center gap-2 font-mono text-emerald-400 font-bold bg-emerald-500/10 w-fit px-3 py-1.5 rounded-lg border border-emerald-500/20 shadow-inner">
                         <MousePointerClick className="h-4 w-4" />{" "}
                         {ad.clicks.toLocaleString()}
                       </div>
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1 text-xs">
-                        <span className="text-slate-400">
+                      <div className="flex flex-col gap-1.5 text-xs font-medium">
+                        <span className="text-slate-400 flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-slate-500" />{" "}
                           Created: {formatDate(ad.created_at)}
                         </span>
                         <span
-                          className={`font-medium flex items-center gap-1 ${ad.is_expired ? "text-rose-400" : "text-slate-200"}`}
+                          className={`flex items-center gap-1.5 ${ad.is_expired ? "text-rose-400" : "text-slate-300"}`}
                         >
-                          <Calendar className="h-3 w-3" /> Expiry:{" "}
+                          <Calendar className="h-3.5 w-3.5" /> Expiry:{" "}
                           {formatDate(ad.expires_at)}
                         </span>
                       </div>
@@ -256,26 +337,44 @@ export default function ManageAds() {
 
                     <td className="px-6 py-4">
                       {ad.is_expired ? (
-                        <Badge variant="danger">Expired</Badge>
+                        <Badge
+                          variant="danger"
+                          className="bg-rose-500/10 text-rose-400 border-rose-500/20 px-2.5 py-1"
+                        >
+                          Expired
+                        </Badge>
                       ) : ad.is_active ? (
-                        <Badge variant="success">Running</Badge>
+                        <Badge
+                          variant="success"
+                          className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-2.5 py-1"
+                        >
+                          Running
+                        </Badge>
                       ) : (
-                        <Badge variant="warning">Paused</Badge>
+                        <Badge
+                          variant="warning"
+                          className="bg-amber-500/10 text-amber-400 border-amber-500/20 px-2.5 py-1"
+                        >
+                          Paused
+                        </Badge>
                       )}
                     </td>
 
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         {/* Toggle Disable/Enable */}
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           title={ad.is_active ? "Pause Ad" : "Resume Ad"}
-                          className={`h-8 w-8 ${ad.is_active ? "text-amber-400 hover:bg-amber-500/10" : "text-emerald-400 hover:bg-emerald-500/10"}`}
+                          className={`h-8 w-8 p-0 ${ad.is_active ? "text-amber-500/70 hover:text-amber-400 hover:bg-amber-500/10" : "text-emerald-500/70 hover:text-emerald-400 hover:bg-emerald-500/10"} transition-colors`}
                           onClick={() => toggleMutation.mutate(ad.id)}
                           disabled={toggleMutation.isPending || ad.is_expired}
                         >
-                          {ad.is_active ? (
+                          {toggleMutation.isPending &&
+                          toggleMutation.variables === ad.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : ad.is_active ? (
                             <Pause className="h-4 w-4" />
                           ) : (
                             <Play className="h-4 w-4" />
@@ -285,9 +384,9 @@ export default function ManageAds() {
                         {/* Extend Duration */}
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           title="Extend Duration"
-                          className="h-8 w-8 text-blue-400 hover:bg-blue-500/10"
+                          className="h-8 w-8 p-0 text-blue-500/70 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
                           onClick={() => {
                             setSelectedAd(ad);
                             setIsExtendModalOpen(true);
@@ -299,9 +398,9 @@ export default function ManageAds() {
                         {/* Edit */}
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           title="Edit Ad"
-                          className="h-8 w-8 text-slate-400 hover:text-white"
+                          className="h-8 w-8 p-0 text-slate-400 hover:text-white transition-colors"
                           onClick={() => openEditModal(ad)}
                         >
                           <Edit className="h-4 w-4" />
@@ -310,19 +409,26 @@ export default function ManageAds() {
                         {/* Delete */}
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           title="Delete Ad"
-                          className="h-8 w-8 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10"
+                          className="h-8 w-8 p-0 text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 disabled:opacity-50 transition-colors"
                           onClick={() => {
                             if (
                               window.confirm(
                                 `Delete "${ad.title}" permanently?`,
                               )
-                            )
+                            ) {
                               deleteMutation.mutate(ad.id);
+                            }
                           }}
+                          disabled={deleteMutation.isPending}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables === ad.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </td>
@@ -338,35 +444,42 @@ export default function ManageAds() {
       <Modal
         isOpen={isFormModalOpen}
         onClose={closeFormModal}
-        title={selectedAd ? "Edit Advertisement" : "Create Advertisement"}
+        title={selectedAd ? "Edit Advertisement" : "Launch Campaign"}
       >
         <form
           onSubmit={(e) => {
             e.preventDefault();
             saveMutation.mutate();
           }}
-          className="space-y-5"
+          className="space-y-6"
         >
           {/* Image Upload Area */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Banner Image (Required)
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-700 bg-slate-950/50 hover:bg-slate-900 rounded-xl p-4 text-center cursor-pointer transition-colors relative overflow-hidden h-40 flex items-center justify-center"
+              className="border-2 border-dashed border-slate-700 bg-slate-950/50 hover:bg-slate-900 rounded-xl p-4 text-center cursor-pointer transition-all duration-300 relative overflow-hidden h-44 flex items-center justify-center group"
             >
               {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="absolute inset-0 w-full h-full object-cover opacity-60"
-                />
+                <>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-sm font-bold text-white flex items-center gap-2">
+                      <Edit className="h-4 w-4" /> Change Image
+                    </span>
+                  </div>
+                </>
               ) : (
                 <div className="flex flex-col items-center">
-                  <UploadCloud className="h-8 w-8 text-slate-500 mb-2" />
-                  <span className="text-sm text-slate-400">
-                    Click to upload banner image
+                  <UploadCloud className="h-10 w-10 text-slate-500 mb-3 group-hover:text-rose-500 transition-colors" />
+                  <span className="text-sm font-medium text-slate-400">
+                    Click to browse or drop banner image
                   </span>
                 </div>
               )}
@@ -381,7 +494,7 @@ export default function ManageAds() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Campaign Title
             </label>
             <Input
@@ -390,13 +503,13 @@ export default function ManageAds() {
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              placeholder="e.g., Save Lives Campaign"
-              className="bg-slate-950"
+              placeholder="e.g., Summer Blood Drive 2026"
+              className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Target URL (On Click)
             </label>
             <Input
@@ -406,15 +519,14 @@ export default function ManageAds() {
               onChange={(e) =>
                 setFormData({ ...formData, target_link: e.target.value })
               }
-              placeholder="https://sponsor.com"
-              className="bg-slate-950"
+              placeholder="https://sponsor-website.com"
+              className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500"
             />
           </div>
 
-          {/* Only show duration on CREATE. For edits, they use the Extend button. */}
           {!selectedAd && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Initial Time Period
               </label>
               <Select
@@ -422,7 +534,7 @@ export default function ManageAds() {
                 onChange={(e) =>
                   setFormData({ ...formData, duration_months: e.target.value })
                 }
-                className="bg-slate-950"
+                className="bg-slate-950/50 h-11 border-slate-700 focus:border-rose-500"
               >
                 <option value="1">1 Month</option>
                 <option value="3">3 Months</option>
@@ -432,18 +544,31 @@ export default function ManageAds() {
             </div>
           )}
 
-          <div className="pt-4 flex justify-end gap-3 border-t border-slate-800 mt-6">
-            <Button type="button" variant="ghost" onClick={closeFormModal}>
-              Cancel
+          <div className="pt-6 border-t border-slate-800 flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-slate-400 hover:text-white"
+              onClick={closeFormModal}
+            >
+              Abort
             </Button>
             <Button
               type="submit"
               variant="primary"
+              className="min-w-40 shadow-lg font-bold"
               disabled={
                 saveMutation.isPending || (!selectedAd && !formData.image)
               }
             >
-              {saveMutation.isPending ? "Saving..." : "Save Advertisement"}
+              {saveMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                  Processing...
+                </>
+              ) : (
+                "Save Campaign"
+              )}
             </Button>
           </div>
         </form>
@@ -453,23 +578,26 @@ export default function ManageAds() {
       <Modal
         isOpen={isExtendModalOpen}
         onClose={() => setIsExtendModalOpen(false)}
-        title="Extend Ad Duration"
+        title="Extend Campaign Duration"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-slate-400">
-            Current Expiry:{" "}
-            <strong className="text-white">
+        <div className="space-y-6">
+          <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 shadow-inner flex flex-col gap-1">
+            <span className="text-sm font-medium text-slate-400">
+              Current Expiry
+            </span>
+            <span className="text-lg font-bold text-white tracking-tight">
               {selectedAd && formatDate(selectedAd.expires_at)}
-            </strong>
-          </p>
+            </span>
+          </div>
+
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">
-              Add Time
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Add Time to Campaign
             </label>
             <Select
               value={extendMonths}
               onChange={(e) => setExtendMonths(e.target.value)}
-              className="bg-slate-950"
+              className="bg-slate-950/50 h-11 border-slate-700 focus:border-blue-500"
             >
               <option value="1">+ 1 Month</option>
               <option value="3">+ 3 Months</option>
@@ -477,20 +605,29 @@ export default function ManageAds() {
               <option value="12">+ 1 Year</option>
             </Select>
           </div>
-          <div className="pt-4 flex justify-end gap-3 border-t border-slate-800 mt-6">
+
+          <div className="pt-6 flex justify-end gap-3 border-t border-slate-800/80">
             <Button
               type="button"
               variant="ghost"
+              className="text-slate-400 hover:text-white"
               onClick={() => setIsExtendModalOpen(false)}
             >
               Cancel
             </Button>
             <Button
               variant="primary"
+              className="bg-blue-600 hover:bg-blue-500 text-white min-w-32 shadow-lg font-bold"
               onClick={() => extendMutation.mutate()}
               disabled={extendMutation.isPending}
             >
-              {extendMutation.isPending ? "Updating..." : "Extend Ad"}
+              {extendMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating...
+                </>
+              ) : (
+                "Extend Ad"
+              )}
             </Button>
           </div>
         </div>

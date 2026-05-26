@@ -1,21 +1,53 @@
+import React from "react";
+import { ShieldCheck, Clock, Ban, HelpCircle } from "lucide-react";
 import { Badge } from "../ui/Badge";
 
-export function StatusBadge({ status, className }) {
-  const config = {
-    AVAILABLE: { label: "Available", variant: "success" },
-    UNAVAILABLE: { label: "Unavailable", variant: "warning" },
-    DEFERRED: { label: "Deferred", variant: "danger" },
+const STATUS_CONFIG = {
+  AVAILABLE: {
+    label: "Available",
+    icon: ShieldCheck,
+    variant: "success",
+    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  },
+  UNAVAILABLE: {
+    label: "Resting",
+    icon: Clock,
+    variant: "warning",
+    className: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  },
+  DEFERRED: {
+    label: "Deferred",
+    icon: Ban,
+    variant: "danger",
+    className: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+  },
+};
+
+/**
+ * Standardized Donor Status Badge
+ * Provides consistent iconography and glassmorphic color mapping
+ * for donor eligibility states across the platform.
+ */
+export function StatusBadge({ status, className = "" }) {
+  // Gracefully handle missing or incorrectly cased status strings
+  const normalizedStatus = status?.toUpperCase();
+
+  const config = STATUS_CONFIG[normalizedStatus] || {
+    label: status || "Unknown",
+    icon: HelpCircle,
+    variant: "default",
+    className: "bg-slate-800 text-slate-400 border-slate-700",
   };
 
-  // Fallback if status is missing or unrecognized
-  const currentStatus = config[status] || {
-    label: status || "Unknown",
-    variant: "default",
-  };
+  const Icon = config.icon;
 
   return (
-    <Badge variant={currentStatus.variant} className={className}>
-      {currentStatus.label}
+    <Badge
+      variant={config.variant}
+      className={`gap-1.5 px-2.5 py-1 flex items-center w-fit ${config.className} ${className}`}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span className="font-semibold tracking-wide">{config.label}</span>
     </Badge>
   );
 }

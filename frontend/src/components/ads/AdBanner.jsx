@@ -1,16 +1,34 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../lib/axios";
 
 export function AdBanner({ className = "" }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef(null);
+
+  // --- Data Fetching ---
   const { data: ads = [], isLoading } = useQuery({
     queryKey: ["activeAds"],
     queryFn: async () => {
-      const response = await api.get("/advertisements/");
+      const response = await api.get("/public/advertisements/");
       return response.data.results || response.data;
     },
   });
 
+  // --- Carousel Engine (Auto-advance) ---
+  useEffect(() => {
+    // Only run the timer if there are multiple ads and the user isn't hovering
+    if (ads.length <= 1 || isPaused) return;
+
+    timerRef.current = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
+    }, 6000); // Change ad every 6 seconds
+
+    return () => clearInterval(timerRef.current);
+  }, [ads.length, isPaused]);
+
+  // --- Fallback States ---
   if (isLoading || ads.length === 0) return null;
 
   const baseURL =
@@ -19,33 +37,76 @@ export function AdBanner({ className = "" }) {
 
   return (
     <div
-      className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}
+      className={`relative w-full h-48 sm:h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl border border-slate-800 bg-slate-950 group ${className}`}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
     >
-      {ads.map((ad) => (
-        <a
-          key={ad.id}
-          href={`${baseURL}/api/public/ads/${ad.id}/click/`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full rounded-2xl overflow-hidden shadow-xl border border-slate-800 hover:border-rose-500/50 hover:shadow-rose-500/10 transition-all group"
-        >
-          <div className="relative">
+      {/* Ad Layers */}
+      {ads.map((ad, index) => {
+        const isActive = index === currentIndex;
+
+        return (
+          <a
+            key={ad.id}
+            href={`${baseURL}/api/public/ads/${ad.id}/click/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            // The absolute positioning stacks them. The opacity transition handles the crossfade.
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+              isActive
+                ? "opacity-100 z-10"
+                : "opacity-0 z-0 pointer-events-none"
+            }`}
+          >
+            {/* Background Image */}
             <img
               src={
                 ad.image.startsWith("http") ? ad.image : `${baseURL}${ad.image}`
               }
               alt={ad.title}
-              className="w-full h-40 object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+              className={`w-full h-full object-cover transition-transform duration-6000 ease-linear ${
+                isActive ? "scale-105" : "scale-100"
+              }`}
             />
-            <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-medium text-slate-300 uppercase tracking-widest border border-white/10">
+
+            {/* Dark Gradient Overlay for Text Readability */}
+            <div className="absolute inset-0 bg-linear-to-t from-slate-950/90 via-slate-900/20 to-transparent" />
+
+            {/* Sponsored Badge */}
+            <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-bold text-white/90 uppercase tracking-widest border border-white/10 shadow-lg">
               Sponsored
             </div>
-            <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-slate-950 to-transparent p-4 pt-12">
-              <p className="text-white font-medium truncate">{ad.title}</p>
+
+            {/* Title / Call to Action */}
+            <div className="absolute bottom-8 left-6 right-6">
+              <h3 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg truncate">
+                {ad.title}
+              </h3>
+              <p className="text-sm text-slate-300 font-medium mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+                Click to learn more &rarr;
+              </p>
             </div>
-          </div>
-        </a>
-      ))}
+          </a>
+        );
+      })}
+
+      {/* Navigation Indicators (Dots) */}
+      {ads.length > 1 && (
+        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-20">
+          {ads.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+              className={`h-1.5 rounded-full transition-all duration-500 ease-in-out ${
+                idx === currentIndex
+                  ? "w-8 bg-rose-500"
+                  : "w-2 bg-white/40 hover:bg-white/70"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

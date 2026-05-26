@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from datetime import timezone
+from django.utils import timezone
 from .models import (
     ContactMessage, MasterCountry, MasterState, MasterDistrict,
     CustomUser, Organization, Donor, Advertisement, PaymentTransaction, SystemLog, TenantSupportTicket, TicketReply

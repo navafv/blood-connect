@@ -1,13 +1,22 @@
-import React, { Suspense, lazy } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import React, { Suspense, lazy, useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import { Droplet } from "lucide-react";
 
-// --- Layouts (Kept synchronous so the app shell loads instantly) ---
+// --- Core Layouts ---
+// Imported synchronously to ensure the application shell renders immediately.
 import { PublicLayout } from "./components/layout/PublicLayout";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { SuperAdminLayout } from "./components/layout/SuperAdminLayout";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
-// --- Public Pages (Lazy Loaded) ---
+// --- Route-Level Code Splitting ---
+// Public Domain
 const Home = lazy(() => import("./pages/public/Home"));
 const SearchDonors = lazy(() => import("./pages/public/SearchDonors"));
 const AboutUs = lazy(() => import("./pages/public/AboutUs"));
@@ -19,18 +28,18 @@ const OrganizationProfile = lazy(
   () => import("./pages/public/OrganizationProfile"),
 );
 
-// --- Auth Pages (Lazy Loaded) ---
+// Authentication Domain
 const Login = lazy(() => import("./pages/auth/Login"));
 const RegisterOrg = lazy(() => import("./pages/auth/RegisterOrg"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 
-// --- Admin Pages (Lazy Loaded) ---
+// Tenant Administration Domain
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const ManageDonors = lazy(() => import("./pages/admin/ManageDonors"));
 const AddDonor = lazy(() => import("./pages/admin/AddDonor"));
-import Support from "./pages/admin/Support";
+const Support = lazy(() => import("./pages/admin/Support"));
 const ProfileSettings = lazy(
   () => import("./pages/admin/settings/ProfileSettings"),
 );
@@ -41,7 +50,7 @@ const BillingSubscription = lazy(
   () => import("./pages/admin/settings/BillingSubscription"),
 );
 
-// --- Super Admin Pages (Lazy Loaded) ---
+// System Administration Domain
 const GlobalDashboard = lazy(
   () => import("./pages/superadmin/GlobalDashboard"),
 );
@@ -59,22 +68,47 @@ const ManageArchivedDonors = lazy(
 );
 const SystemLogs = lazy(() => import("./pages/superadmin/SystemLogs"));
 
-// --- Loading Fallback UI ---
+/**
+ * Scroll Restoration Utility
+ * Ensures consistent top-of-page alignment across SPA transitions.
+ */
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
+
+  return null;
+};
+
+/**
+ * Asynchronous Boundary Fallback
+ * Rendered during lazy chunk resolution to maintain layout stability.
+ */
 const PageLoader = () => (
-  <div className="flex h-screen w-screen items-center justify-center bg-slate-950">
-    <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-800 border-t-rose-500" />
+  <div
+    className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 gap-4"
+    aria-live="polite"
+  >
+    <div className="relative flex items-center justify-center">
+      <Droplet className="absolute h-8 w-8 text-rose-500 animate-pulse fill-rose-500/20" />
+      <div className="h-16 w-16 animate-spin rounded-full border-4 border-slate-800 border-t-rose-500" />
+    </div>
+    <span className="text-sm font-medium tracking-widest text-transparent bg-clip-text bg-linear-to-r from-slate-400 to-slate-200 animate-pulse">
+      LOADING WORKSPACE
+    </span>
   </div>
 );
 
 function App() {
   return (
     <BrowserRouter>
-      {/* Suspense catches the lazy-loaded components and shows the PageLoader while they fetch */}
+      <ScrollToTop />
+
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* ==========================================
-              PUBLIC ROUTES (Wrapped in Public Navbar/Footer)
-              ========================================== */}
+          {/* --- Public Subgraph --- */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<SearchDonors />} />
@@ -83,39 +117,40 @@ function App() {
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/org/:slug" element={<OrganizationProfile />} />
+            <Route path="/hospital/:slug" element={<OrganizationProfile />} />
           </Route>
 
-          {/* ==========================================
-              AUTHENTICATION ROUTES (Standalone)
-              ========================================== */}
+          {/* --- Authentication Subgraph --- */}
           <Route path="/login" element={<Login />} />
           <Route path="/register-org" element={<RegisterOrg />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
 
-          {/* ==========================================
-              SECURE ORG ADMIN ROUTES (Wrapped in Sidebar Layout)
-              ========================================== */}
+          {/* --- Tenant Administration Subgraph --- */}
+          {/* Base protection: Requires a valid login (STAFF or ADMIN) */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
+              {/* Standard Operations (Open to ORG_STAFF and ORG_ADMIN) */}
               <Route index element={<Dashboard />} />
               <Route path="donors" element={<ManageDonors />} />
               <Route path="add-donor" element={<AddDonor />} />
-              <Route path="settings" element={<ProfileSettings />} />
-              <Route path="settings/staff" element={<StaffManagement />} />
               <Route path="support" element={<Support />} />
-              <Route
-                path="settings/billing"
-                element={<BillingSubscription />}
-              />
+
+              {/* Elevated Operations (Restricted to ORG_ADMIN only) */}
+              <Route element={<ProtectedRoute requireOrgAdmin={true} />}>
+                <Route path="settings" element={<ProfileSettings />} />
+                <Route path="settings/staff" element={<StaffManagement />} />
+                <Route
+                  path="settings/billing"
+                  element={<BillingSubscription />}
+                />
+              </Route>
             </Route>
           </Route>
 
-          {/* ==========================================
-              SECURE SUPER ADMIN ROUTES
-              ========================================== */}
+          {/* --- System Administration Subgraph --- */}
+          {/* Strict protection: Requires SUPER_ADMIN clearance */}
           <Route element={<ProtectedRoute requireSuperAdmin={true} />}>
             <Route path="/superadmin" element={<SuperAdminLayout />}>
               <Route index element={<GlobalDashboard />} />
@@ -129,9 +164,7 @@ function App() {
             </Route>
           </Route>
 
-          {/* ==========================================
-              FALLBACK ROUTE (404 Redirect)
-              ========================================== */}
+          {/* Unmatched Routes Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

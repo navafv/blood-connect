@@ -7,8 +7,9 @@ import {
   MessageSquare,
   CheckCircle2,
   Loader2,
-  AlertCircle,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
 import { Button } from "../../components/ui/Button";
 import {
   Card,
@@ -20,9 +21,13 @@ import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 import api from "../../lib/axios";
 
+/**
+ * Public Contact Boundary
+ * Facilitates unauthenticated communication from public users and prospective
+ * tenant organizations to the system administrators.
+ */
 export default function ContactUs() {
   const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'success'
-  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -33,88 +38,102 @@ export default function ContactUs() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (error) setError("");
   };
 
+  /**
+   * Dispatches the contact payload to the public endpoint.
+   * Leverages global toast infrastructure for transient error states while
+   * maintaining a dedicated inline success state for high-visibility confirmation.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("loading");
-    setError("");
 
     try {
-      // Send the public message to the Django backend
       await api.post("/public/contact/", formData);
 
       setStatus("success");
-      setFormData({ name: "", email: "", subject: "", message: "" }); // Reset form
+      setFormData({ name: "", email: "", subject: "", message: "" });
+      toast.success("Message dispatched successfully.");
 
-      // Reset back to idle after 5 seconds
+      // Automatic state restoration
       setTimeout(() => {
         setStatus("idle");
-      }, 5000);
+      }, 6000);
     } catch (err) {
-      console.error("Failed to send message:", err);
-      setError("Failed to send your message. Please try again later.");
+      console.error("Transmission Failure:", err);
+      toast.error(
+        "Failed to route message. Please verify network connectivity.",
+      );
       setStatus("idle");
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 overflow-hidden pb-24">
-      {/* --- Hero Section --- */}
-      <section className="relative px-4 pt-20 pb-12 text-center">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-75 bg-blue-600/10 rounded-[100%] blur-[100px] pointer-events-none" />
+      {/* --- Composition Header --- */}
+      <section className="relative px-4 pt-20 pb-16 text-center">
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-75 bg-blue-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000"
+          aria-hidden="true"
+        />
 
         <div className="container mx-auto max-w-4xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-slate-900 border border-slate-800 mb-6 shadow-lg shadow-blue-500/10">
-            <MessageSquare className="h-8 w-8 text-blue-500" />
+          <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-slate-900 border border-slate-800 mb-8 shadow-2xl relative group">
+            <div className="absolute inset-0 bg-blue-500/20 rounded-2xl blur-xl group-hover:bg-blue-500/30 transition-colors duration-500" />
+            <MessageSquare className="h-10 w-10 text-blue-500 relative z-10 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
           </div>
-          <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
             Get in Touch
           </h1>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Have questions about registering your organization, or need help
-            navigating the directory? Our team is here to assist you.
+            navigating the directory? Our administrative team is here to assist.
           </p>
         </div>
       </section>
 
+      {/* --- Main Content Grid --- */}
       <div className="container mx-auto max-w-6xl px-4 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-start">
-          {/* --- Left Column: Contact Information --- */}
-          <div className="lg:col-span-2 space-y-8 animate-in fade-in slide-in-from-left-8 duration-700 delay-100">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-start">
+          {/* Informational Subgraph */}
+          <div className="lg:col-span-2 space-y-10 animate-in fade-in slide-in-from-left-8 duration-700 delay-100">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">
+              <h2 className="text-2xl font-bold text-white mb-8 tracking-tight">
                 Contact Information
               </h2>
-              <div className="space-y-6">
-                {/* Email Info */}
-                <div className="flex items-start gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                    <Mail className="h-5 w-5 text-rose-500" />
+              <div className="space-y-8">
+                {/* Email Node */}
+                <div className="group flex items-start gap-5">
+                  <div className="h-14 w-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 group-hover:border-rose-500/30 group-hover:bg-rose-500/5 transition-all duration-300 shadow-lg">
+                    <Mail className="h-6 w-6 text-rose-500 group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <div>
-                    <h3 className="text-white font-medium mb-1">Email Us</h3>
-                    <p className="text-sm text-slate-400 mb-1">
+                    <h3 className="text-white font-semibold text-lg mb-1">
+                      Email Us
+                    </h3>
+                    <p className="text-sm text-slate-400 mb-2">
                       For general inquiries and support:
                     </p>
                     <a
                       href="mailto:support@bloodconnect.example.com"
                       className="text-rose-400 hover:text-rose-300 font-medium transition-colors"
                     >
-                      support@bloodconnect.example.com
+                      support@bloodconnect.com
                     </a>
                   </div>
                 </div>
 
-                {/* Phone Info */}
-                <div className="flex items-start gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                    <Phone className="h-5 w-5 text-blue-500" />
+                {/* Telephony Node */}
+                <div className="group flex items-start gap-5">
+                  <div className="h-14 w-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 group-hover:border-blue-500/30 group-hover:bg-blue-500/5 transition-all duration-300 shadow-lg">
+                    <Phone className="h-6 w-6 text-blue-500 group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <div>
-                    <h3 className="text-white font-medium mb-1">Call Us</h3>
-                    <p className="text-sm text-slate-400 mb-1">
+                    <h3 className="text-white font-semibold text-lg mb-1">
+                      Call Us
+                    </h3>
+                    <p className="text-sm text-slate-400 mb-2">
                       Mon-Fri from 9am to 6pm IST.
                     </p>
                     <a
@@ -126,13 +145,13 @@ export default function ContactUs() {
                   </div>
                 </div>
 
-                {/* Location Info */}
-                <div className="flex items-start gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                    <MapPin className="h-5 w-5 text-emerald-500" />
+                {/* Spatial Node */}
+                <div className="group flex items-start gap-5">
+                  <div className="h-14 w-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 group-hover:border-emerald-500/30 group-hover:bg-emerald-500/5 transition-all duration-300 shadow-lg">
+                    <MapPin className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <div>
-                    <h3 className="text-white font-medium mb-1">
+                    <h3 className="text-white font-semibold text-lg mb-1">
                       Headquarters
                     </h3>
                     <p className="text-sm text-slate-400 leading-relaxed">
@@ -147,12 +166,15 @@ export default function ContactUs() {
               </div>
             </div>
 
-            {/* Emergency Notice */}
-            <div className="p-5 rounded-xl border border-amber-500/20 bg-amber-500/5 mt-8">
-              <div className="flex items-center gap-3 text-amber-500 mb-2">
-                <AlertCircle className="h-5 w-5 shrink-0" />
-                <h3 className="font-semibold">Medical Emergency?</h3>
-              </div>
+            {/* Disclaimer Boundary */}
+            <div className="p-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 shadow-inner">
+              <h3 className="font-semibold text-amber-500 mb-2 flex items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                </span>
+                Medical Emergency?
+              </h3>
               <p className="text-sm text-amber-200/70 leading-relaxed">
                 BloodConnect is a directory and software provider, not a medical
                 facility. We do not stock blood. In case of a severe medical
@@ -162,72 +184,70 @@ export default function ContactUs() {
             </div>
           </div>
 
-          {/* --- Right Column: Contact Form --- */}
+          {/* Interactive Form Subgraph */}
           <div className="lg:col-span-3 animate-in fade-in slide-in-from-right-8 duration-700 delay-200">
-            <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md shadow-2xl relative overflow-hidden">
-              <div className="absolute -right-20 -top-20 w-64 h-64 bg-rose-500/10 rounded-full blur-[80px] pointer-events-none" />
+            <Card className="border-slate-800 bg-slate-900/40 backdrop-blur-xl shadow-2xl relative overflow-hidden rounded-3xl">
+              {/* Form Ambient Highlight */}
+              <div
+                className="absolute -right-20 -top-20 w-80 h-80 bg-rose-500/10 rounded-full blur-[100px] pointer-events-none"
+                aria-hidden="true"
+              />
 
               {status === "success" ? (
-                /* Success State */
-                <CardContent className="p-12 flex flex-col items-center justify-center text-center h-full min-h-100 animate-in fade-in zoom-in-95">
-                  <div className="h-20 w-20 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mb-6">
-                    <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                <CardContent className="p-16 flex flex-col items-center justify-center text-center h-full min-h-125 animate-in fade-in zoom-in-95 duration-500">
+                  <div className="h-24 w-24 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mb-8 relative">
+                    <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md animate-pulse" />
+                    <CheckCircle2 className="h-12 w-12 text-emerald-500 relative z-10" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-3">
-                    Message Sent!
+                  <h3 className="text-3xl font-extrabold text-white mb-4 tracking-tight">
+                    Message Dispatched
                   </h3>
-                  <p className="text-slate-400 max-w-sm mx-auto">
-                    Thank you for reaching out. A member of our support team
-                    will get back to you at <strong>{formData.email}</strong>{" "}
+                  <p className="text-slate-400 max-w-md mx-auto text-lg leading-relaxed">
+                    Thank you for reaching out. A member of our support
+                    engineering team will contact you at{" "}
+                    <strong className="text-slate-200">{formData.email}</strong>{" "}
                     within 24 hours.
                   </p>
                 </CardContent>
               ) : (
-                /* Form State */
                 <>
-                  <CardHeader className="border-b border-slate-800/50 pb-6 px-8 pt-8">
-                    <CardTitle className="text-2xl text-white">
+                  <CardHeader className="border-b border-slate-800/50 pb-8 px-10 pt-10 relative z-10">
+                    <CardTitle className="text-3xl text-white tracking-tight">
                       Send a Message
                     </CardTitle>
-                    <p className="text-sm text-slate-400 mt-2">
-                      Fill out the form below and we'll respond as soon as
-                      possible.
+                    <p className="text-slate-400 mt-2 text-base">
+                      Provide the details below and we will route your inquiry
+                      to the appropriate department.
                     </p>
                   </CardHeader>
 
-                  <CardContent className="p-8">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      {error && (
-                        <div className="flex items-center gap-2 p-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg">
-                          <AlertCircle className="h-5 w-5 shrink-0" />
-                          <p>{error}</p>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-300">
-                            Your Name *
+                  <CardContent className="p-10 relative z-10">
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                            Your Name <span className="text-rose-500">*</span>
                           </label>
                           <Input
                             name="name"
                             placeholder="John Doe"
-                            className="bg-slate-950/50"
+                            className="bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 h-12 transition-all"
                             value={formData.name}
                             onChange={handleChange}
                             required
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-300">
-                            Email Address *
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                            Email Address{" "}
+                            <span className="text-rose-500">*</span>
                           </label>
                           <Input
                             type="email"
                             name="email"
                             placeholder="john@example.com"
-                            className="bg-slate-950/50"
+                            className="bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 h-12 transition-all"
                             value={formData.email}
                             onChange={handleChange}
                             required
@@ -235,19 +255,19 @@ export default function ContactUs() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">
-                          Subject *
+                      <div className="space-y-3">
+                        <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                          Subject <span className="text-rose-500">*</span>
                         </label>
                         <Select
                           name="subject"
-                          className="bg-slate-950/50"
+                          className="bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 h-12 transition-all"
                           value={formData.subject}
                           onChange={handleChange}
                           required
                         >
                           <option value="" disabled>
-                            Select a topic
+                            Select inquiry classification
                           </option>
                           <option value="organization_registration">
                             Organization Registration Help
@@ -267,37 +287,37 @@ export default function ContactUs() {
                         </Select>
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">
-                          Message *
+                      <div className="space-y-3">
+                        <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                          Message Body <span className="text-rose-500">*</span>
                         </label>
                         <textarea
                           name="message"
-                          placeholder="How can we help you today?"
+                          placeholder="Please provide specifics regarding your request..."
                           rows={5}
-                          className="flex w-full rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors resize-none"
+                          className="flex w-full rounded-xl border border-slate-700 bg-slate-950/50 px-4 py-3 text-base text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all resize-none shadow-inner"
                           value={formData.message}
                           onChange={handleChange}
                           required
                         />
                       </div>
 
-                      <div className="pt-2">
+                      <div className="pt-4">
                         <Button
                           type="submit"
                           variant="primary"
-                          className="w-full sm:w-auto px-8 gap-2"
+                          className="w-full sm:w-auto px-10 py-6 text-base font-semibold gap-3 rounded-full hover:shadow-[0_0_20px_rgba(225,29,72,0.3)] transition-all duration-300"
                           disabled={status === "loading"}
                         >
                           {status === "loading" ? (
                             <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Sending Message...
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                              Transmitting...
                             </>
                           ) : (
                             <>
-                              <Send className="h-4 w-4" />
-                              Send Message
+                              <Send className="h-5 w-5" />
+                              Submit Inquiry
                             </>
                           )}
                         </Button>

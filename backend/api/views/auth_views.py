@@ -9,6 +9,8 @@ from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -165,7 +167,10 @@ class RegisterOrganizationView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 class VerifyEmailOTPView(APIView):
-    """Verifies the 6-digit OTP sent to the user during registration."""
+    """
+    Verifies the OTP. Implements atomic updates to prevent 
+    race conditions and ensures single-use token lifecycle.
+    """
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
 
@@ -176,29 +181,34 @@ class VerifyEmailOTPView(APIView):
         if not email or not otp:
             return Response({"error": "Email and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = CustomUser.objects.filter(email=email).first()
+        # Use select_for_update to lock the row during verification
+        user = CustomUser.objects.filter(email=email).select_for_update().first()
+        
         if not user:
             return Response({"error": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
 
         if user.is_email_verified:
             return Response({"message": "Email is already verified."}, status=status.HTTP_200_OK)
 
+        # OTP Validation & Expiry Check
         if user.email_verification_otp != otp:
             return Response({"error": "Invalid verification code."}, status=status.HTTP_400_BAD_REQUEST)
 
         if user.email_otp_expires_at and user.email_otp_expires_at < timezone.now():
-            return Response({"error": "Verification code has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Verification code has expired."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # OTP is valid! Mark as verified and clean up.
+        # Atomic state transition
         user.is_email_verified = True
         user.email_verification_otp = None
         user.email_otp_expires_at = None
         user.save()
 
         return Response({"message": "Email verified successfully!"}, status=status.HTTP_200_OK)
-    
+
 class ResendEmailOTPView(APIView):
-    """Generates and emails a new 6-digit OTP."""
+    """
+    Generates and emails a new OTP with a mandatory server-side cooldown.
+    """
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
 
@@ -207,26 +217,27 @@ class ResendEmailOTPView(APIView):
         user = CustomUser.objects.filter(email=email).first()
 
         if not user:
-            return Response({"error": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No account found."}, status=status.HTTP_404_NOT_FOUND)
 
         if user.is_email_verified:
-            return Response({"error": "Email is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Email already verified."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Generate new OTP and reset timer
+        if user.email_otp_expires_at and user.email_otp_expires_at > (timezone.now() + timedelta(minutes=9)):
+            return Response({"error": "Please wait before requesting another code."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
         new_otp = str(random.randint(100000, 999999))
         user.email_verification_otp = new_otp
         user.email_otp_expires_at = timezone.now() + timedelta(minutes=10)
         user.save()
 
-        # Fire Email
         send_async_email.delay(
-            subject=f"New Verification Code: {new_otp}", 
+            subject=f"Verification Code: {new_otp}", 
             plain_message=f"Your new verification code is: {new_otp}", 
             recipient_list=[email], 
-            html_message=f"<p>Your new verification code is <b>{new_otp}</b>. It expires in 10 minutes.</p>"
+            html_message=f"<p>Your code is <b>{new_otp}</b>. It expires in 10 minutes.</p>"
         )
 
-        return Response({"message": "A new verification code has been sent."}, status=status.HTTP_200_OK)
+        return Response({"message": "Verification code dispatched."}, status=status.HTTP_200_OK)
 
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -273,6 +284,13 @@ class PasswordResetConfirmView(APIView):
         token = request.data.get('token')
         new_password = request.data.get('new_password')
 
+        # 🛡️ 1. Validate payload completeness
+        if not uidb64 or not token or not new_password:
+            return Response(
+                {"error": "Missing required parameters."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = CustomUser.objects.get(pk=uid)
@@ -280,11 +298,25 @@ class PasswordResetConfirmView(APIView):
             user = None
 
         if user is not None and default_token_generator.check_token(user, token):
+            
+            # 🛡️ 2. Enforce strict server-side password policies
+            try:
+                validate_password(new_password, user=user)
+            except ValidationError as e:
+                # Returns Django's specific password rules (e.g. "Password is too common") to the frontend
+                return Response(
+                    {"error": list(e.messages)[0]}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             user.set_password(new_password)
             user.save()
-            return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+            return Response(
+                {"message": "Credential updated securely."}, 
+                status=status.HTTP_200_OK
+            )
         else:
             return Response(
-                {"error": "The reset link is invalid or has expired. Please request a new link."}, 
+                {"error": "The security token is invalid or has expired. Please request a new recovery link."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )

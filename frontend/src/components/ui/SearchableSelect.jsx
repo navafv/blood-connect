@@ -5,7 +5,7 @@ import { cn } from "../../lib/utils";
 export const SearchableSelect = React.forwardRef(
   (
     {
-      options = [], // Array of { label: string, value: string }
+      options = [],
       value,
       onChange,
       placeholder = "Select an option...",
@@ -18,15 +18,12 @@ export const SearchableSelect = React.forwardRef(
     const [searchTerm, setSearchTerm] = useState("");
     const wrapperRef = useRef(null);
 
-    // Find the currently selected label
     const selectedOption = options.find((opt) => opt.value === value);
 
-    // Filter options based on search
     const filteredOptions = options.filter((opt) =>
       opt.label.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
-    // Close dropdown when clicking outside
     useEffect(() => {
       function handleClickOutside(event) {
         if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -41,48 +38,56 @@ export const SearchableSelect = React.forwardRef(
     const handleSelect = (selectedValue) => {
       onChange(selectedValue);
       setIsOpen(false);
-      setSearchTerm(""); // Reset search on select
+      setSearchTerm("");
     };
 
     return (
       <div ref={wrapperRef} className="relative w-full">
-        {/* Trigger Button (Looks like your original select) */}
+        {/* Trigger Button */}
         <button
           type="button"
           ref={ref}
           disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "flex h-10 w-full items-center justify-between rounded-md border border-slate-700 bg-slate-900/50 px-3 py-2 text-sm text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-11 w-full items-center justify-between rounded-xl border border-slate-700/80 bg-slate-950/50 px-4 py-2 text-sm text-slate-100 shadow-inner transition-all duration-200 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/30 disabled:cursor-not-allowed disabled:opacity-50",
+            isOpen && "border-rose-500 ring-1 ring-rose-500/30 bg-slate-950",
             className,
           )}
         >
-          <span className={cn("truncate", !selectedOption && "text-slate-400")}>
+          <span
+            className={cn(
+              "truncate font-medium",
+              !selectedOption && "text-slate-500 font-normal",
+            )}
+          >
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isOpen ? "text-rose-400 rotate-180" : "text-slate-500"}`}
+          />
         </button>
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-50 mt-1 w-full rounded-md border border-slate-700 bg-slate-800 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="absolute z-50 mt-2 w-full rounded-xl border border-slate-700/80 bg-slate-900/95 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             {/* Search Input Field */}
-            <div className="flex items-center border-b border-slate-700 px-3 py-2">
-              <Search className="h-4 w-4 mr-2 text-slate-400 shrink-0" />
+            <div className="flex items-center border-b border-slate-800 bg-slate-950/50 px-3 py-2.5">
+              <Search className="h-4 w-4 mr-2 text-slate-500 shrink-0" />
               <input
                 type="text"
                 autoFocus
-                className="flex-1 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                placeholder="Search..."
+                className="flex-1 bg-transparent text-sm font-medium text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                placeholder="Search options..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
             {/* Options List */}
-            <div className="max-h-60 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+            <div className="max-h-60 overflow-y-auto p-1.5 custom-scrollbar">
               {filteredOptions.length === 0 ? (
-                <p className="py-4 text-center text-sm text-slate-400">
+                <p className="py-6 text-center text-sm font-medium text-slate-500">
                   No results found.
                 </p>
               ) : (
@@ -92,9 +97,10 @@ export const SearchableSelect = React.forwardRef(
                     type="button"
                     onClick={() => handleSelect(option.value)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-sm px-2 py-2 text-sm text-slate-200 hover:bg-rose-500/10 hover:text-rose-400 transition-colors",
-                      value === option.value &&
-                        "bg-rose-500/10 text-rose-400 font-medium",
+                      "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      value === option.value
+                        ? "bg-rose-500/10 text-rose-400"
+                        : "text-slate-300 hover:bg-slate-800/80 hover:text-white",
                     )}
                   >
                     <span className="truncate">{option.label}</span>

@@ -9,20 +9,36 @@ import {
   Loader2,
   AlertCircle,
   Clock,
+  Inbox,
+  ServerCrash,
+  RefreshCw,
+  Terminal,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
+/**
+ * SuperAdmin Public Support Inbox
+ * Centralized dashboard for managing, replying to, and resolving messages
+ * submitted via the public "Contact Us" form.
+ */
 export default function ManageMessages() {
   const queryClient = useQueryClient();
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replyText, setReplyText] = useState("");
 
-  // Fetch Messages
-  const { data: messages = [], isLoading } = useQuery({
+  // --- Query Pipeline: Fetch Inbox ---
+  const {
+    data: messages = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["superadmin-messages"],
     queryFn: async () => {
       const res = await api.get("/superadmin/messages/");
@@ -30,30 +46,47 @@ export default function ManageMessages() {
     },
   });
 
-  // Reply Mutation
+  // --- Mutation Pipeline: Send Reply ---
   const replyMutation = useMutation({
     mutationFn: async (payload) =>
       api.post(`/superadmin/messages/${selectedMessage.id}/reply/`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries(["superadmin-messages"]);
       closeModal();
+      toast.success("Reply dispatched successfully.", { icon: "📨" });
+    },
+    onError: (err) => {
+      toast.error(
+        err.response?.data?.error ||
+          "Failed to dispatch reply. Verify email configuration.",
+      );
     },
   });
 
-  // Toggle Resolution Mutation
+  // --- Mutation Pipeline: Toggle Resolution ---
   const toggleMutation = useMutation({
     mutationFn: async (id) => api.post(`/superadmin/messages/${id}/toggle/`),
-    onSuccess: () => queryClient.invalidateQueries(["superadmin-messages"]),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["superadmin-messages"]);
+      toast.success("Ticket status updated.");
+    },
+    onError: () => toast.error("Failed to modify ticket status."),
   });
 
-  // Delete Mutation
+  // --- Mutation Pipeline: Delete Message ---
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.delete(`/superadmin/messages/${id}/`),
-    onSuccess: () => queryClient.invalidateQueries(["superadmin-messages"]),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["superadmin-messages"]);
+      toast.success("Message deleted permanently.");
+    },
+    onError: () => toast.error("Failed to delete message."),
   });
 
+  // --- Action Handlers ---
   const handleReplySubmit = (e) => {
     e.preventDefault();
+    if (!replyText.trim()) return;
     replyMutation.mutate({ reply_text: replyText });
   };
 
@@ -72,107 +105,154 @@ export default function ManageMessages() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+      {/* --- Workspace Header --- */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Mail className="h-6 w-6 text-rose-500" /> Public Support Inbox
+          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+              <Mail className="h-5 w-5 text-rose-500" />
+            </div>
+            Public Support Inbox
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Manage, reply to, and resolve messages from the Contact Us form.
+          <p className="text-sm text-slate-400 mt-2">
+            Manage, reply to, and resolve inquiries from the public Contact Us
+            portal.
           </p>
         </div>
       </div>
 
-      {/* Messages Table */}
-      <Card className="border-slate-800 bg-slate-900/60 backdrop-blur-md">
+      {/* --- Primary Data Table Area --- */}
+      <Card className="overflow-hidden border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <thead className="bg-slate-950/40 text-xs uppercase text-slate-500 font-bold border-b border-slate-800/80">
               <tr>
-                <th className="px-6 py-4 font-medium">Sender</th>
-                <th className="px-6 py-4 font-medium">Subject</th>
-                <th className="px-6 py-4 font-medium">Received</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                <th className="px-6 py-5">Sender Identity</th>
+                <th className="px-6 py-5">Subject Line</th>
+                <th className="px-6 py-5">Received</th>
+                <th className="px-6 py-5">Status</th>
+                <th className="px-6 py-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {isLoading ? (
                 <tr>
+                  <td colSpan="5" className="px-6 py-24 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-4" />
+                    <p className="text-sm font-medium tracking-widest uppercase text-slate-400">
+                      Loading Inbox...
+                    </p>
+                  </td>
+                </tr>
+              ) : isError ? (
+                <tr>
                   <td
                     colSpan="5"
-                    className="px-6 py-12 text-center text-slate-500"
+                    className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-2" />{" "}
-                    Loading inbox...
+                    <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <ServerCrash className="h-10 w-10 text-rose-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                      Telemetry Failure
+                    </h3>
+                    <p className="text-slate-400 max-w-sm mx-auto leading-relaxed text-sm mb-6">
+                      Unable to retrieve messages from the central database.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="border-slate-700 bg-slate-900/50"
+                      onClick={() => refetch()}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" /> Retry Connection
+                    </Button>
                   </td>
                 </tr>
               ) : messages.length === 0 ? (
                 <tr>
                   <td
                     colSpan="5"
-                    className="px-6 py-12 text-center text-slate-500"
+                    className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
-                    Inbox is empty.
+                    <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <Inbox className="h-10 w-10 text-slate-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                      Inbox Empty
+                    </h3>
+                    <p className="text-slate-400 max-w-sm mx-auto leading-relaxed text-sm">
+                      You are all caught up! There are no public inquiries at
+                      this time.
+                    </p>
                   </td>
                 </tr>
               ) : (
                 messages.map((msg) => (
                   <tr
                     key={msg.id}
-                    className={`hover:bg-slate-800/30 transition-colors ${!msg.is_resolved ? "bg-slate-800/10" : ""}`}
+                    className={`hover:bg-slate-800/30 transition-colors group ${!msg.is_resolved ? "bg-slate-800/10" : ""}`}
                   >
                     <td className="px-6 py-4">
-                      <div>
-                        <p
-                          className={`font-medium ${!msg.is_resolved ? "text-white" : "text-slate-300"}`}
-                        >
-                          {msg.name}
-                        </p>
-                        <p className="text-xs text-slate-500">{msg.email}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center font-bold text-slate-300 shadow-inner group-hover:bg-slate-800 transition-colors shrink-0">
+                          {msg.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p
+                            className={`font-bold text-sm ${!msg.is_resolved ? "text-white" : "text-slate-300"}`}
+                          >
+                            {msg.name}
+                          </p>
+                          <p className="text-xs font-medium text-slate-500 font-mono mt-0.5 tracking-tight">
+                            {msg.email}
+                          </p>
+                        </div>
                       </div>
                     </td>
+
                     <td className="px-6 py-4">
                       <p
-                        className={`truncate max-w-xs ${!msg.is_resolved ? "text-slate-200 font-medium" : "text-slate-400"}`}
+                        className={`truncate max-w-xs ${!msg.is_resolved ? "text-slate-200 font-bold" : "text-slate-400 font-medium"}`}
                       >
                         {msg.subject}
                       </p>
                     </td>
+
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <Clock className="h-3 w-3" />{" "}
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        <Clock className="h-3.5 w-3.5 text-slate-500" />
                         {formatDate(msg.created_at)}
                       </div>
                     </td>
+
                     <td className="px-6 py-4">
                       {msg.is_resolved ? (
                         <Badge
-                          variant="default"
-                          className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          variant="success"
+                          className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-2.5 py-1"
                         >
                           Resolved
                         </Badge>
                       ) : (
                         <Badge
                           variant="warning"
-                          className="bg-amber-500/10 text-amber-400 border-amber-500/20"
+                          className="bg-amber-500/10 text-amber-400 border-amber-500/20 px-2.5 py-1"
                         >
                           Needs Reply
                         </Badge>
                       )}
                     </td>
+
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* View / Reply */}
+                      <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        {/* Read & Reply */}
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           title="Read & Reply"
                           aria-label={`Read message from ${msg.name}`}
-                          className="h-8 w-8 text-blue-400 hover:bg-blue-500/10"
+                          className="h-8 w-8 p-0 text-blue-400 hover:bg-blue-500/10 transition-colors"
                           onClick={() => setSelectedMessage(msg)}
                         >
                           {msg.is_resolved ? (
@@ -185,35 +265,55 @@ export default function ManageMessages() {
                         {/* Toggle Status */}
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           title={
                             msg.is_resolved
                               ? "Mark Unresolved"
                               : "Mark Resolved"
                           }
                           aria-label="Toggle resolved status"
-                          className={`h-8 w-8 ${msg.is_resolved ? "text-slate-500 hover:text-white" : "text-emerald-400 hover:bg-emerald-500/10"}`}
+                          className={`h-8 w-8 p-0 transition-colors ${msg.is_resolved ? "text-slate-500 hover:text-white" : "text-emerald-400 hover:bg-emerald-500/10"}`}
                           onClick={() => toggleMutation.mutate(msg.id)}
-                          disabled={toggleMutation.isPending}
+                          disabled={
+                            toggleMutation.isPending &&
+                            toggleMutation.variables === msg.id
+                          }
                         >
-                          <CheckCircle2 className="h-4 w-4" />
+                          {toggleMutation.isPending &&
+                          toggleMutation.variables === msg.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
                         </Button>
 
                         {/* Delete */}
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           title="Delete Message"
                           aria-label="Delete message"
-                          className="h-8 w-8 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
+                          className="h-8 w-8 p-0 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-50"
                           onClick={() => {
                             if (
-                              window.confirm("Delete this message permanently?")
-                            )
+                              window.confirm(
+                                "Permanently delete this inquiry from the database?",
+                              )
+                            ) {
                               deleteMutation.mutate(msg.id);
+                            }
                           }}
+                          disabled={
+                            deleteMutation.isPending &&
+                            deleteMutation.variables === msg.id
+                          }
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables === msg.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </td>
@@ -229,73 +329,116 @@ export default function ManageMessages() {
       <Modal
         isOpen={!!selectedMessage}
         onClose={closeModal}
-        title="Support Ticket"
+        title="Support Inquiry"
       >
         {selectedMessage && (
           <div className="space-y-6">
             {/* Original Message Display */}
-            <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-4 space-y-4">
-              <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+            <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-5 shadow-inner relative overflow-hidden">
+              <div
+                className={`absolute top-0 left-0 w-1 h-full ${selectedMessage.is_resolved ? "bg-emerald-500" : "bg-amber-500"}`}
+              />
+
+              <div className="flex justify-between items-start border-b border-slate-800/80 pb-4">
                 <div>
-                  <p className="text-white font-medium">
+                  <p className="text-white font-bold text-lg tracking-tight">
                     {selectedMessage.name}
                   </p>
-                  <p className="text-sm text-slate-400 font-mono">
+                  <p className="text-sm font-medium text-slate-400 font-mono tracking-tight mt-0.5">
                     {selectedMessage.email}
                   </p>
                 </div>
                 <div className="text-right">
                   <Badge
                     variant={
-                      selectedMessage.is_resolved ? "default" : "warning"
+                      selectedMessage.is_resolved ? "success" : "warning"
+                    }
+                    className={
+                      selectedMessage.is_resolved
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                     }
                   >
-                    {selectedMessage.is_resolved ? "Resolved" : "Open"}
+                    {selectedMessage.is_resolved ? "Resolved" : "Open Ticket"}
                   </Badge>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs font-medium text-slate-500 mt-2.5 flex items-center gap-1.5 justify-end">
+                    <Clock className="h-3 w-3" />{" "}
                     {formatDate(selectedMessage.created_at)}
                   </p>
                 </div>
               </div>
+
               <div>
-                <p className="text-sm font-semibold text-slate-300 mb-1">
-                  Subject: {selectedMessage.subject}
+                <p className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Subject:{" "}
+                  <span className="text-slate-200 normal-case tracking-normal">
+                    {selectedMessage.subject}
+                  </span>
                 </p>
-                <div className="text-sm text-slate-400 whitespace-pre-wrap bg-slate-900 p-3 rounded-lg border border-slate-800/50">
+                <div className="text-sm text-slate-300 whitespace-pre-wrap bg-slate-900/50 p-4 rounded-xl border border-slate-800 shadow-sm leading-relaxed">
                   {selectedMessage.message}
                 </div>
               </div>
             </div>
 
             {/* Email Reply Form */}
-            <form onSubmit={handleReplySubmit} className="space-y-3">
-              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <Reply className="h-4 w-4" /> Send Email Reply
-              </label>
-              <textarea
-                required
-                rows={5}
-                placeholder="Type your response here. This will be sent directly to their email address..."
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-              />
-              <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="ghost" onClick={closeModal}>
-                  Cancel
+            <form onSubmit={handleReplySubmit} className="space-y-5">
+              {/* Developer Environment Alert */}
+              <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl text-left shadow-inner">
+                <div className="flex items-center gap-2 mb-2">
+                  <Terminal className="h-4 w-4 text-emerald-500" />
+                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-500">
+                    Developer Notice
+                  </p>
+                </div>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  If SMTP routing is suppressed in your local environment, the
+                  reply payload will be printed to your{" "}
+                  <strong className="text-slate-300">
+                    Django terminal stdout
+                  </strong>{" "}
+                  instead of being emailed.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-white flex items-center gap-2">
+                  <Reply className="h-4 w-4 text-blue-400" /> Dispatch Response
+                </label>
+                <textarea
+                  required
+                  rows={6}
+                  placeholder="Draft your response here. This payload will be routed directly to their inbox..."
+                  className="w-full rounded-xl border border-slate-700 bg-slate-950/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all resize-none shadow-inner"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  disabled={replyMutation.isPending}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800/80">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={closeModal}
+                  className="text-slate-400 hover:text-white"
+                  disabled={replyMutation.isPending}
+                >
+                  Abort
                 </Button>
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={replyMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-500 shadow-lg font-bold min-w-48"
+                  disabled={replyMutation.isPending || !replyText.trim()}
                 >
                   {replyMutation.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />{" "}
-                      Sending...
+                      Transmitting...
                     </>
                   ) : (
-                    "Send Reply & Resolve"
+                    "Send Reply & Mark Resolved"
                   )}
                 </Button>
               </div>

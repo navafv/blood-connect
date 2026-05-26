@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import {
   Search,
-  MapPin,
   Globe2,
   Loader2,
   AlertCircle,
   ChevronLeft,
   ChevronRight,
   Navigation,
+  MapPin,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { SearchableSelect } from "../../components/ui/SearchableSelect";
@@ -16,42 +18,85 @@ import api from "../../lib/axios";
 import { AdBanner } from "../../components/ads/AdBanner";
 import { DonorCard } from "../../components/donors/DonorCard";
 
-const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+const bloodGroups = [
+  "A+",
+  "A-",
+  "A1+",
+  "A1-",
+  "A1B+",
+  "A1B-",
+  "A2+",
+  "A2-",
+  "A2B+",
+  "A2B-",
+  "AB+",
+  "AB-",
+  "B+",
+  "B-",
+  "BBG",
+  "INRA",
+  "O+",
+  "O-",
+];
 
+/**
+ * Public Donor Search Interface
+ * Facilitates hyper-local, cascading geographical searches against the public
+ * donor registry. Implements reverse-geocoding for automated location detection
+ * and cursor-based pagination for high-volume result sets.
+ */
 export default function SearchDonors() {
+  // --- Master Data State ---
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [districts, setDistricts] = useState([]);
 
+  // --- Active Filter State ---
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedBloodGroup, setSelectedBloodGroup] = useState("");
 
+  // --- UI Transition State ---
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
-  const [results, setResults] = useState([]);
 
+  // --- Payload & Pagination State ---
+  const [results, setResults] = useState([]);
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [prevPageUrl, setPrevPageUrl] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
 
-  // --- 1. Fetch Countries on Component Mount ---
+  /**
+   * Initializes the geographic hierarchy by fetching the root level (Countries)
+   * upon component mount. Downstream levels (States, Districts) are lazy-loaded
+   * based on user selection to minimize initial payload size.
+   */
   useEffect(() => {
     const fetchCountries = async () => {
       try {
         const response = await api.get("/locations/countries/");
         setCountries(response.data);
       } catch (error) {
-        console.error("Failed to fetch countries:", error);
+        console.error("Geographic initialization failed:", error);
+        toast.error("Failed to load geographic master data.");
       }
     };
     fetchCountries();
   }, []);
 
+  /**
+   * Hardware Geolocation & Reverse Geocoding via OpenStreetMap (Nominatim API).
+   * Translates raw GPS coordinates into structured administrative boundaries,
+   * then cross-references them against our internal database identifiers.
+   */
   const handleLocateMe = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      toast.error("Hardware geolocation is not supported by your browser.");
+      return;
+    }
+
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -61,66 +106,98 @@ export default function SearchDonors() {
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
           );
           const data = await res.json();
+
           const detectedCountry = data.address?.country;
           const detectedState = data.address?.state;
 
           if (detectedCountry) {
+            // Reconcile external map data with internal master records
             const matchedCountry = countries.find(
               (c) => c.name.toLowerCase() === detectedCountry.toLowerCase(),
             );
+
             if (matchedCountry) {
               setSelectedCountry(matchedCountry);
               const stateRes = await api.get(
                 `/locations/states/?country=${matchedCountry.id}`,
               );
               setStates(stateRes.data);
+
               if (detectedState) {
                 const matchedState = stateRes.data.find(
                   (s) => s.name.toLowerCase() === detectedState.toLowerCase(),
                 );
+
                 if (matchedState) {
                   setSelectedState(matchedState);
                   const distRes = await api.get(
                     `/locations/districts/?state=${matchedState.id}`,
                   );
                   setDistricts(distRes.data);
+                  toast.success("Location auto-detected successfully.");
                 }
               }
+            } else {
+              toast.error(
+                "Detected location is not currently serviced by our network.",
+              );
             }
           }
         } catch (error) {
-          console.error(error);
+          console.error("Reverse geocoding pipeline failure:", error);
+          toast.error("Failed to resolve coordinate data.");
         } finally {
           setIsLocating(false);
         }
       },
-      () => setIsLocating(false),
+      (error) => {
+        console.warn("Geolocation permission denied or timed out:", error);
+        toast.error(
+          "Location access denied. Please select your region manually.",
+        );
+        setIsLocating(false);
+      },
       { timeout: 10000 },
     );
   };
 
-  // --- Handlers for SearchableSelect ---
+  // --- Cascading Mutation Handlers ---
+
   const handleCountryChange = async (val) => {
     const countryObj = countries.find((c) => c.id.toString() === val);
     setSelectedCountry(countryObj || null);
+
+    // Purge downstream dependencies
     setSelectedState(null);
     setSelectedDistrict(null);
     setStates([]);
     setDistricts([]);
+
     if (val) {
-      const response = await api.get(`/locations/states/?country=${val}`);
-      setStates(response.data);
+      try {
+        const response = await api.get(`/locations/states/?country=${val}`);
+        setStates(response.data);
+      } catch (error) {
+        toast.error("Failed to fetch state data.");
+      }
     }
   };
 
   const handleStateChange = async (val) => {
     const stateObj = states.find((s) => s.id.toString() === val);
     setSelectedState(stateObj || null);
+
+    // Purge downstream dependencies
     setSelectedDistrict(null);
     setDistricts([]);
+
     if (val) {
-      const response = await api.get(`/locations/districts/?state=${val}`);
-      setDistricts(response.data);
+      try {
+        const response = await api.get(`/locations/districts/?state=${val}`);
+        setDistricts(response.data);
+      } catch (error) {
+        toast.error("Failed to fetch district data.");
+      }
     }
   };
 
@@ -129,67 +206,94 @@ export default function SearchDonors() {
     setSelectedDistrict(districtObj || null);
   };
 
-  // --- 4. Execute Search ---
-  const fetchDonors = async (url = null) => {
+  /**
+   * Query Execution Engine
+   * Constructs the filter payload and dispatches the read request. Handles both
+   * initial parameter-based queries and absolute URL overrides for pagination.
+   */
+  const fetchDonors = async (overrideUrl = null) => {
     setIsSearching(true);
     setHasSearched(true);
+
     try {
-      let endpoint =
-        url ||
-        `/donors/search/?country=${selectedCountry?.name || ""}&state=${selectedState?.name || ""}&district=${selectedDistrict?.name || ""}&blood_group=${selectedBloodGroup}`;
-      const response = await api.get(
-        endpoint.replace(api.defaults.baseURL, ""),
-      );
+      let endpoint = overrideUrl;
+
+      if (!endpoint) {
+        // Construct canonical search query.
+        // Note: Backend requires the 'name' string, not the relational ID.
+        const params = new URLSearchParams();
+        if (selectedCountry) params.append("country", selectedCountry.name);
+        if (selectedState) params.append("state", selectedState.name);
+        if (selectedDistrict) params.append("district", selectedDistrict.name);
+        if (selectedBloodGroup)
+          params.append("blood_group", selectedBloodGroup);
+
+        endpoint = `/public/donors/search/?${params.toString()}`;
+      } else {
+        // Strip base URL if pagination returns absolute paths
+        endpoint = endpoint.replace(api.defaults.baseURL, "") || endpoint;
+      }
+
+      const response = await api.get(endpoint);
       setResults(response.data.results);
       setNextPageUrl(response.data.next);
       setPrevPageUrl(response.data.previous);
       setTotalCount(response.data.count);
+
+      if (response.data.count === 0 && !overrideUrl) {
+        toast("No matches found for this specific criteria.", { icon: "ℹ️" });
+      }
+    } catch (error) {
+      console.error("Query dispatch failed:", error);
+      toast.error("Failed to connect to the directory server.");
     } finally {
       setIsSearching(false);
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    fetchDonors();
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col pb-24">
-      {/* --- Search Header --- */}
-      <section className="pt-12 pb-8 px-4 relative overflow-hidden bg-slate-900/50 border-b border-slate-800">
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-rose-600/10 rounded-full blur-[100px] pointer-events-none" />
+      {/* --- Search Console Header --- */}
+      <section className="pt-12 pb-16 px-4 relative overflow-hidden bg-slate-900/40 border-b border-slate-800/80">
+        <div
+          className="absolute top-0 right-1/4 w-125 h-125 bg-rose-600/10 rounded-full blur-[120px] pointer-events-none"
+          aria-hidden="true"
+        />
 
-        <div className="container mx-auto max-w-4xl text-center relative z-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Find a Blood Donor
+        <div className="container mx-auto max-w-4xl text-center relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+            Directory Search
           </h1>
-          <p className="text-slate-400 max-w-2xl mx-auto">
-            Our platform strictly matches you with available donors in your
-            local area. Select your geographic region to begin.
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Our infrastructure connects you securely with eligible donors in
+            your locality. Define your geographical parameters to initiate the
+            query.
           </p>
         </div>
       </section>
 
-      {/* --- Search Filter Box --- */}
-      <div className="container mx-auto max-w-5xl px-4 -mt-6 relative z-20">
-        <Card className="bg-slate-900/90 backdrop-blur-xl border-slate-700 shadow-2xl">
-          <CardContent className="p-6">
-            <div className="flex justify-end mb-4">
+      {/* --- Input Filter Matrix --- */}
+      <div className="container mx-auto max-w-5xl px-4 -mt-10 relative z-20">
+        <Card className="bg-slate-900/70 backdrop-blur-xl border-slate-700/80 shadow-2xl overflow-visible">
+          <CardContent className="p-6 md:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-white font-semibold flex items-center gap-2">
+                <Search className="h-5 w-5 text-rose-500" /> Query Parameters
+              </h2>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleLocateMe}
                 disabled={isLocating}
-                className="bg-slate-950/50 border-slate-700 text-rose-400"
+                className="bg-slate-950/50 border-slate-700 text-rose-400 hover:text-rose-300 hover:bg-slate-800 transition-all shadow-inner"
               >
                 {isLocating ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Navigation className="h-4 w-4 mr-2" />
                 )}
-                Auto-Detect Location
+                {isLocating ? "Resolving..." : "Auto-Detect Location"}
               </Button>
             </div>
 
@@ -198,10 +302,10 @@ export default function SearchDonors() {
                 e.preventDefault();
                 fetchDonors();
               }}
-              className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end"
+              className="grid grid-cols-1 md:grid-cols-5 gap-5 items-end"
             >
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+              <div className="space-y-2 relative z-50">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Country
                 </label>
                 <SearchableSelect
@@ -215,9 +319,9 @@ export default function SearchDonors() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
-                  State
+              <div className="space-y-2 relative z-40">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  State / Province
                 </label>
                 <SearchableSelect
                   options={states.map((s) => ({
@@ -231,9 +335,9 @@ export default function SearchDonors() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
-                  District
+              <div className="space-y-2 relative z-30">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  District / City
                 </label>
                 <SearchableSelect
                   options={districts.map((d) => ({
@@ -247,8 +351,8 @@ export default function SearchDonors() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+              <div className="space-y-2 relative z-20">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Blood Group
                 </label>
                 <SearchableSelect
@@ -262,7 +366,7 @@ export default function SearchDonors() {
               <Button
                 type="submit"
                 variant="primary"
-                className="h-10 w-full gap-2 text-sm"
+                className="h-10 w-full gap-2 text-sm font-semibold shadow-lg hover:shadow-rose-500/20 transition-all"
                 disabled={isSearching}
               >
                 {isSearching ? (
@@ -270,48 +374,78 @@ export default function SearchDonors() {
                 ) : (
                   <Search className="h-4 w-4" />
                 )}
-                Search
+                {isSearching ? "Querying..." : "Execute Search"}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
 
+      {/* --- Ad Network Boundary --- */}
       <div className="container mx-auto max-w-5xl px-4 mt-8">
         <AdBanner />
       </div>
 
-      {/* --- Search Results --- */}
-      <div className="container mx-auto max-w-5xl px-4 mt-12">
+      {/* --- Data Visualization Render Surface --- */}
+      <div className="container mx-auto max-w-5xl px-4 mt-12 min-h-100">
         {!hasSearched ? (
-          <div className="text-center py-20 text-slate-500">
-            <Globe2 className="h-16 w-16 mx-auto mb-4 text-slate-800" />
-            <p className="text-lg">
-              Select your location to find nearby donors.
+          /* Pre-Query State */
+          <div className="flex flex-col items-center justify-center text-center py-24 text-slate-500 animate-in fade-in duration-700">
+            <Globe2 className="h-20 w-20 mb-6 text-slate-800" />
+            <h3 className="text-xl font-semibold text-slate-400 mb-2">
+              Awaiting Parameters
+            </h3>
+            <p className="text-base max-w-md">
+              Define your geographic constraints above to securely query the
+              nearest available donors.
             </p>
           </div>
         ) : isSearching ? (
-          <div className="text-center py-20 text-slate-500">
-            <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-rose-500" />
-            <p className="text-lg">Scanning local registries...</p>
+          /* Flight State */
+          <div className="flex flex-col items-center justify-center text-center py-24 text-slate-500">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-xl animate-pulse" />
+              <Loader2 className="h-16 w-16 animate-spin text-rose-500 relative z-10" />
+            </div>
+            <p className="text-lg font-medium text-slate-300">
+              Scanning regional registries...
+            </p>
           </div>
         ) : results.length === 0 ? (
-          <div className="text-center py-20 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">
-            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-slate-700" />
-            <h3 className="text-xl font-semibold text-white mb-2">
-              No available donors found
+          /* Empty Set Resolution */
+          <div className="flex flex-col items-center justify-center text-center py-24 bg-slate-900/40 backdrop-blur-sm rounded-3xl border border-slate-800/60 shadow-inner animate-in fade-in zoom-in-95 duration-300">
+            <div className="h-20 w-20 rounded-2xl bg-slate-800/50 flex items-center justify-center border border-slate-700 mb-6">
+              <AlertCircle className="h-10 w-10 text-slate-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-3">
+              Zero Active Matches
             </h3>
-            <p>
-              We couldn't find any donors matching {selectedBloodGroup} in{" "}
-              {selectedDistrict?.name}.
+            <p className="text-slate-400 max-w-md text-base leading-relaxed">
+              We could not identify any eligible donors matching{" "}
+              <strong className="text-slate-300">
+                {selectedBloodGroup || "any group"}
+              </strong>{" "}
+              in{" "}
+              <strong className="text-slate-300">
+                {selectedDistrict?.name || "your selected region"}
+              </strong>{" "}
+              at this time.
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-              <h3 className="text-lg font-medium text-white">
-                Found {totalCount} Donors in {selectedDistrict?.name}
-              </h3>
+          /* Positive Resolution State */
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-between items-end border-b border-slate-800/80 pb-4">
+              <div>
+                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-rose-500" />
+                  Regional Matches
+                </h3>
+                <p className="text-sm text-slate-400 mt-1">
+                  Surfacing {totalCount} verified records in{" "}
+                  {selectedDistrict?.name}.
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -320,16 +454,17 @@ export default function SearchDonors() {
               ))}
             </div>
 
+            {/* Pagination Controls */}
             {totalCount > 0 && (
-              <div className="flex items-center justify-between mt-8 border-t border-slate-800 pt-6">
-                <span className="text-sm text-slate-400">
-                  Showing {results.length} of {totalCount} total donors
+              <div className="flex flex-col sm:flex-row items-center justify-between mt-10 border-t border-slate-800/80 pt-6 gap-4">
+                <span className="text-sm font-medium text-slate-400">
+                  Displaying batch of {results.length} records.
                 </span>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300"
+                    className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-4 transition-colors"
                     disabled={!prevPageUrl || isSearching}
                     onClick={() => fetchDonors(prevPageUrl)}
                   >
@@ -338,7 +473,7 @@ export default function SearchDonors() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300"
+                    className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-4 transition-colors"
                     disabled={!nextPageUrl || isSearching}
                     onClick={() => fetchDonors(nextPageUrl)}
                   >
