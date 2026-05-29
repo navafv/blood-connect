@@ -131,8 +131,6 @@ class Organization(models.Model):
 
     # Mini-Website Image Fields
     banner_image = models.ImageField(upload_to='organization/banners/', blank=True, null=True)
-    gallery_photo_1 = models.ImageField(upload_to='organization/gallery/', blank=True, null=True)
-    gallery_photo_2 = models.ImageField(upload_to='organization/gallery/', blank=True, null=True)
 
     # SaaS Management & Privacy
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', db_index=True)

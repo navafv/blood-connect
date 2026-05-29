@@ -16,6 +16,7 @@ import {
   SearchX,
   MapPin,
   Save,
+  MessageCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -462,6 +463,15 @@ export default function ManageDonors() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <a
+                              href={`https://wa.me/${donor.phone_number?.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hello ${donor.full_name}, this is an urgent message from the blood bank. We currently have a critical need for ${donor.blood_group} blood. Are you available to donate today?`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Message Donor on WhatsApp"
+                              className="h-8 w-8 flex items-center justify-center rounded-md text-emerald-500/70 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </a>
                             <Button
                               variant="ghost"
                               size="sm"
