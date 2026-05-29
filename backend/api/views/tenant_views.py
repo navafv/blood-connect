@@ -12,10 +12,10 @@ from rest_framework.decorators import action
 from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
-from django.conf import settings
+from django.shortcuts import get_object_or_404
 
 from ..tasks import send_async_email
-from ..models import CustomUser, Donor, PaymentTransaction, TenantSupportTicket, TicketReply
+from ..models import CustomUser, DonationRecord, Donor, PaymentTransaction, TenantSupportTicket, TicketReply
 from ..serializers import (
     DonorSerializer, OrganizationSerializer, CustomUserSerializer, 
     PaymentTransactionSerializer, TenantSupportTicketSerializer
@@ -44,37 +44,49 @@ class TenantDonorBulkUploadView(APIView):
     @transaction.atomic
     def post(self, request):
         user = request.user
-        if not user.organization:
-            return Response({"error": "No organization linked."}, status=status.HTTP_400_BAD_REQUEST)
+        if not getattr(user, 'organization', None):
+            return Response({"error": "No organization linked to this account."}, status=status.HTTP_403_FORBIDDEN)
 
         file = request.FILES.get('file')
         if not file or not file.name.endswith('.csv'):
-            return Response({"error": "Valid .csv file is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "A valid .csv file is required."}, status=status.HTTP_400_BAD_REQUEST)
         
         def parse_flexible_date(date_str):
-            if not date_str or not date_str.strip(): return None
+            if not date_str or not str(date_str).strip(): 
+                return None
             # Tries standard, US, and EU date formats
             for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%d-%m-%Y', '%d/%m/%Y', '%Y/%m/%d'):
                 try:
-                    return datetime.strptime(date_str.strip(), fmt).date()
+                    return datetime.strptime(str(date_str).strip(), fmt).date()
                 except ValueError:
                     continue
             raise ValueError(f"Invalid date format: {date_str}")
 
         org = user.organization
+        valid_blood_groups = {"A+", "A-", "A1+", "A1-", "A1B+", "A1B-", "A2+", "A2-", "A2B+", "A2B-", "AB+", "AB-", "B+", "B-", "BBG", "INRA", "O+", "O-"}
         try:
-            decoded_file = io.TextIOWrapper(file, encoding='utf-8', errors='replace')
+            decoded_file = io.TextIOWrapper(file, encoding='utf-8-sig', errors='replace')
             reader = csv.DictReader(decoded_file)
             
             expected_headers = {'full_name', 'phone_number', 'blood_group', 'date_of_birth'}
             if not reader.fieldnames or not expected_headers.issubset(set(reader.fieldnames)):
-                return Response({"error": "Invalid CSV headers."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "error": f"Invalid CSV headers. Expected at least: {', '.join(expected_headers)}"
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             donors_to_create = []
             errors = []
             
             for idx, row in enumerate(reader, start=2): 
                 try:
+                    full_name = str(row.get('full_name', '')).strip()
+                    phone_number = str(row.get('phone_number', '')).strip()
+                    blood_group = str(row.get('blood_group', '')).strip().upper()
+                    gender = str(row.get('gender', 'O')).strip().upper()[:1]
+                    if not full_name or not phone_number or not blood_group:
+                        raise ValueError("Missing required text fields (name, phone, or blood group).")
+                    if blood_group not in valid_blood_groups:
+                        raise ValueError(f"Unrecognized blood group: '{blood_group}'")
                     parsed_dob = parse_flexible_date(row.get('date_of_birth'))
                     if not parsed_dob:
                         raise ValueError("Date of birth is required.")
@@ -83,13 +95,16 @@ class TenantDonorBulkUploadView(APIView):
 
                     donor = Donor(
                         organization=org,
-                        country=org.country, state=org.state, district=org.district,
-                        full_name=row.get('full_name').strip(),
-                        phone_number=row.get('phone_number').strip(),
+                        country=org.country, 
+                        state=org.state, 
+                        district=org.district,
+                        full_name=full_name,
+                        phone_number=phone_number,
                         date_of_birth=parsed_dob,
-                        gender=row.get('gender', 'O').strip().upper()[:1],
-                        blood_group=row.get('blood_group').strip().upper(),
-                        last_donation_date=parsed_last_donation
+                        gender=gender if gender in ['M', 'F', 'O'] else 'O',
+                        blood_group=blood_group,
+                        last_donation_date=parsed_last_donation,
+                        is_permanently_deferred=False,
                     )
                     donors_to_create.append(donor)
                 except Exception as e:
@@ -98,9 +113,13 @@ class TenantDonorBulkUploadView(APIView):
             if donors_to_create:
                 Donor.objects.bulk_create(donors_to_create, ignore_conflicts=True)
                 
-            return Response({"message": f"Successfully imported {len(donors_to_create)} donors.", "errors": errors}, status=status.HTTP_200_OK)
+            return Response({
+                "message": f"Successfully imported {len(donors_to_create)} donors.", 
+                "errors": errors # Warning flags for partial successes are passed to the frontend
+            }, status=status.HTTP_200_OK)
+            
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"Failed to process file: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 class TenantDashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -271,3 +290,35 @@ class TenantSupportTicketViewSet(viewsets.ModelViewSet):
             ticket.status = 'OPEN'
             ticket.save()
         return Response({"message": "Reply sent successfully."})
+    
+class LogDonationView(APIView):
+    """
+    Logs a new clinical donation into the donor's historical ledger.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, donor_id):
+        user = request.user
+        if not getattr(user, 'organization', None):
+            return Response({"error": "Unauthorized."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Ensure the donor actually belongs to this hospital
+        donor = get_object_or_404(Donor, id=donor_id, organization=user.organization)
+        
+        donation_type = request.data.get('donation_type', 'WHOLE_BLOOD')
+        donation_date = request.data.get('donation_date')
+        notes = request.data.get('clinical_notes', '')
+
+        if not donation_date:
+            return Response({"error": "Donation date is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the ledger record
+        DonationRecord.objects.create(
+            donor=donor,
+            organization=user.organization,
+            donation_type=donation_type,
+            donation_date=donation_date,
+            clinical_notes=notes
+        )
+
+        return Response({"message": "Donation recorded successfully. Cooldown period recalculated."}, status=status.HTTP_201_CREATED)

@@ -54,6 +54,15 @@ export default function ManageDonors() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDonor, setEditingDonor] = useState(null);
 
+  // --- Donation Logging State ---
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [donorToLog, setDonorToLog] = useState(null);
+  const [donationLogData, setDonationLogData] = useState({
+    donation_type: "WHOLE_BLOOD",
+    donation_date: new Date().toISOString().split("T")[0],
+    clinical_notes: "",
+  });
+
   // --- Query Pipeline: Fetch Registry ---
   const {
     data: donors = [],
@@ -69,6 +78,25 @@ export default function ManageDonors() {
     },
   });
 
+  // --- Mutation: Log Clinical Donation ---
+  const logDonationMutation = useMutation({
+    mutationFn: async (payload) => {
+      const response = await api.post(
+        `/tenant/donors/${donorToLog.id}/log-donation/`,
+        payload,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
+      toast.success("Clinical record updated. Cooldown recalculated.");
+      setIsLogModalOpen(false);
+      setDonorToLog(null);
+    },
+    onError: (err) => toast.error("Failed to log donation record."),
+  });
+
   // --- Mutation Pipeline: Edit Record ---
   const editMutation = useMutation({
     mutationFn: async (updatedData) => {
@@ -81,6 +109,7 @@ export default function ManageDonors() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
       toast.success("Donor record updated successfully.");
       setIsEditModalOpen(false);
       setEditingDonor(null);
@@ -99,6 +128,7 @@ export default function ManageDonors() {
     mutationFn: async (id) => await api.delete(`/tenant/donors/${id}/`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
       toast.success("Donor record archived successfully.");
     },
     onError: () => {
@@ -121,6 +151,7 @@ export default function ManageDonors() {
         errors: data.errors,
       });
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
       setUploadFile(null);
       toast.success("Batch import processed successfully.");
     },
@@ -144,11 +175,6 @@ export default function ManageDonors() {
     }));
   };
 
-  /**
-   * 🛡️ SANITIZED EDIT SUBMISSION
-   * We explicitly construct the payload to prevent Django from crashing (500 Error)
-   * when it tries to deserialize read-only or relational properties.
-   */
   const handleEditSubmit = (e) => {
     e.preventDefault();
     if (!editingDonor) return;
@@ -158,9 +184,8 @@ export default function ManageDonors() {
       full_name: editingDonor.full_name,
       phone_number: editingDonor.phone_number,
       blood_group: editingDonor.blood_group,
-      gender: editingDonor.gender, // Added missing gender field
+      gender: editingDonor.gender,
       date_of_birth: editingDonor.date_of_birth,
-      // Convert empty strings to strict null to satisfy PostgreSQL DateField constraints
       last_donation_date: editingDonor.last_donation_date || null,
       is_permanently_deferred: editingDonor.is_permanently_deferred || false,
     };
@@ -204,6 +229,9 @@ export default function ManageDonors() {
 
   // --- Client-Side Search & Filter Engine ---
   const filteredDonors = donors.filter((donor) => {
+    // STRICT FILTER: Only display "Available Now" donors
+    if (!donor.is_available_now) return false;
+
     const matchesBloodGroup = activeFilters.bloodGroup
       ? donor.blood_group === activeFilters.bloodGroup
       : true;
@@ -309,8 +337,8 @@ export default function ManageDonors() {
       <Card className="border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
         <CardHeader className="border-b border-slate-800/60 pb-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <CardTitle className="text-lg font-bold text-white tracking-tight">
-              Active Registry
+            <CardTitle className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              Active Registry <Badge variant="success">Available Only</Badge>
             </CardTitle>
           </div>
           <DonorFilters onFilter={setActiveFilters} />
@@ -339,21 +367,21 @@ export default function ManageDonors() {
                 Retry Connection
               </Button>
             </div>
-          ) : donors.length === 0 ? (
+          ) : donors.filter((d) => d.is_available_now).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center px-4 animate-in fade-in duration-500">
               <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
                 <Users className="h-10 w-10 text-slate-500" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
-                Registry is Empty
+                No Available Donors
               </h3>
               <p className="text-slate-400 max-w-sm mb-8 leading-relaxed text-sm">
-                Your organizational pool has no active donors. Begin by
-                registering an individual or executing a bulk import.
+                Your organizational pool currently has no donors eligible to
+                donate.
               </p>
               <Link to="/admin/add-donor">
                 <Button variant="primary" className="shadow-lg">
-                  Initialize Registry
+                  Register New Donor
                 </Button>
               </Link>
             </div>
@@ -364,7 +392,7 @@ export default function ManageDonors() {
                 No Matches Found
               </h3>
               <p className="text-slate-400 text-sm max-w-sm">
-                No records in the active registry match the query:{" "}
+                No available records match the query:{" "}
                 <strong className="text-slate-300">
                   "{activeFilters.searchQuery}"
                 </strong>
@@ -425,31 +453,33 @@ export default function ManageDonors() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          {donor.is_permanently_deferred ? (
-                            <Badge
-                              variant="danger"
-                              className="bg-rose-500/10 text-rose-400 border-rose-500/20"
-                            >
-                              Deferred
-                            </Badge>
-                          ) : donor.is_available_now ? (
-                            <Badge
-                              variant="success"
-                              className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            >
-                              Available
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="warning"
-                              className="bg-amber-500/10 text-amber-400 border-amber-500/20"
-                            >
-                              Resting
-                            </Badge>
-                          )}
+                          <Badge
+                            variant="success"
+                            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          >
+                            Available
+                          </Badge>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Log New Donation"
+                              className="h-8 w-8 p-0 text-emerald-500/70 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                              onClick={() => {
+                                setDonorToLog(donor);
+                                setDonationLogData({
+                                  ...donationLogData,
+                                  donation_date: new Date()
+                                    .toISOString()
+                                    .split("T")[0],
+                                });
+                                setIsLogModalOpen(true);
+                              }}
+                            >
+                              <Droplet className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -462,7 +492,6 @@ export default function ManageDonors() {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-
                             <Button
                               variant="ghost"
                               size="sm"
@@ -488,13 +517,14 @@ export default function ManageDonors() {
                   </tbody>
                 </table>
               </div>
+
+              {/* MOBILE STACKED VIEW */}
               <div className="md:hidden flex flex-col gap-4 p-4">
                 {filteredDonors.map((donor) => (
                   <div
                     key={donor.id}
                     className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 flex flex-col gap-4 shadow-sm"
                   >
-                    {/* Identity & Status Row */}
                     <div className="flex justify-between items-start gap-3">
                       <div className="flex items-center gap-3">
                         <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-black text-sm shadow-inner shrink-0">
@@ -516,7 +546,6 @@ export default function ManageDonors() {
                       </div>
                     </div>
 
-                    {/* Meta Details Grid */}
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80">
                         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
@@ -539,33 +568,34 @@ export default function ManageDonors() {
                       </div>
                     </div>
 
-                    {/* Status & Actions Row */}
                     <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
                       <div>
-                        {donor.is_permanently_deferred ? (
-                          <Badge
-                            variant="danger"
-                            className="bg-rose-500/10 text-rose-400 border-rose-500/20"
-                          >
-                            Deferred
-                          </Badge>
-                        ) : donor.is_available_now ? (
-                          <Badge
-                            variant="success"
-                            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          >
-                            Available
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="warning"
-                            className="bg-amber-500/10 text-amber-400 border-amber-500/20"
-                          >
-                            Resting
-                          </Badge>
-                        )}
+                        <Badge
+                          variant="success"
+                          className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        >
+                          Available
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 w-9 p-0 text-emerald-500/70 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+                          title="Log New Donation"
+                          onClick={() => {
+                            setDonorToLog(donor);
+                            setDonationLogData({
+                              ...donationLogData,
+                              donation_date: new Date()
+                                .toISOString()
+                                .split("T")[0],
+                            });
+                            setIsLogModalOpen(true);
+                          }}
+                        >
+                          <Droplet className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -603,7 +633,123 @@ export default function ManageDonors() {
         </CardContent>
       </Card>
 
-      {/* --- Edit Donor Modal (NEW) --- */}
+      {/* --- Log Clinical Donation Modal --- */}
+      <Modal
+        isOpen={isLogModalOpen}
+        onClose={() => {
+          setIsLogModalOpen(false);
+          setDonorToLog(null);
+        }}
+        title="Log Clinical Donation"
+      >
+        {donorToLog && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              logDonationMutation.mutate(donationLogData);
+            }}
+            className="space-y-6"
+          >
+            <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/80 mb-6">
+              <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                Target Donor
+              </p>
+              <p className="text-sm font-semibold text-white flex items-center gap-2">
+                {donorToLog.full_name}{" "}
+                <Badge variant="primary" className="py-0">
+                  {donorToLog.blood_group}
+                </Badge>
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Donation Type
+                </label>
+                <select
+                  className="flex h-11 w-full rounded-xl border border-slate-700/80 bg-slate-950/50 px-4 py-2 text-sm text-slate-100 focus:ring-1 focus:ring-rose-500"
+                  value={donationLogData.donation_type}
+                  onChange={(e) =>
+                    setDonationLogData({
+                      ...donationLogData,
+                      donation_type: e.target.value,
+                    })
+                  }
+                  required
+                >
+                  <option value="WHOLE_BLOOD">
+                    Whole Blood (90-120 day cooldown)
+                  </option>
+                  <option value="PLATELETS">
+                    Platelets Apheresis (14 day cooldown)
+                  </option>
+                  <option value="PLASMA">Plasma (28 day cooldown)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Date of Extraction
+                </label>
+                <Input
+                  type="date"
+                  className="h-11 bg-slate-950/50"
+                  value={donationLogData.donation_date}
+                  max={new Date().toISOString().split("T")[0]} // Prevent future dates
+                  onChange={(e) =>
+                    setDonationLogData({
+                      ...donationLogData,
+                      donation_date: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase">
+                  Clinical Notes (Optional)
+                </label>
+                <textarea
+                  className="w-full rounded-xl border border-slate-700/80 bg-slate-950/50 px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/30 resize-none h-24"
+                  placeholder="E.g., Low hemoglobin initial reading, 500ml extracted..."
+                  value={donationLogData.clinical_notes}
+                  onChange={(e) =>
+                    setDonationLogData({
+                      ...donationLogData,
+                      clinical_notes: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsLogModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={logDonationMutation.isPending}
+              >
+                {logDonationMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Commit Record"
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* --- Edit Donor Modal --- */}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => {
@@ -666,7 +812,6 @@ export default function ManageDonors() {
                 </select>
               </div>
 
-              {/* Added missing gender field here */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-400 uppercase">
                   Gender

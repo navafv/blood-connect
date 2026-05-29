@@ -219,7 +219,6 @@ class Donor(models.Model):
     district = models.ForeignKey(MasterDistrict, on_delete=models.PROTECT, db_index=True)
     
     # Medical & Availability Tracking
-    last_donation_date = models.DateField(null=True, blank=True, validators=[validate_past_date])
     is_permanently_deferred = models.BooleanField(default=False)
     deferral_reason = models.TextField(blank=True, null=True, help_text="e.g., Medical condition, recent tattoo")
     has_consented = models.BooleanField(default=False, help_text="Donor explicitly consented to data storage and contact.")
@@ -237,41 +236,74 @@ class Donor(models.Model):
         return f"{self.full_name} ({self.blood_group})"
 
     def delete(self, *args, **kwargs):
-        """
-        Soft-delete the single instance instead of removing it from the database.
-        Required for medical audit compliance (HIPAA).
-        """
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save()
 
     def hard_delete(self, *args, **kwargs):
-        """
-        Only used if a SuperAdmin legitimately needs to permanently purge a record.
-        """
         super().delete(*args, **kwargs)
 
     @property
+    def latest_donation(self):
+        return self.donation_records.first()
+
+    @property
+    def last_donation_date(self):
+        latest = self.latest_donation
+        return latest.donation_date if latest else None
+
+    @property
     def is_available_now(self):
-        """
-        Dynamically calculates if the donor is available based on:
-        - Permanent deferral status
-        - Gender specific wait times (Male: 90 days, Female: 120 days)
-        """
         if self.is_permanently_deferred:
             return False
             
-        if not self.last_donation_date:
-            return True
+        latest = self.latest_donation
+        if not latest:
+            return True # Never donated = available
             
-        wait_days = 90 if self.gender == 'M' else 120
-        next_eligible_date = self.last_donation_date + timedelta(days=wait_days)
-        
-        return timezone.now().date() >= next_eligible_date
+        today = timezone.now().date()
+        days_since_donation = (today - latest.donation_date).days
+        if latest.donation_type == 'PLATELETS':
+            return days_since_donation >= 14
+        elif latest.donation_type == 'PLASMA':
+            return days_since_donation >= 28
+        else: # WHOLE_BLOOD
+            cooldown_days = 90 if self.gender == 'M' else 120
+            return days_since_donation >= cooldown_days
+
+
+# =========================================
+# 5. DONATION RECORD
+# =========================================
+
+class DonationRecord(models.Model):
+    """
+    Clinical ledger tracking historical donations and types.
+    """
+    DONATION_TYPES = (
+        ('WHOLE_BLOOD', 'Whole Blood (RBC)'),
+        ('PLATELETS', 'Platelets (Apheresis)'),
+        ('PLASMA', 'Plasma'),
+    )
+    
+    donor = models.ForeignKey('Donor', on_delete=models.CASCADE, related_name='donation_records')
+    organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    donation_type = models.CharField(max_length=20, choices=DONATION_TYPES, default='WHOLE_BLOOD')
+    donation_date = models.DateField(default=timezone.now)
+    clinical_notes = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-donation_date', '-created_at'] # Most recent first
+
+    def __str__(self):
+        return f"{self.donor.full_name} - {self.get_donation_type_display()} on {self.donation_date}"
 
 
 # ==========================================
-# 5. ADVERTISEMENT (Managed by Super Admin)
+# 6. ADVERTISEMENT (Managed by Super Admin)
 # ==========================================
 
 class Advertisement(models.Model):
@@ -294,7 +326,7 @@ class Advertisement(models.Model):
 
 
 # ==========================================
-# 6. SYSTEM LOGS (Super Admin Audit Trail)
+# 7. SYSTEM LOGS (Super Admin Audit Trail)
 # ==========================================
 
 class SystemLog(models.Model):
@@ -316,7 +348,7 @@ class SystemLog(models.Model):
     
 
 # ==========================================
-# 7. PUBLIC CONTACT MESSAGES
+# 8. PUBLIC CONTACT MESSAGES
 # ==========================================
 
 class ContactMessage(models.Model):
@@ -332,7 +364,7 @@ class ContactMessage(models.Model):
     
 
 # ==========================================
-# 8. SUBSCRIPTION & UPI PAYMENTS
+# 9. SUBSCRIPTION & UPI PAYMENTS
 # ==========================================
 
 class PaymentTransaction(models.Model):
@@ -356,7 +388,7 @@ class PaymentTransaction(models.Model):
 
 
 # ==========================================
-# 9. TENANT DASHBOARD SUPPORT TICKETS
+# 10. TENANT DASHBOARD SUPPORT TICKETS
 # ==========================================
 
 class TenantSupportTicket(models.Model):

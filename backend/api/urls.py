@@ -19,6 +19,7 @@ from .views import (
     ActiveAdvertisementView,
     ContactMessageCreateView,
     PublicOrganizationDetailView,
+    LogDonationView,
     TenantPaymentView, 
     TenantStaffViewSet,
     TenantDonorViewSet,
@@ -114,6 +115,7 @@ urlpatterns = [
     path('tenant/billing/payments/', TenantPaymentView.as_view(), name='tenant-payments'),
     path('tenant/organization/', TenantOrganizationView.as_view(), name='tenant-organization'),
     path('tenant/dashboard-stats/', TenantDashboardStatsView.as_view(), name='tenant-dashboard-stats'),
+    path('tenant/donors/<uuid:donor_id>/log-donation/', LogDonationView.as_view(), name='log-donation'),
     path('tenant/donors/bulk-upload/', TenantDonorBulkUploadView.as_view(), name='tenant-donor-bulk-upload'),
     
     # Mount generated router paths
