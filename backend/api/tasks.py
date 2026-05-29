@@ -9,10 +9,6 @@ from .models import Donor # Assuming you purge donors or records
 logger = logging.getLogger(__name__)
 
 def send_async_email(subject, plain_message, recipient_list, html_message=None):
-    """
-    Dispatches an email in a separate background thread.
-    Replaces the heavy Celery @shared_task for a zero-budget architecture.
-    """
     def send_email_thread():
         try:
             send_mail(
@@ -32,15 +28,9 @@ def send_async_email(subject, plain_message, recipient_list, html_message=None):
     thread.start()
 
 def purge_old_deleted_records():
-    """
-    Previously a Celery Beat task. Now a standard function.
-    You will trigger this via a free Cron Job service hitting a secure webhook, 
-    or via a custom Django management command.
-    """
     try:
-        # Example logic based on your previous Celery Beat schedule
         cutoff_date = timezone.now() - relativedelta(months=1)
-        # Record.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
+        Donor.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
         logger.info("Successfully purged old records.")
     except Exception as e:
         logger.error(f"Failed to purge records: {str(e)}")

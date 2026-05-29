@@ -5,7 +5,6 @@ Django settings for blood connect project.
 import os
 from pathlib import Path
 from datetime import timedelta
-from celery.schedules import crontab
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

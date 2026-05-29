@@ -1,7 +1,7 @@
 import csv
 import io
+import secrets
 import string
-import random
 from datetime import datetime, timedelta
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.views import APIView
@@ -223,7 +223,8 @@ class TenantStaffViewSet(viewsets.ModelViewSet):
         if CustomUser.objects.filter(email=email).exists():
             return Response({"error": "User exists."}, status=status.HTTP_400_BAD_REQUEST)
 
-        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        alphabet = string.ascii_letters + string.digits
+        temp_password = ''.join(secrets.choice(alphabet) for _ in range(10))
         org = request.user.organization
         
         user = CustomUser.objects.create_user(

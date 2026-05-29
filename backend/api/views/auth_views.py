@@ -1,5 +1,4 @@
-import string
-import random
+import secrets
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -139,7 +138,7 @@ class RegisterOrganizationView(APIView):
             )
 
             # 2. Generate 6-Digit OTP
-            otp_code = str(random.randint(100000, 999999))
+            otp_code = str(secrets.randbelow(900000) + 100000)
 
             # 3. Create User with OTP attached
             admin_user = CustomUser.objects.create_user(
@@ -189,6 +188,7 @@ class VerifyEmailOTPView(APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
 
+    @transaction.atomic
     def post(self, request):
         email = request.data.get('email')
         otp = request.data.get('otp')
@@ -240,7 +240,7 @@ class ResendEmailOTPView(APIView):
         if user.email_otp_expires_at and user.email_otp_expires_at > (timezone.now() + timedelta(minutes=9)):
             return Response({"error": "Please wait before requesting another code."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
-        new_otp = str(random.randint(100000, 999999))
+        new_otp = str(secrets.randbelow(900000) + 100000)
         user.email_verification_otp = new_otp
         user.email_otp_expires_at = timezone.now() + timedelta(minutes=10)
         user.save()

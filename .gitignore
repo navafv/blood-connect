@@ -83,8 +83,4 @@ ehthumbs_vista.db
 .idea/
 *.iml
 
-celerybeat-schedule
-celerybeat-schedule-shm
-celerybeat-schedule-wal
-
 start.bat
