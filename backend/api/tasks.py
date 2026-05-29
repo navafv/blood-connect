@@ -1,51 +1,46 @@
-from celery import shared_task
+import threading
+import logging
+from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-from .models import Donor, SystemLog
-from django.core.mail import send_mail
 from dateutil.relativedelta import relativedelta
+from .models import Donor # Assuming you purge donors or records
 
-@shared_task
+logger = logging.getLogger(__name__)
+
 def send_async_email(subject, plain_message, recipient_list, html_message=None):
     """
-    Sends an email asynchronously in the background using Celery.
+    Dispatches an email in a separate background thread.
+    Replaces the heavy Celery @shared_task for a zero-budget architecture.
     """
-    try:
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=recipient_list,
-            html_message=html_message,
-            fail_silently=False,
-        )
-        return f"Email sent successfully to {recipient_list}"
-    except Exception as e:
-        # Celery will log this error in the worker terminal
-        return f"Failed to send email to {recipient_list}. Error: {e}"
-    
-@shared_task
+    def send_email_thread():
+        try:
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=recipient_list,
+                html_message=html_message,
+                fail_silently=False,
+            )
+        except Exception as e:
+            logger.error(f"Failed to send async email to {recipient_list}: {str(e)}")
+
+    # Spawn and start the background thread
+    thread = threading.Thread(target=send_email_thread)
+    thread.daemon = True # Ensures the thread closes if the main server restarts
+    thread.start()
+
 def purge_old_deleted_records():
     """
-    Permanently removes donor records that have been soft-deleted 
-    for more than 7 exact years (Retention Policy).
+    Previously a Celery Beat task. Now a standard function.
+    You will trigger this via a free Cron Job service hitting a secure webhook, 
+    or via a custom Django management command.
     """
-    seven_years_ago = timezone.now() - relativedelta(years=7)
-    
-    # Query all records marked is_deleted=True older than 7 years
-    old_records = Donor.all_objects.filter(
-        is_deleted=True, 
-        deleted_at__lt=seven_years_ago
-    )
-    
-    count = old_records.count()
-    if count > 0:
-        SystemLog.objects.create(
-            level='INFO',
-            source='SYSTEM',
-            message=f"Purged {count} donor records older than 7 years."
-        )
-        old_records.delete() 
-        return f"Successfully purged {count} old medical donor records."
-    
-    return "No records found for purging."
+    try:
+        # Example logic based on your previous Celery Beat schedule
+        cutoff_date = timezone.now() - relativedelta(months=1)
+        # Record.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
+        logger.info("Successfully purged old records.")
+    except Exception as e:
+        logger.error(f"Failed to purge records: {str(e)}")

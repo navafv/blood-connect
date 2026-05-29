@@ -166,7 +166,7 @@ class RegisterOrganizationView(APIView):
                 <p style="color: #64748b; font-size: 12px; margin-top: 20px;">This code will expire in 10 minutes.</p>
             </div>
             """
-            send_async_email.delay(
+            send_async_email(
                 subject=subject, 
                 plain_message=plain_message, 
                 recipient_list=[data.get('email')], 
@@ -245,7 +245,7 @@ class ResendEmailOTPView(APIView):
         user.email_otp_expires_at = timezone.now() + timedelta(minutes=10)
         user.save()
 
-        send_async_email.delay(
+        send_async_email(
             subject=f"Verification Code: {new_otp}", 
             plain_message=f"Your new verification code is: {new_otp}", 
             recipient_list=[email], 
@@ -279,7 +279,7 @@ class PasswordResetRequestView(APIView):
                 <p style="margin-top: 20px; color: #666;">If you did not request this, please ignore this email.</p>
             </div>
             """
-            send_async_email.delay(
+            send_async_email(
                 subject=subject, 
                 plain_message=plain_message, 
                 recipient_list=[email], 

@@ -246,28 +246,4 @@ EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', 'your-fallback-key-here
 # The "From" address that users will see (Ensure this is verified in SendGrid!)
 DEFAULT_FROM_EMAIL = 'support@bloodconnect.com'
 
-
-# ==========================================
-# CELERY & REDIS CONFIGURATION
-# ==========================================
-# Assuming Redis is running locally on the default port
-CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-
-
-# ==========================================
-# CELERY BEAT SCHEDULE
-# ==========================================
-from celery.schedules import crontab
-
-CELERY_BEAT_SCHEDULE = {
-    'purge-old-deleted-records-every-month': {
-        'task': 'api.tasks.purge_old_deleted_records',
-        # Runs at midnight on the 1st day of every month
-        'schedule': crontab(minute=0, hour=0, day_of_month=1),
-    },
-}
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
