@@ -70,7 +70,7 @@ export function DonorCard({ donor }) {
         <div className="flex justify-between items-start mb-5 gap-4">
           <div>
             <h3 className="text-xl font-bold text-white tracking-tight mb-1">
-              {donor.full_name}
+              {donor.anonymous_label}
             </h3>
             <div className="flex flex-wrap items-center gap-2.5 text-xs font-medium text-slate-400">
               <span className="capitalize tracking-wider text-slate-500">

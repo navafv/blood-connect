@@ -443,7 +443,7 @@ export default function SearchDonors() {
                 </h3>
                 <p className="text-sm text-slate-400 mt-1">
                   Surfacing {totalCount} verified records in{" "}
-                  {selectedDistrict?.name}.
+                  {selectedDistrict?.name || "the selected region"}.
                 </p>
               </div>
             </div>

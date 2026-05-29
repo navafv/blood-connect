@@ -57,7 +57,7 @@
     background-color: #334155; /* slate-700 */
   }
 
-  /* * 5. Chrome Autofill Dark Mode Fix
+  /* * 5. Chrome Autofill Dark Mode
    * Prevents Chrome from aggressively making autofilled inputs bright white/yellow
    */
   input:-webkit-autofill,

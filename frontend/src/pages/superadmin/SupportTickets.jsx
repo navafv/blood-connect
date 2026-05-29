@@ -36,8 +36,6 @@ export default function SupportTickets() {
   // --- UI & Filter State ---
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-
-  // 🛡️ THE FIX: Track ID instead of object so the modal live-updates on refetch
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [updateStatus, setUpdateStatus] = useState("IN_PROGRESS");

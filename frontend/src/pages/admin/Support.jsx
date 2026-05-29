@@ -38,7 +38,6 @@ export default function Support() {
   // --- UI Transition State ---
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // 🛡️ THE FIX: Store the ID instead of the object. This ensures the chat modal
   // automatically updates when React Query fetches new data in the background.
   const [selectedTicketId, setSelectedTicketId] = useState(null);
 
