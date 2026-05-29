@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -61,10 +62,15 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+# ==========================================
+# FRONTEND SPA INTEGRATION PATHS
+# ==========================================
+FRONTEND_DIST_DIR = BASE_DIR.parent / 'frontend' / 'dist'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [FRONTEND_DIST_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -140,7 +146,14 @@ USE_TZ = True
 # ==========================================
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Tell Django to serve Vite's compiled assets
+STATICFILES_DIRS = [
+    FRONTEND_DIST_DIR, 
+]
+
+# Tell WhiteNoise to serve root-level files (like favicon.ico, robots.txt)
+WHITENOISE_ROOT = FRONTEND_DIST_DIR
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -181,11 +194,11 @@ else:
 # CORS, CSRF & REST FRAMEWORK
 # ==========================================
 
-cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000')
+cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000')
 CORS_ALLOWED_ORIGINS = cors_origins_env.split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,http://localhost:3000')
+csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000')
 CSRF_TRUSTED_ORIGINS = csrf_origins_env.split(',')
 
 
