@@ -97,15 +97,12 @@ class CurrentUserView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # request.user is automatically populated by Django's AuthenticationMiddleware
-        # when using JWT or session authentication
         user = request.user
         return Response({
             "id": user.id,
             "email": user.email,
             "username": user.username,
-            "role": getattr(user, 'role', 'PUBLIC_USER'), # Assumes 'role' field exists
-            # Add any other fields your frontend needs
+            "role": getattr(user, 'role', 'PUBLIC_USER'),
         }, status=status.HTTP_200_OK)
     
 class LogoutView(APIView):
@@ -124,7 +121,6 @@ class RegisterOrganizationView(APIView):
     def post(self, request):
         data = request.data
         try:
-            # 1. Create Organization
             organization = Organization.objects.create(
                 name=data.get('orgName'),
                 org_type=data.get('orgType', 'NGO'),
@@ -137,10 +133,9 @@ class RegisterOrganizationView(APIView):
                 status='PENDING'
             )
 
-            # 2. Generate 6-Digit OTP
+            # Secure OTP Generation
             otp_code = str(secrets.randbelow(900000) + 100000)
 
-            # 3. Create User with OTP attached
             admin_user = CustomUser.objects.create_user(
                 username=data.get('email'),
                 email=data.get('email'),
@@ -152,7 +147,6 @@ class RegisterOrganizationView(APIView):
                 email_otp_expires_at=timezone.now() + timedelta(minutes=10)
             )
 
-            # 4. Fire Async Email to the User
             subject = f"Verify your BloodConnect Organization: {otp_code}"
             plain_message = f"Your verification code is: {otp_code}. This code expires in 10 minutes."
             html_message = f"""
@@ -181,10 +175,6 @@ class RegisterOrganizationView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 class VerifyEmailOTPView(APIView):
-    """
-    Verifies the OTP. Implements atomic updates to prevent 
-    race conditions and ensures single-use token lifecycle.
-    """
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
 
@@ -196,7 +186,6 @@ class VerifyEmailOTPView(APIView):
         if not email or not otp:
             return Response({"error": "Email and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Use select_for_update to lock the row during verification
         user = CustomUser.objects.filter(email=email).select_for_update().first()
         
         if not user:
@@ -205,14 +194,12 @@ class VerifyEmailOTPView(APIView):
         if user.is_email_verified:
             return Response({"message": "Email is already verified."}, status=status.HTTP_200_OK)
 
-        # OTP Validation & Expiry Check
         if user.email_verification_otp != otp:
             return Response({"error": "Invalid verification code."}, status=status.HTTP_400_BAD_REQUEST)
 
         if user.email_otp_expires_at and user.email_otp_expires_at < timezone.now():
             return Response({"error": "Verification code has expired."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Atomic state transition
         user.is_email_verified = True
         user.email_verification_otp = None
         user.email_otp_expires_at = None
@@ -221,15 +208,13 @@ class VerifyEmailOTPView(APIView):
         return Response({"message": "Email verified successfully!"}, status=status.HTTP_200_OK)
 
 class ResendEmailOTPView(APIView):
-    """
-    Generates and emails a new OTP with a mandatory server-side cooldown.
-    """
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
 
+    @transaction.atomic
     def post(self, request):
         email = request.data.get('email')
-        user = CustomUser.objects.filter(email=email).first()
+        user = CustomUser.objects.filter(email=email).select_for_update().first()
 
         if not user:
             return Response({"error": "No account found."}, status=status.HTTP_404_NOT_FOUND)
@@ -299,7 +284,6 @@ class PasswordResetConfirmView(APIView):
         token = request.data.get('token')
         new_password = request.data.get('new_password')
 
-        # 🛡️ 1. Validate payload completeness
         if not uidb64 or not token or not new_password:
             return Response(
                 {"error": "Missing required parameters."}, 
@@ -313,12 +297,9 @@ class PasswordResetConfirmView(APIView):
             user = None
 
         if user is not None and default_token_generator.check_token(user, token):
-            
-            # 🛡️ 2. Enforce strict server-side password policies
             try:
                 validate_password(new_password, user=user)
             except ValidationError as e:
-                # Returns Django's specific password rules (e.g. "Password is too common") to the frontend
                 return Response(
                     {"error": list(e.messages)[0]}, 
                     status=status.HTTP_400_BAD_REQUEST

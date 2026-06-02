@@ -19,7 +19,6 @@ import { AdBanner } from "../../components/ads/AdBanner";
  * and CSS-driven micro-interactions.
  */
 export default function Home() {
-  // Value Proposition Configuration
   const features = [
     {
       icon: Clock,
@@ -51,7 +50,6 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-slate-950 overflow-hidden">
       {/* --- Hero Composition --- */}
       <section className="relative px-4 pt-20 pb-32 md:pt-32 md:pb-40 lg:pt-40 lg:pb-48">
-        {/* Ambient Gradient Mesh */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000"
           aria-hidden="true"
@@ -80,7 +78,7 @@ export default function Home() {
               <Button
                 variant="primary"
                 size="lg"
-                className="w-full text-base gap-2 px-8 py-6 rounded-full shadow-[0_0_30px_rgba(225,29,72,0.2)] hover:shadow-[0_0_40px_rgba(225,29,72,0.4)] transition-all duration-300"
+                className="w-full text-base gap-2 px-8 py-6 rounded-full shadow-rose-glow hover:shadow-rose-glow-lg transition-all duration-300"
               >
                 <Search className="h-5 w-5" />
                 Find Donors Now
@@ -112,7 +110,6 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* Visual connector line for large viewports */}
             <div
               className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-linear-to-r from-slate-800 via-rose-500/20 to-slate-800 -translate-y-1/2 z-0"
               aria-hidden="true"
@@ -215,7 +212,7 @@ export default function Home() {
             <Button
               variant="primary"
               size="lg"
-              className="px-10 py-7 rounded-full text-lg font-semibold gap-3 shadow-xl hover:shadow-[0_0_40px_rgba(225,29,72,0.3)] hover:-translate-y-1 transition-all duration-300"
+              className="px-10 py-7 rounded-full text-lg font-semibold gap-3 shadow-rose-glow hover:shadow-rose-glow-lg hover:-translate-y-1 transition-all duration-300"
             >
               <Search className="h-6 w-6" />
               Search the Directory

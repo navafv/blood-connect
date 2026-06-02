@@ -1,7 +1,7 @@
 import React from "react";
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import api from "../../lib/axios";
 
 /**
@@ -28,7 +28,7 @@ export const ProtectedRoute = ({
       return response.data;
     },
     retry: false, // If 401 Unauthorized, fail immediately without retrying
-    staleTime: 5 * 60 * 1000, // Cache the session for 5 minutes so navigation stays snappy
+    staleTime: 5 * 60 * 1000, // Cache the session for 5 minutes
   });
 
   // 1. Await Backend Resolution
@@ -45,28 +45,21 @@ export const ProtectedRoute = ({
 
   // 2. Unauthenticated / Spoofed Bypass -> Redirect to Auth Gateway
   if (isError || !user) {
-    // Purge any spoofed or lingering local storage flags
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("userRole");
-
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Source of truth is now the API, with local storage as a fallback sync
-  const userRole = user.role || localStorage.getItem("userRole");
-
   // 3. SuperAdmin Guard -> Kick standard tenants out of the platform console
-  if (requireSuperAdmin && userRole !== "SUPER_ADMIN") {
+  if (requireSuperAdmin && user.role !== "SUPER_ADMIN") {
     return <Navigate to="/admin" replace />;
   }
 
   // 4. Tenant Admin Guard -> Kick standard staff out of Billing & Settings
-  if (requireOrgAdmin && userRole === "ORG_STAFF") {
+  if (requireOrgAdmin && user.role === "ORG_STAFF") {
     return <Navigate to="/admin/donors" replace />;
   }
 
   // 5. Cross-Pollination Guard -> Ensure SuperAdmins stay in their console
-  if (!requireSuperAdmin && userRole === "SUPER_ADMIN") {
+  if (!requireSuperAdmin && user.role === "SUPER_ADMIN") {
     return <Navigate to="/superadmin" replace />;
   }
 

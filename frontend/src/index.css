@@ -8,6 +8,10 @@
   --color-primary-hover: #be123c; /* Rose 700 - Hover state */
   --color-background-dark: #0f172a; /* Slate 900 */
   --color-background-darker: #020617; /* Slate 950 */
+
+  /* Abstracted Box Shadows for cleaner JSX scaling */
+  --shadow-rose-glow: 0 0 30px rgba(225, 29, 72, 0.2);
+  --shadow-rose-glow-lg: 0 0 40px rgba(225, 29, 72, 0.4);
 }
 
 /* * 2. Base Browser Resets & Enhancements

@@ -10,7 +10,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Prefetch, Max
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 
@@ -26,13 +26,11 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if not user.organization:
-            return Donor.objects.none()
-            
         return Donor.objects.select_related(
-            'country', 'state', 'district'
-        ).filter(organization=user.organization).order_by('-created_at')
+            'organization', 'country', 'state', 'district'
+        ).prefetch_related(
+            Prefetch('donation_records', queryset=DonationRecord.objects.order_by('-donation_date'))
+        ).filter(organization=self.request.user.organization).order_by('-created_at')
     
     def perform_create(self, serializer):
         serializer.save(organization=self.request.user.organization)
@@ -131,7 +129,9 @@ class TenantDashboardStatsView(APIView):
             if not hasattr(user, 'organization') or not user.organization:
                 return Response({"error": "No organization linked."}, status=status.HTTP_400_BAD_REQUEST)
                 
-            donors = Donor.objects.filter(organization=user.organization)
+            donors = Donor.objects.filter(organization=user.organization).annotate(
+                annotated_last_donation=Max('donation_records__donation_date')
+            )
             today = timezone.now().date()
             thirty_days_ago = today - timedelta(days=30)
             
@@ -145,14 +145,14 @@ class TenantDashboardStatsView(APIView):
             available_donors = donors.filter(
                 is_permanently_deferred=False
             ).filter(
-                Q(last_donation_date__isnull=True) |
-                Q(gender='M', last_donation_date__lte=male_threshold) |
-                Q(gender='F', last_donation_date__lte=female_threshold) |
-                Q(gender='O', last_donation_date__lte=female_threshold)
+                Q(annotated_last_donation__isnull=True) |
+                Q(gender='M', annotated_last_donation__lte=male_threshold) |
+                Q(gender='F', annotated_last_donation__lte=female_threshold) |
+                Q(gender='O', annotated_last_donation__lte=female_threshold)
             ).count()
                     
             # 3. Donations this month
-            recent_donations = donors.filter(last_donation_date__gte=thirty_days_ago).count()
+            recent_donations = donors.filter(annotated_last_donation__gte=thirty_days_ago).count()
             
             # 4. Blood Group Distribution
             bg_counts = donors.values('blood_group').annotate(count=Count('blood_group')).order_by('-count')

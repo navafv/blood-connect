@@ -60,46 +60,7 @@ class MasterDistrict(models.Model):
 
 
 # ==========================================
-# 2. CUSTOM USER (Handles Authentication & OTP)
-# ==========================================
-
-class CustomUser(AbstractUser):
-    ROLE_CHOICES = (
-        ('SUPER_ADMIN', 'Super Admin'),
-        ('ORG_ADMIN', 'Organization Admin'),
-        ('ORG_STAFF', 'Organization Staff'),
-        ('PUBLIC_USER', 'Public User / Donor'),
-    )
-    
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PUBLIC_USER')
-    phone_number = models.CharField(validators=[phone_regex], max_length=20, unique=True, null=True, blank=True)
-    
-    # Verification Flags (For OTP Step)
-    is_email_verified = models.BooleanField(default=False)
-    is_phone_verified = models.BooleanField(default=False)
-    email_verification_otp = models.CharField(max_length=6, null=True, blank=True)
-    email_otp_expires_at = models.DateTimeField(null=True, blank=True)
-    
-    # The organization this user belongs to (Null for SuperAdmins and Public Users)
-    organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_members')
-
-    def __str__(self):
-        return self.email or self.username
-
-    def save(self, *args, **kwargs):
-        """
-        If the phone_number is submitted as an empty string (""), 
-        we forcefully convert it to Python's None (SQL NULL).
-        This ensures multiple users without phone numbers don't violate the unique=True constraint.
-        """
-        if not self.phone_number:
-            self.phone_number = None
-            
-        super().save(*args, **kwargs)
-
-
-# ==========================================
-# 3. ORGANIZATION (The SaaS Tenant)
+# 2. ORGANIZATION (The SaaS Tenant)
 # ==========================================
 
 class Organization(models.Model):
@@ -157,6 +118,50 @@ class Organization(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_org_type_display()})"
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['status', 'is_searchable']),
+        ]
+
+
+# ==========================================
+# 3. CUSTOM USER (Handles Authentication & OTP)
+# ==========================================
+
+class CustomUser(AbstractUser):
+    ROLE_CHOICES = (
+        ('SUPER_ADMIN', 'Super Admin'),
+        ('ORG_ADMIN', 'Organization Admin'),
+        ('ORG_STAFF', 'Organization Staff'),
+        ('PUBLIC_USER', 'Public User / Donor'),
+    )
+    
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PUBLIC_USER')
+    phone_number = models.CharField(validators=[phone_regex], max_length=20, unique=True, null=True, blank=True)
+    
+    # Verification Flags (For OTP Step)
+    is_email_verified = models.BooleanField(default=False)
+    is_phone_verified = models.BooleanField(default=False)
+    email_verification_otp = models.CharField(max_length=6, null=True, blank=True)
+    email_otp_expires_at = models.DateTimeField(null=True, blank=True)
+    
+    # The organization this user belongs to (Null for SuperAdmins and Public Users)
+    organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_members')
+
+    def __str__(self):
+        return self.email or self.username
+
+    def save(self, *args, **kwargs):
+        """
+        If the phone_number is submitted as an empty string (""), 
+        we forcefully convert it to Python's None (SQL NULL).
+        This ensures multiple users without phone numbers don't violate the unique=True constraint.
+        """
+        if not self.phone_number:
+            self.phone_number = None
+            
+        super().save(*args, **kwargs)
 
 
 # ==========================================
@@ -165,11 +170,19 @@ class Organization(models.Model):
 
 class SoftDeleteQuerySet(models.QuerySet):
     def delete(self):
-        """
-        Intercepts bulk deletions (e.g., Donor.objects.filter(...).delete())
-        and executes a bulk SQL UPDATE instead.
-        """
-        return super().update(is_deleted=True, deleted_at=timezone.now())
+        batch_size = 2000
+        total_updated = 0
+        pks = list(self.values_list('pk', flat=True))
+        
+        for i in range(0, len(pks), batch_size):
+            batch_pks = pks[i:i + batch_size]
+            updated = self.model.all_objects.filter(pk__in=batch_pks).update(
+                is_deleted=True, 
+                deleted_at=timezone.now()
+            )
+            total_updated += updated
+            
+        return total_updated
 
 class ActiveDonorManager(models.Manager):
     def get_queryset(self):
@@ -243,7 +256,8 @@ class Donor(models.Model):
 
     @property
     def latest_donation(self):
-        return self.donation_records.first()
+        all_records = self.donation_records.all()
+        return all_records[0] if all_records else None
 
     @property
     def last_donation_date(self):
@@ -268,6 +282,13 @@ class Donor(models.Model):
         else: # WHOLE_BLOOD
             cooldown_days = 90 if self.gender == 'M' else 120
             return days_since_donation >= cooldown_days
+        
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_deleted']),
+            models.Index(fields=['organization', 'is_deleted']),
+            models.Index(fields=['blood_group', 'country', 'state']),
+        ]
 
 
 # =========================================
@@ -284,8 +305,8 @@ class DonationRecord(models.Model):
         ('PLASMA', 'Plasma'),
     )
     
-    donor = models.ForeignKey('Donor', on_delete=models.CASCADE, related_name='donation_records')
-    organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
+    donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='donation_records')
+    organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True, blank=True)
     
     donation_type = models.CharField(max_length=20, choices=DONATION_TYPES, default='WHOLE_BLOOD')
     donation_date = models.DateField(default=timezone.now)

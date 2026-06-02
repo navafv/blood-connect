@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,11 +18,14 @@ load_dotenv(BASE_DIR / '.env')
 # SECURITY & DEPLOYMENT SETTINGS
 # ==========================================
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-m*8s-q#-9+zcnwo)#f(^h6%q1)vrp^1a17icj&p$evq436*-r#')
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY and not DEBUG:
+    raise ImproperlyConfigured("SECRET_KEY environment variable is missing in production.")
+elif not SECRET_KEY:
+    SECRET_KEY = 'django-insecure-m*8s-q#-9+zcnwo)#f(^h6%q1)vrp^1a17icj&p$evq436*-r#'
 
 # Dynamically parse ALLOWED_HOSTS from the environment.
 allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
@@ -132,7 +136,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # ==========================================
 # Internationalization
 # ==========================================
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
@@ -151,7 +154,6 @@ STATICFILES_DIRS = [
     FRONTEND_DIST_DIR, 
 ]
 
-# Tell WhiteNoise to serve root-level files (like favicon.ico, robots.txt)
 WHITENOISE_ROOT = FRONTEND_DIST_DIR
 
 MEDIA_URL = '/media/'

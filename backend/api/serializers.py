@@ -36,17 +36,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'password', 'role', 
             'phone_number', 'is_email_verified', 'is_phone_verified', 'organization'
         ]
-        # Ensure verification statuses cannot be modified by user requests, 
-        # only by the internal OTP verification endpoint/logic.
+        
         extra_kwargs = {
             'password': {'write_only': True},
             'role': {'read_only': True}, 
             'is_email_verified': {'read_only': True},
-            'is_phone_verified': {'read_only': True}
+            'is_phone_verified': {'read_only': True},
+            'organization': {'read_only': True} 
         }
 
     def create(self, validated_data):
-        # We must use create_user() so Django securely hashes the password!
         user = CustomUser.objects.create_user(**validated_data)
         return user
 

@@ -7,6 +7,8 @@ import {
   useLocation,
 } from "react-router-dom";
 import { Droplet } from "lucide-react";
+import ScrollToTop from "./hooks/useScrollRestoration";
+import PageLoader from "./components/ui/PageLoader";
 
 // --- Core Layouts ---
 // Imported synchronously to ensure the application shell renders immediately.
@@ -67,39 +69,6 @@ const ManageArchivedDonors = lazy(
   () => import("./pages/superadmin/ManageArchivedDonors"),
 );
 const SystemLogs = lazy(() => import("./pages/superadmin/SystemLogs"));
-
-/**
- * Scroll Restoration Utility
- * Ensures consistent top-of-page alignment across SPA transitions.
- */
-const ScrollToTop = () => {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }, [pathname]);
-
-  return null;
-};
-
-/**
- * Asynchronous Boundary Fallback
- * Rendered during lazy chunk resolution to maintain layout stability.
- */
-const PageLoader = () => (
-  <div
-    className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 gap-4"
-    aria-live="polite"
-  >
-    <div className="relative flex items-center justify-center">
-      <Droplet className="absolute h-8 w-8 text-rose-500 animate-pulse fill-rose-500/20" />
-      <div className="h-16 w-16 animate-spin rounded-full border-4 border-slate-800 border-t-rose-500" />
-    </div>
-    <span className="text-sm font-medium tracking-widest text-transparent bg-clip-text bg-linear-to-r from-slate-400 to-slate-200 animate-pulse">
-      LOADING WORKSPACE
-    </span>
-  </div>
-);
 
 function App() {
   return (
