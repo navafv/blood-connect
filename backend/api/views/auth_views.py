@@ -2,7 +2,7 @@ import secrets
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle, ScopedRateThrottle
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from datetime import timedelta
 from django.utils import timezone
@@ -176,7 +176,8 @@ class RegisterOrganizationView(APIView):
         
 class VerifyEmailOTPView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [AnonRateThrottle]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'otp'
 
     @transaction.atomic
     def post(self, request):
@@ -209,7 +210,8 @@ class VerifyEmailOTPView(APIView):
 
 class ResendEmailOTPView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [AnonRateThrottle]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'otp'
 
     @transaction.atomic
     def post(self, request):
@@ -241,7 +243,8 @@ class ResendEmailOTPView(APIView):
 
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [AnonRateThrottle]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'password_reset'
 
     def post(self, request):
         email = request.data.get('email')

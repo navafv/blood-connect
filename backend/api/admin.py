@@ -1,3 +1,13 @@
 from django.contrib import admin
+from simple_history.admin import SimpleHistoryAdmin
+from .models import Donor, DonationRecord
 
-# Register your models here.
+@admin.register(Donor)
+class DonorAdmin(SimpleHistoryAdmin):
+    list_display = ('full_name', 'blood_group', 'organization')
+    search_fields = ('full_name', 'phone_number')
+    history_list_display = ["status"] 
+
+@admin.register(DonationRecord)
+class DonationRecordAdmin(SimpleHistoryAdmin):
+    list_display = ('donor', 'donation_type', 'donation_date')

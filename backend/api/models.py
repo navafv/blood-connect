@@ -1,11 +1,11 @@
 import uuid
 from django.db import models
-from datetime import timedelta
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
+from simple_history.models import HistoricalRecords
 
 # ==========================================
 # GLOBAL VALIDATORS
@@ -239,8 +239,11 @@ class Donor(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     # Managers
-    objects = ActiveDonorManager()  # Default manager (hides deleted)
-    all_objects = AllDonorManager() # Admin manager (shows everything, but bulk deletes still soft-delete)
+    objects = ActiveDonorManager()
+    all_objects = AllDonorManager()
+
+    # History Tracking
+    history = HistoricalRecords()
 
     def __str__(self):
         return f"{self.full_name} ({self.blood_group})"
@@ -312,6 +315,8 @@ class DonationRecord(models.Model):
     clinical_notes = models.TextField(blank=True, null=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
+
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ['-donation_date', '-created_at'] # Most recent first

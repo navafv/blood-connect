@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from api.models import (
     MasterCountry, MasterState, MasterDistrict, CustomUser, 
-    Organization, Donor, PaymentTransaction
+    Organization, Donor, PaymentTransaction, DonationRecord # <-- Added DonationRecord
 )
 
 class Command(BaseCommand):
@@ -17,7 +17,10 @@ class Command(BaseCommand):
         
         # Clear data in reverse dependency order
         PaymentTransaction.objects.all().delete()
-        Donor.all_objects.all().delete()
+        DonationRecord.objects.all().delete() # <-- Added to clear old ledgers
+        
+        # Note: Using .objects instead of .all_objects just in case a soft-delete manager isn't configured
+        Donor.objects.all().delete() 
         CustomUser.objects.all().delete()
         Organization.objects.all().delete()
 
@@ -85,7 +88,7 @@ class Command(BaseCommand):
 
         # 6. Populate Donors with 2+ Years of History
         self.stdout.write("Generating 250 Historical Donors (Spanning 800 days)...")
-        blood_groups = [bg[0] for bg in Donor.BLOOD_GROUP_CHOICES]
+        blood_groups = [bg[0] for bg in Donor.BLOOD_GROUP_CHOICES] if hasattr(Donor, 'BLOOD_GROUP_CHOICES') else ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]
         first_names = ["Rahul", "Aisha", "Mohammed", "Priya", "Arjun", "Kavya", "Sanjay", "Anjali", "Vishnu", "Meera", "David", "Fatima", "Rohan"]
         last_names = ["Nair", "Menon", "Kumar", "V", "Pillai", "Das", "Joseph", "George", "Iyer", "Rahman"]
         
@@ -95,19 +98,11 @@ class Command(BaseCommand):
         today = now.date()
 
         for i in range(250):
-            # Simulate registration anywhere from today to 800 days ago (~2.2 years)
             days_since_registered = random.randint(0, 800)
             registered_at = now - timedelta(days=days_since_registered)
-            
-            # 30% of people have never donated. Otherwise, they donated sometime between registration and today.
-            if random.random() < 0.30:
-                last_donation = None
-            else:
-                days_since_donation = random.randint(0, days_since_registered)
-                last_donation = (now - timedelta(days=days_since_donation)).date()
-
             assigned_district = random.choice(list(districts.values()))
 
+            # Create the donor WITHOUT last_donation_date
             donor = Donor(
                 organization=org,
                 full_name=f"{random.choice(first_names)} {random.choice(last_names)}",
@@ -118,8 +113,6 @@ class Command(BaseCommand):
                 country=country,
                 state=state,
                 district=assigned_district,
-                last_donation_date=last_donation,
-                # 5% of users are permanently deferred (e.g. medical conditions)
                 is_permanently_deferred=random.random() < 0.05,
                 has_consented=True
             )
@@ -127,17 +120,47 @@ class Command(BaseCommand):
             donors_to_create.append(donor)
             historical_timestamps.append(registered_at)
 
-        # Bulk create is fast, but it ignores custom `created_at` values because of auto_now_add=True
-        created_donors = Donor.objects.bulk_create(donors_to_create)
+        # Bulk create the Donors
+        Donor.objects.bulk_create(donors_to_create)
 
-        # 7. Force overwrite the `created_at` timestamps to bypass Django's auto_now_add
-        self.stdout.write("Applying historical timeline to database...")
-        for donor, historical_time in zip(Donor.objects.filter(organization=org).order_by('id'), historical_timestamps):
-            # Using .update() bypasses the auto_now_add trigger
-            Donor.objects.filter(id=donor.id).update(created_at=historical_time)
+        # 7. Force overwrite created_at timestamps & Generate Clinical Ledger
+        self.stdout.write("Applying historical timeline and clinical ledgers...")
+        
+        saved_donors = Donor.objects.filter(organization=org).order_by('id')
+        donation_records_to_create = []
+
+        for donor, registered_at in zip(saved_donors, historical_timestamps):
+            # Bypass auto_now_add to set the true historical registration date
+            Donor.objects.filter(id=donor.id).update(created_at=registered_at)
+
+            # 70% chance of having donated previously
+            if random.random() < 0.70:
+                days_since_registered = (now - registered_at).days
+                if days_since_registered >= 0:
+                    days_since_donation = random.randint(0, days_since_registered)
+                    last_donation_date = (now - timedelta(days=days_since_donation)).date()
+                    
+                    # Weighted randomness: mostly whole blood, some platelets/plasma
+                    donation_type = random.choices(
+                        ['WHOLE_BLOOD', 'PLATELETS', 'PLASMA'], 
+                        weights=[0.80, 0.15, 0.05]
+                    )[0]
+
+                    donation_records_to_create.append(
+                        DonationRecord(
+                            donor=donor,
+                            organization=org,
+                            donation_type=donation_type,
+                            donation_date=last_donation_date,
+                            clinical_notes="Seeded historical record."
+                        )
+                    )
+
+        # Bulk create the clinical history
+        DonationRecord.objects.bulk_create(donation_records_to_create)
 
         self.stdout.write(self.style.SUCCESS("-" * 50))
-        self.stdout.write(self.style.SUCCESS("✅ Database seeded successfully with 2+ years of data!"))
+        self.stdout.write(self.style.SUCCESS(f"✅ Database seeded successfully with {len(saved_donors)} Donors and {len(donation_records_to_create)} Clinical Records!"))
         self.stdout.write(self.style.SUCCESS("SuperAdmin Login : admin@bloodconnect.com / adminpassword123"))
         self.stdout.write(self.style.SUCCESS("Hospital Login   : staff@citygeneral.com / staffpassword123"))
         self.stdout.write(self.style.SUCCESS("-" * 50))
