@@ -103,7 +103,6 @@ class DonorSerializer(serializers.ModelSerializer):
         read_only_fields = ['organization']
 
     def get_masked_phone(self, obj):
-        """Returns the phone number with the last digits masked for public privacy"""
         if obj.phone_number and len(obj.phone_number) >= 10:
             # Mask format logic for public safety
             return obj.phone_number[:6] + 'XXXX'

@@ -21,10 +21,6 @@ from .public_views import StandardResultsSetPagination
 
 
 class IsSuperAdmin(permissions.BasePermission):
-    """
-    Custom permission to allow users with the 'SUPER_ADMIN' role 
-    OR native Django superusers.
-    """
     def has_permission(self, request, view):
         return bool(
             request.user and 
@@ -48,7 +44,6 @@ class SuperAdminDistrictViewSet(viewsets.ModelViewSet):
     queryset = MasterDistrict.objects.all()
 
 class SuperAdminOrganizationListView(generics.ListAPIView):
-    """Returns a list of all registered organizations."""
     serializer_class = OrganizationSerializer
     permission_classes = [IsSuperAdmin]
     queryset = Organization.objects.select_related(
@@ -56,7 +51,6 @@ class SuperAdminOrganizationListView(generics.ListAPIView):
     ).order_by('-created_at')
 
 class SuperAdminOrganizationStatusUpdateView(APIView):
-    """Allows a Super Admin to Approve (ACTIVE) or Suspend an organization."""
     permission_classes = [IsSuperAdmin]
 
     def patch(self, request, pk):
@@ -121,7 +115,6 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         )
 
 class SuperAdminDashboardStatsView(APIView):
-    """Returns platform-wide statistics for the Super Admin dashboard."""
     permission_classes = [IsSuperAdmin]
 
     def get(self, request):
@@ -155,7 +148,6 @@ class SuperAdminDashboardStatsView(APIView):
         }, status=status.HTTP_200_OK)
 
 class SuperAdminSystemLogListView(generics.ListAPIView):
-    """Returns system logs for the Super Admin audit trail with pagination."""
     permission_classes = [IsSuperAdmin]
     serializer_class = SystemLogSerializer
     pagination_class = StandardResultsSetPagination
@@ -164,7 +156,6 @@ class SuperAdminSystemLogListView(generics.ListAPIView):
         return SystemLog.objects.all().order_by('-timestamp')
 
 class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
-    """CRUD endpoints for Super Admins to manage system-wide advertisements."""
     queryset = Advertisement.objects.all().order_by('-created_at')
     serializer_class = AdvertisementSerializer
     permission_classes = [IsSuperAdmin]
@@ -201,7 +192,6 @@ class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Status updated', 'is_active': ad.is_active})
 
 class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
-    """CRUD endpoints for Super Admins to manage and reply to public contact messages."""
     queryset = ContactMessage.objects.all().order_by('-created_at')
     serializer_class = ContactMessageSerializer
     permission_classes = [IsSuperAdmin]
@@ -251,7 +241,6 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Status updated', 'is_resolved': message.is_resolved})
 
 class SuperAdminArchivedDonorViewSet(viewsets.ModelViewSet):
-    """Endpoints for Super Admins to view, restore, or permanently delete archived donors."""
     serializer_class = DonorSerializer
     permission_classes = [IsSuperAdmin]
 
@@ -275,7 +264,6 @@ class SuperAdminArchivedDonorViewSet(viewsets.ModelViewSet):
         return Response({"message": "Donor record permanently erased."}, status=status.HTTP_200_OK)
 
 class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
-    """Super Admin endpoints to view and approve/reject UPI transactions."""
     serializer_class = PaymentTransactionSerializer
     permission_classes = [IsSuperAdmin]
     queryset = PaymentTransaction.objects.select_related(
@@ -315,7 +303,6 @@ class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
         return Response({"error": "Invalid action parameter."}, status=status.HTTP_400_BAD_REQUEST)
 
 class SuperAdminExtendSubscriptionView(APIView):
-    """Allows Super Admins to manually gift/extend a subscription by X years."""
     permission_classes = [IsSuperAdmin]
     
     def post(self, request, pk):
@@ -332,7 +319,6 @@ class SuperAdminExtendSubscriptionView(APIView):
         return Response({"message": f"Extended successfully by {years} year(s)."})
 
 class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
-    """Super Admin endpoints to manage and reply to Tenant Support Tickets."""
     serializer_class = TenantSupportTicketSerializer
     permission_classes = [IsSuperAdmin]
     queryset = TenantSupportTicket.objects.select_related(

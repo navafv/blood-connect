@@ -14,21 +14,16 @@ from ..serializers import (
 )
 
 class StandardResultsSetPagination(PageNumberPagination):
-    """
-    Standard pagination class for large public datasets (like donor search).
-    """
     page_size = 20
     page_size_query_param = 'page_size'
     max_page_size = 100
 
 class MasterCountryListView(generics.ListAPIView):
-    """Returns only countries whitelisted by the Super Admin"""
     queryset = MasterCountry.objects.filter(is_whitelisted=True)
     serializer_class = MasterCountrySerializer
     permission_classes = [permissions.AllowAny]
 
 class MasterStateListView(generics.ListAPIView):
-    """Returns states filtered by a specific country ID"""
     serializer_class = MasterStateSerializer
     permission_classes = [permissions.AllowAny]
     
@@ -39,7 +34,6 @@ class MasterStateListView(generics.ListAPIView):
         return MasterState.objects.none()
 
 class MasterDistrictListView(generics.ListAPIView):
-    """Returns districts filtered by a specific state ID"""
     serializer_class = MasterDistrictSerializer
     permission_classes = [permissions.AllowAny]
     
@@ -50,10 +44,6 @@ class MasterDistrictListView(generics.ListAPIView):
         return MasterDistrict.objects.none()
 
 class PublicDonorSearchView(generics.ListAPIView):
-    """
-    Handles the public cascading search. 
-    Only returns donors belonging to 'ACTIVE' and 'SEARCHABLE' organizations.
-    """
     serializer_class = PublicDonorSearchSerializer
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
@@ -70,7 +60,6 @@ class PublicDonorSearchView(generics.ListAPIView):
         )
 
 class ActiveAdvertisementView(generics.ListAPIView):
-    """Public view to fetch ALL active and non-expired ads."""
     serializer_class = AdvertisementSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -81,17 +70,12 @@ class ActiveAdvertisementView(generics.ListAPIView):
         ).order_by('-created_at')
  
 class ContactMessageCreateView(generics.CreateAPIView):
-    """Allows the public to submit contact forms to the Super Admin."""
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class AdClickRedirectView(APIView):
-    """
-    Public endpoint to track advertisement clicks. 
-    Increments the click counter securely and redirects the user.
-    """
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, pk):
@@ -103,7 +87,6 @@ class AdClickRedirectView(APIView):
     
 
 class PublicOrganizationDetailView(generics.RetrieveAPIView):
-    """Fetches public details and photos for the hospital mini-website."""
     serializer_class = OrganizationSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = 'slug'

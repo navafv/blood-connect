@@ -41,7 +41,6 @@ export default function OrganizationProfile() {
   const { data: donorData, isLoading: donorsLoading } = useQuery({
     queryKey: ["org-donors", org?.id],
     queryFn: async () => {
-      // 🛡️ Corrected namespace to hit the public API layer
       const res = await api.get(
         `/public/donors/search/?organization=${org.id}`,
       );

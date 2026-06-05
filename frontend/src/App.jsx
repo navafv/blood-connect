@@ -1,12 +1,6 @@
-import React, { Suspense, lazy, useEffect } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
-import { Droplet } from "lucide-react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./hooks/useScrollRestoration";
 import PageLoader from "./components/ui/PageLoader";
 
@@ -16,6 +10,7 @@ import { PublicLayout } from "./components/layout/PublicLayout";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { SuperAdminLayout } from "./components/layout/SuperAdminLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { SessionExpiredModal } from "./components/auth/SessionExpiredModal";
 
 // --- Route-Level Code Splitting ---
 // Public Domain
@@ -68,8 +63,30 @@ const ManageArchivedDonors = lazy(
 const SystemLogs = lazy(() => import("./pages/superadmin/SystemLogs"));
 
 function App() {
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
+
+  useEffect(() => {
+    // Listen for the custom event dispatched by Axios when a 401 occurs
+    const handleSessionExpiration = () => {
+      setIsSessionExpired(true);
+    };
+
+    window.addEventListener("session-expired", handleSessionExpiration);
+
+    return () => {
+      window.removeEventListener("session-expired", handleSessionExpiration);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
+
+      <SessionExpiredModal
+        isOpen={isSessionExpired}
+        onClose={() => setIsSessionExpired(false)}
+      />
+
       <ScrollToTop />
 
       <Suspense fallback={<PageLoader />}>

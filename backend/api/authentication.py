@@ -4,9 +4,6 @@ from rest_framework import exceptions
 from django.conf import settings
 
 def enforce_csrf(request):
-    """
-    Manually enforces CSRF validation for cookie-based authentication.
-    """
     check = CSRFCheck(request)
     check.process_request(request)
     reason = check.process_view(request, None, (), {})
@@ -14,10 +11,6 @@ def enforce_csrf(request):
         raise exceptions.PermissionDenied(f'CSRF Failed: {reason}')
 
 class CustomCookieJWTAuthentication(JWTAuthentication):
-    """
-    Custom authentication class that reads the JWT from an HttpOnly cookie 
-    and strictly enforces CSRF protection.
-    """
     def authenticate(self, request):
         raw_token = request.COOKIES.get(settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'))
         

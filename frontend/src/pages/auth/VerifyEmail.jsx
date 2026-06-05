@@ -40,7 +40,6 @@ export default function VerifyEmail() {
   const [countdown, setCountdown] = useState(30);
   const [isResending, setIsResending] = useState(false);
 
-  // Security Check: Prevent direct navigation bypassing the registration flow
   if (!email) {
     return <Navigate to="/register-org" replace />;
   }

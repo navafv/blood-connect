@@ -152,11 +152,6 @@ class CustomUser(AbstractUser):
         return self.email or self.username
 
     def save(self, *args, **kwargs):
-        """
-        If the phone_number is submitted as an empty string (""), 
-        we forcefully convert it to Python's None (SQL NULL).
-        This ensures multiple users without phone numbers don't violate the unique=True constraint.
-        """
         if not self.phone_number:
             self.phone_number = None
             
@@ -298,9 +293,6 @@ class Donor(models.Model):
 # =========================================
 
 class DonationRecord(models.Model):
-    """
-    Clinical ledger tracking historical donations and types.
-    """
     DONATION_TYPES = (
         ('WHOLE_BLOOD', 'Whole Blood (RBC)'),
         ('PLATELETS', 'Platelets (Apheresis)'),

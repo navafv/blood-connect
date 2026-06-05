@@ -71,16 +71,22 @@ api.interceptors.response.use(
         // If the refresh fails (e.g., refresh token is expired or manipulated)
         processQueue(refreshError, null);
 
-        // Clean up UI state and force the user back to the login screen
+        // Clean up UI state
         localStorage.removeItem("isAuthenticated");
         localStorage.removeItem("userRole");
-        window.location.href = "/login";
+        // This freezes the screen with a modal, allowing the user to copy unsaved text!
+        window.dispatchEvent(new CustomEvent("session-expired"));
 
         return Promise.reject(refreshError);
       } finally {
         // Always unlock the refresh process when done
         isRefreshing = false;
       }
+    }
+
+    // Catch random 401s outside of the retry flow as a fallback
+    if (error.response?.status === 401) {
+      window.dispatchEvent(new CustomEvent("session-expired"));
     }
 
     // For all other errors (400, 403, 404, 500), just reject the promise normally

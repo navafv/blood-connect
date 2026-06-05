@@ -98,11 +98,21 @@ class CurrentUserView(APIView):
 
     def get(self, request):
         user = request.user
+        org_data = None
+        
+        if getattr(user, 'organization', None):
+            org_data = {
+                "id": user.organization.id,
+                "name": user.organization.name,
+                "status": user.organization.status,
+            }
+
         return Response({
             "id": user.id,
             "email": user.email,
             "username": user.username,
             "role": getattr(user, 'role', 'PUBLIC_USER'),
+            "organization": org_data
         }, status=status.HTTP_200_OK)
     
 class LogoutView(APIView):

@@ -41,11 +41,6 @@ from .views import (
     SuperAdminOrganizationStatusUpdateView,
 )
 
-"""
-System Router Configuration
-Registers ViewSets for standard RESTful CRUD operations.
-Namespaces are strictly segregated by actor roles (Tenant vs. SuperAdmin).
-"""
 router = DefaultRouter()
 
 # Tenant (Organization) Routes

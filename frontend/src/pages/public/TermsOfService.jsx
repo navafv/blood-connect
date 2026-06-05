@@ -216,7 +216,6 @@ export default function TermsOfService() {
           {terms.map((term, index) => {
             const Icon = term.icon;
 
-            // 🛡️ UX Enhancement: Isolate the medical disclaimer with a high-visibility danger state
             const isDisclaimer = index === 1;
 
             return (

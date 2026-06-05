@@ -248,9 +248,6 @@ class TenantSupportTicketViewSet(viewsets.ModelViewSet):
         return Response({"message": "Reply sent successfully."})
     
 class LogDonationView(APIView):
-    """
-    Logs a new clinical donation into the donor's historical ledger.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, donor_id):
