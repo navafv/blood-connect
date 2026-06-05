@@ -45,9 +45,6 @@ const Support = lazy(() => import("./pages/admin/Support"));
 const ProfileSettings = lazy(
   () => import("./pages/admin/settings/ProfileSettings"),
 );
-const StaffManagement = lazy(
-  () => import("./pages/admin/settings/StaffManagement"),
-);
 const BillingSubscription = lazy(
   () => import("./pages/admin/settings/BillingSubscription"),
 );
@@ -97,29 +94,21 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
 
           {/* --- Tenant Administration Subgraph --- */}
-          {/* Base protection: Requires a valid login (STAFF or ADMIN) */}
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute requireOrgAdmin={true} />}>
             <Route path="/admin" element={<AdminLayout />}>
-              {/* Standard Operations (Open to ORG_STAFF and ORG_ADMIN) */}
               <Route index element={<Dashboard />} />
               <Route path="donors" element={<ManageDonors />} />
               <Route path="add-donor" element={<AddDonor />} />
               <Route path="support" element={<Support />} />
-
-              {/* Elevated Operations (Restricted to ORG_ADMIN only) */}
-              <Route element={<ProtectedRoute requireOrgAdmin={true} />}>
-                <Route path="settings" element={<ProfileSettings />} />
-                <Route path="settings/staff" element={<StaffManagement />} />
-                <Route
-                  path="settings/billing"
-                  element={<BillingSubscription />}
-                />
-              </Route>
+              <Route path="settings" element={<ProfileSettings />} />
+              <Route
+                path="settings/billing"
+                element={<BillingSubscription />}
+              />
             </Route>
           </Route>
 
           {/* --- System Administration Subgraph --- */}
-          {/* Strict protection: Requires SUPER_ADMIN clearance */}
           <Route element={<ProtectedRoute requireSuperAdmin={true} />}>
             <Route path="/superadmin" element={<SuperAdminLayout />}>
               <Route index element={<GlobalDashboard />} />

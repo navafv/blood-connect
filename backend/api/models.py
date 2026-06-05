@@ -133,7 +133,6 @@ class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('SUPER_ADMIN', 'Super Admin'),
         ('ORG_ADMIN', 'Organization Admin'),
-        ('ORG_STAFF', 'Organization Staff'),
         ('PUBLIC_USER', 'Public User / Donor'),
     )
     

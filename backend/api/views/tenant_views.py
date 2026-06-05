@@ -203,51 +203,6 @@ class TenantOrganizationView(generics.RetrieveUpdateAPIView):
             raise PermissionDenied("You are not associated with any organization.")
         return self.request.user.organization
 
-class TenantStaffViewSet(viewsets.ModelViewSet):
-    serializer_class = CustomUserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        if not user.organization:
-            return CustomUser.objects.none()
-        return CustomUser.objects.select_related('organization').filter(
-            organization=user.organization
-        ).order_by('-date_joined')
-
-    def create(self, request, *args, **kwargs):
-        if request.user.role != 'ORG_ADMIN':
-            return Response({"error": "Only Organization Admins can add staff."}, status=status.HTTP_403_FORBIDDEN)
-
-        email = request.data.get('email')
-        if CustomUser.objects.filter(email=email).exists():
-            return Response({"error": "User exists."}, status=status.HTTP_400_BAD_REQUEST)
-
-        alphabet = string.ascii_letters + string.digits
-        temp_password = ''.join(secrets.choice(alphabet) for _ in range(10))
-        org = request.user.organization
-        
-        user = CustomUser.objects.create_user(
-            username=email, email=email, password=temp_password,
-            first_name=request.data.get('name', ''), role=request.data.get('role', 'ORG_STAFF'), organization=org
-        )
-
-        send_async_email.delay(
-            subject=f"Join {org.name} on BloodConnect",
-            plain_message=f"Temp pass: {temp_password}",
-            recipient_list=[email],
-            html_message=f"<p>Temp pass: {temp_password}</p>"
-        )
-
-        return Response(self.get_serializer(user).data, status=status.HTTP_201_CREATED)
-
-    def destroy(self, request, *args, **kwargs):
-        if request.user.role != 'ORG_ADMIN':
-            return Response({"error": "Only Admins can remove staff."}, status=status.HTTP_403_FORBIDDEN)
-        if self.get_object().id == request.user.id:
-            return Response({"error": "Cannot remove yourself."}, status=status.HTTP_400_BAD_REQUEST)
-        return super().destroy(request, *args, **kwargs)
-
 class TenantPaymentView(generics.ListCreateAPIView):
     serializer_class = PaymentTransactionSerializer
     permission_classes = [permissions.IsAuthenticated]

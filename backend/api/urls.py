@@ -21,7 +21,6 @@ from .views import (
     PublicOrganizationDetailView,
     LogDonationView,
     TenantPaymentView, 
-    TenantStaffViewSet,
     TenantDonorViewSet,
     TenantOrganizationView,
     TenantDashboardStatsView,
@@ -50,7 +49,6 @@ Namespaces are strictly segregated by actor roles (Tenant vs. SuperAdmin).
 router = DefaultRouter()
 
 # Tenant (Organization) Routes
-router.register(r'tenant/staff', TenantStaffViewSet, basename='tenant-staff')
 router.register(r'tenant/donors', TenantDonorViewSet, basename='tenant-donor')
 router.register(r'tenant/support-tickets', TenantSupportTicketViewSet, basename='tenant-support-tickets')
 

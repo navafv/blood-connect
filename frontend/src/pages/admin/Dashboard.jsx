@@ -37,7 +37,7 @@ import api from "../../lib/axios";
 
 /**
  * Tenant Administrative Dashboard
- * Primary overview interface for Organization Admins and Staff.
+ * Primary overview interface for Organization Admins.
  * Leverages React Query for automatic background synchronization, ensuring
  * critical medical metrics remain fresh.
  */

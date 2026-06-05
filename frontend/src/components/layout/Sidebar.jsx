@@ -31,7 +31,6 @@ export function Sidebar({ isOpen, setIsOpen }) {
     { name: "Register Donor", path: "/admin/add-donor", icon: UserPlus },
     { name: "Support", path: "/admin/support", icon: LifeBuoy },
     { name: "Profile Settings", path: "/admin/settings", icon: Building2 },
-    { name: "Staff Access", path: "/admin/settings/staff", icon: Lock },
     {
       name: "Billing & Subscription",
       path: "/admin/settings/billing",

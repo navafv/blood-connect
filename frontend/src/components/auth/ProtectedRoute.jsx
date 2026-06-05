@@ -53,16 +53,11 @@ export const ProtectedRoute = ({
     return <Navigate to="/admin" replace />;
   }
 
-  // 4. Tenant Admin Guard -> Kick standard staff out of Billing & Settings
-  if (requireOrgAdmin && user.role === "ORG_STAFF") {
-    return <Navigate to="/admin/donors" replace />;
-  }
-
-  // 5. Cross-Pollination Guard -> Ensure SuperAdmins stay in their console
+  // 4. Cross-Pollination Guard -> Ensure SuperAdmins stay in their console
   if (!requireSuperAdmin && user.role === "SUPER_ADMIN") {
     return <Navigate to="/superadmin" replace />;
   }
 
-  // 6. Clearance Verified -> Render the protected layout/component
+  // 5. Clearance Verified -> Render the protected layout/component
   return <Outlet />;
 };
