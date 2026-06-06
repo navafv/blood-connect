@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import {
   Droplet,
   Mail,
@@ -17,9 +18,9 @@ import api from "../../lib/axios";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // --- UI Transition State ---
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // --- Payload State ---
@@ -32,35 +33,39 @@ export default function Login() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+  // Capture the URL they were on before the session expired
+  const from = location.state?.from || null;
 
-    try {
-      // Dispatch credentials. Expected response: { role: "ORG_ADMIN" | "SUPER_ADMIN" }
-      // JWTs are expected to be set implicitly via Set-Cookie headers.
-      const response = await api.post("/auth/login/", {
-        username: formData.email,
-        password: formData.password,
-      });
-
-      const userRole = response.data.role;
-
-      // Hydrate client-side routing state
+  // --- Unified Authentication Pipeline ---
+  const loginMutation = useMutation({
+    mutationFn: async (credentials) => {
+      // Backend expects 'username' instead of 'email' for default Django Auth
+      const res = await api.post("/auth/login/", credentials);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      // Hydrate client-side routing state flags
+      const userRole = data.role || data.user?.role;
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userRole", userRole);
 
       toast.success("Authentication successful. Initializing workspace.");
 
-      // Role-based workspace routing
-      if (userRole === "SUPER_ADMIN") {
-        navigate("/superadmin");
+      // --- Seamless Redirection Logic ---
+      if (from) {
+        // Return them exactly where they were
+        navigate(from, { replace: true });
       } else {
-        navigate("/admin");
+        // Default routing based on role
+        if (userRole === "SUPER_ADMIN") {
+          navigate("/superadmin", { replace: true });
+        } else {
+          navigate("/admin", { replace: true });
+        }
       }
-    } catch (err) {
+    },
+    onError: (err) => {
       console.error("Authentication Failure:", err);
-
       if (err.response?.status === 401) {
         toast.error(
           "Invalid credentials. Please verify your email and password.",
@@ -73,9 +78,15 @@ export default function Login() {
             "System error during authentication. Please try again later.",
         );
       }
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    loginMutation.mutate({
+      email: formData.email,
+      password: formData.password,
+    });
   };
 
   return (
@@ -137,7 +148,7 @@ export default function Login() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  disabled={isLoading}
+                  disabled={loginMutation.isPending}
                 />
               </div>
             </div>
@@ -170,7 +181,7 @@ export default function Login() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  disabled={isLoading}
+                  disabled={loginMutation.isPending}
                 />
                 <button
                   type="button"
@@ -194,9 +205,9 @@ export default function Login() {
                 type="submit"
                 variant="primary"
                 className="w-full flex justify-center items-center py-6 text-base font-semibold shadow-lg hover:shadow-rose-500/20 transition-all rounded-xl gap-2"
-                disabled={isLoading}
+                disabled={loginMutation.isPending}
               >
-                {isLoading ? (
+                {loginMutation.isPending ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
                     Authenticating...

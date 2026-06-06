@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./hooks/useScrollRestoration";
 import PageLoader from "./components/ui/PageLoader";
+import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 
 // --- Core Layouts ---
 // Imported synchronously to ensure the application shell renders immediately.

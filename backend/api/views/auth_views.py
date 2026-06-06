@@ -28,7 +28,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             access_token = response.data.get('access')
             refresh_token = response.data.get('refresh')
             
-            user = CustomUser.objects.filter(username=request.data.get('username')).first()
+            user = CustomUser.objects.filter(email=request.data.get('email')).first()
             actual_role = user.role if user else 'PUBLIC_USER'
             
             if user and user.is_superuser:
@@ -110,7 +110,6 @@ class CurrentUserView(APIView):
         return Response({
             "id": user.id,
             "email": user.email,
-            "username": user.username,
             "role": getattr(user, 'role', 'PUBLIC_USER'),
             "organization": org_data
         }, status=status.HTTP_200_OK)
@@ -157,7 +156,6 @@ class RegisterOrganizationView(APIView):
             otp_code = str(secrets.randbelow(900000) + 100000)
 
             admin_user = CustomUser.objects.create_user(
-                username=data.get('email'),
                 email=data.get('email'),
                 password=data.get('password'),
                 first_name=data.get('contactName', ''),

@@ -1,11 +1,17 @@
 import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AlertTriangle, Copy, LogIn } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 
 export function SessionExpiredModal({ isOpen, onClose }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const handleLoginRedirect = () => {
-    window.location.href = "/login";
+    onClose();
+    const currentPath = location.pathname + location.search;
+    navigate("/login", { state: { from: currentPath } });
   };
 
   return (

@@ -5,7 +5,7 @@ from django.db.models import Prefetch
 from django.utils.text import slugify
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from simple_history.models import HistoricalRecords
 
 # ==========================================
@@ -47,6 +47,7 @@ class MasterState(models.Model):
         
     class Meta:
         ordering = ['name']
+        unique_together = ('country', 'name')
 
 
 class MasterDistrict(models.Model):
@@ -58,6 +59,7 @@ class MasterDistrict(models.Model):
         
     class Meta:
         ordering = ['name']
+        unique_together = ('state', 'name')
 
 
 # ==========================================
@@ -130,6 +132,29 @@ class Organization(models.Model):
 # 3. CUSTOM USER (Handles Authentication & OTP)
 # ==========================================
 
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email address must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'SUPER_ADMIN') # Automatically grant SuperAdmin role
+        extra_fields.setdefault('is_email_verified', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
+
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('SUPER_ADMIN', 'Super Admin'),
@@ -137,25 +162,31 @@ class CustomUser(AbstractUser):
         ('PUBLIC_USER', 'Public User / Donor'),
     )
     
+    username = None
+    email = models.EmailField(unique=True)
+    
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PUBLIC_USER')
     phone_number = models.CharField(validators=[phone_regex], max_length=20, unique=True, null=True, blank=True)
     
-    # Verification Flags (For OTP Step)
+    # Verification Flags
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
     email_verification_otp = models.CharField(max_length=6, null=True, blank=True)
     email_otp_expires_at = models.DateTimeField(null=True, blank=True)
     
-    # The organization this user belongs to (Null for SuperAdmins and Public Users)
-    organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_members')
+    organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_members')
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
 
     def __str__(self):
-        return self.email or self.username
+        return self.email
 
     def save(self, *args, **kwargs):
         if not self.phone_number:
             self.phone_number = None
-            
         super().save(*args, **kwargs)
 
 
