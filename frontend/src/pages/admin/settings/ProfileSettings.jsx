@@ -27,11 +27,6 @@ import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import api from "../../../lib/axios";
 
-/**
- * Tenant Profile Settings Workspace
- * Allows organization administrators to manage their public-facing directory
- * profile, contact vectors, and institutional media assets.
- */
 export default function ProfileSettings() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);

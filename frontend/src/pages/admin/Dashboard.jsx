@@ -35,12 +35,6 @@ import {
 import { Button } from "../../components/ui/Button";
 import api from "../../lib/axios";
 
-/**
- * Tenant Administrative Dashboard
- * Primary overview interface for Organization Admins.
- * Leverages React Query for automatic background synchronization, ensuring
- * critical medical metrics remain fresh.
- */
 export default function Dashboard() {
   const navigate = useNavigate();
 
@@ -61,10 +55,6 @@ export default function Dashboard() {
     retry: 1,
   });
 
-  /**
-   * Action Dictionary mapping specific backend event enum strings
-   * to their semantic UI representation.
-   */
   const getActivityStyling = (action) => {
     switch (action) {
       case "DONATION_LOGGED":
@@ -136,10 +126,6 @@ export default function Dashboard() {
 
   const { overview, bloodGroupDistribution, recentActivity } = stats;
 
-  /**
-   * Custom Recharts Tooltip configured to match the application's
-   * glassmorphic design system.
-   */
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (

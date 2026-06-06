@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.utils import timezone
+from django.db.models import Prefetch
 from django.utils.text import slugify
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
@@ -177,16 +178,28 @@ class SoftDeleteQuerySet(models.QuerySet):
             total_updated += updated
             
         return total_updated
+    
+    def hard_delete(self):
+        return super().delete()
 
 class ActiveDonorManager(models.Manager):
     def get_queryset(self):
-        # Return our custom QuerySet, filtering out soft-deleted records
         return SoftDeleteQuerySet(self.model, using=self._db).filter(is_deleted=False)
+
+    def get_for_tenant(self, organization):
+        return self.get_queryset().filter(organization=organization)
+
+    def with_availability_context(self):
+        from .models import DonationRecord # Local import to prevent circularity
+        latest_donation_prefetch = Prefetch(
+            'donation_records',
+            queryset=DonationRecord.objects.order_by('-donation_date'),
+            to_attr='prefetched_latest_donation'
+        )
+        return self.get_queryset().prefetch_related(latest_donation_prefetch)
 
 class AllDonorManager(models.Manager):
     def get_queryset(self):
-        # Return our custom QuerySet, but include EVERYTHING (even deleted ones)
-        # This allows SuperAdmins to view deleted records or undelete them.
         return SoftDeleteQuerySet(self.model, using=self._db)
 
 class Donor(models.Model):
@@ -253,7 +266,9 @@ class Donor(models.Model):
 
     @property
     def latest_donation(self):
-        all_records = self.donation_records.all()
+        if hasattr(self, 'prefetched_latest_donation'):
+            return self.prefetched_latest_donation[0] if self.prefetched_latest_donation else None        
+        all_records = self.donation_records.all()[:1]
         return all_records[0] if all_records else None
 
     @property
@@ -284,7 +299,7 @@ class Donor(models.Model):
         indexes = [
             models.Index(fields=['is_deleted']),
             models.Index(fields=['organization', 'is_deleted']),
-            models.Index(fields=['blood_group', 'country', 'state']),
+            models.Index(fields=['blood_group', 'district', 'state']),
         ]
 
 

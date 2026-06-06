@@ -5,7 +5,9 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Crucial for sending/receiving HttpOnly cookies
+  withCredentials: true, 
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
 });
 
 // --- Concurrency / Race Condition Variables ---

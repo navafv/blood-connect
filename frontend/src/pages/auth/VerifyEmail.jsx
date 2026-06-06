@@ -22,11 +22,6 @@ import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import api from "../../lib/axios";
 
-/**
- * Identity Verification Boundary
- * Enforces email ownership verification via a 6-digit Time-Based One-Time Password (TOTP).
- * Blocks unverified tenants from accessing the organization workspace.
- */
 export default function VerifyEmail() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,10 +39,6 @@ export default function VerifyEmail() {
     return <Navigate to="/register-org" replace />;
   }
 
-  /**
-   * Resend Throttling Mechanism
-   * Mitigates potential email-bombing attacks by enforcing a client-side cooldown.
-   */
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -61,10 +52,6 @@ export default function VerifyEmail() {
     setOtp(value);
   };
 
-  /**
-   * OTP Verification Dispatch
-   * Transmits the token payload to the backend authorization server.
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -101,9 +88,6 @@ export default function VerifyEmail() {
     }
   };
 
-  /**
-   * OTP Re-issuance Dispatch
-   */
   const handleResend = async () => {
     setIsResending(true);
     setStatus("idle");

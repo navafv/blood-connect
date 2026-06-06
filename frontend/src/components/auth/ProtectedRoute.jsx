@@ -4,18 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import api from "../../lib/axios";
 
-/**
- * Enterprise Routing Security Wrapper (RBAC)
- * Enforces cryptographic session verification via the backend before granting
- * access to protected layouts.
- */
 export const ProtectedRoute = ({
   requireSuperAdmin = false,
   requireOrgAdmin = false,
 }) => {
   const location = useLocation();
 
-  // --- Cryptographic Session Verification ---
   const {
     data: user,
     isLoading,
@@ -23,15 +17,13 @@ export const ProtectedRoute = ({
   } = useQuery({
     queryKey: ["auth-session-verify"],
     queryFn: async () => {
-      // Pings the backend to validate the HttpOnly JWT cookie
       const response = await api.get("/auth/me/");
       return response.data;
     },
-    retry: false, // If 401 Unauthorized, fail immediately without retrying
-    staleTime: 5 * 60 * 1000, // Cache the session for 5 minutes
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // 1. Await Backend Resolution
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 gap-4">
@@ -43,21 +35,28 @@ export const ProtectedRoute = ({
     );
   }
 
-  // 2. Unauthenticated / Spoofed Bypass -> Redirect to Auth Gateway
   if (isError || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // 3. SuperAdmin Guard -> Kick standard tenants out of the platform console
+  // --- STRICT RBAC ENFORCEMENT ---
+
+  // 1. SuperAdmin Guard
   if (requireSuperAdmin && user.role !== "SUPER_ADMIN") {
-    return <Navigate to="/admin" replace />;
+    // If an OrgAdmin tries to access SuperAdmin, send them to their dashboard
+    if (user.role === "ORG_ADMIN") return <Navigate to="/admin" replace />;
+    // Otherwise kick to home
+    return <Navigate to="/" replace />;
   }
 
-  // 4. Cross-Pollination Guard -> Ensure SuperAdmins stay in their console
-  if (!requireSuperAdmin && user.role === "SUPER_ADMIN") {
-    return <Navigate to="/superadmin" replace />;
+  // 2. OrgAdmin Guard (Prevents PUBLIC_USER from accessing tenant dashboard)
+  if (requireOrgAdmin && user.role !== "ORG_ADMIN") {
+    // If SuperAdmin tries to access tenant dashboard, send them to global dashboard
+    if (user.role === "SUPER_ADMIN")
+      return <Navigate to="/superadmin" replace />;
+    // If public user, kick to home
+    return <Navigate to="/" replace />;
   }
 
-  // 5. Clearance Verified -> Render the protected layout/component
   return <Outlet />;
 };

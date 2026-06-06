@@ -1,8 +1,3 @@
-/**
- * Asynchronous Boundary Fallback
- * Rendered during lazy chunk resolution to maintain layout stability.
- */
-
 const PageLoader = () => (
   <div
     className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 gap-4"

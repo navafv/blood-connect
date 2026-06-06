@@ -13,11 +13,6 @@ import {
   CardContent,
 } from "../../components/ui/Card";
 
-/**
- * Legal & Operational Constraints Boundary
- * Static presentational layer outlining user obligations, tenant responsibilities,
- * and critical medical liability waivers.
- */
 export default function TermsOfService() {
   const lastUpdated = "May 17, 2026";
 

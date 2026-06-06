@@ -15,11 +15,6 @@ import api from "../../lib/axios";
 import { DonorCard } from "../../components/donors/DonorCard";
 import { Button } from "../../components/ui/Button";
 
-/**
- * Organization Public Profile (Tenant Mini-Site)
- * Dynamically generated public page for registered organizations. Displays
- * institutional details and a scoped directory of their active donors.
- */
 export default function OrganizationProfile() {
   const { slug } = useParams();
 

@@ -6,11 +6,6 @@ import toast from "react-hot-toast";
 import { Sidebar } from "./Sidebar";
 import api from "../../lib/axios";
 
-/**
- * Tenant Administration Layout Shell
- * Provides the structural flexbox foundation, responsive sidebar routing,
- * and secure session termination for the hospital admin console.
- */
 export function AdminLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();

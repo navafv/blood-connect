@@ -17,10 +17,6 @@ import {
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
 
-/**
- * Tenant Administrative Sidebar
- * Navigation hub for facility-level operations, billing, and system configuration.
- */
 export function Sidebar({ isOpen, setIsOpen }) {
   const location = useLocation();
   const navigate = useNavigate();

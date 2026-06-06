@@ -33,11 +33,6 @@ import { Input } from "../../components/ui/Input";
 import { DonorFilters } from "../../components/donors/DonorFilters";
 import api from "../../lib/axios";
 
-/**
- * Registry Management Interface
- * Permits authorized tenant staff to execute CRUD operations on their geographically
- * locked donor pool. Includes client-side filtering, inline editing, and bulk ingest capabilities.
- */
 export default function ManageDonors() {
   const queryClient = useQueryClient();
 

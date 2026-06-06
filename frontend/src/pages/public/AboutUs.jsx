@@ -11,11 +11,6 @@ import {
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 
-/**
- * Institutional Identity Domain
- * Static presentation layer outlining platform mission, architecture rationale,
- * and core operational tenets. Optimized for brand trust and tenant conversion.
- */
 export default function AboutUs() {
   const values = [
     {

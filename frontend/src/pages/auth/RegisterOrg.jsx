@@ -21,12 +21,6 @@ import { Input } from "../../components/ui/Input";
 import { SearchableSelect } from "../../components/ui/SearchableSelect";
 import api from "../../lib/axios";
 
-/**
- * Tenant Onboarding Boundary
- * Facilitates the registration of new healthcare organizations (Hospitals, NGOs).
- * Captures institutional identity, administrative credentials, and enforces
- * strict geographical boundaries for downstream donor management.
- */
 export default function RegisterOrg() {
   const navigate = useNavigate();
 
@@ -52,9 +46,6 @@ export default function RegisterOrg() {
     is_searchable: true,
   });
 
-  /**
-   * Initializes the geographic hierarchy by fetching whitelisted root nodes (Countries).
-   */
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -111,11 +102,6 @@ export default function RegisterOrg() {
     });
   };
 
-  /**
-   * Tenant Provisioning Dispatch
-   * Transmits the onboarding payload to the backend. Upon success, routes the user
-   * to the email verification gate to confirm administrative control of the provided domain.
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("loading");

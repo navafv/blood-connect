@@ -7,10 +7,6 @@ import { Toaster } from "react-hot-toast";
 import App from "./App.jsx";
 import "./index.css";
 
-/**
- * Global Query Client Configuration
- * Establishes baseline caching and invalidation strategies for server state.
- */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

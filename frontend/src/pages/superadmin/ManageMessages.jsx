@@ -22,11 +22,6 @@ import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Public Support Inbox
- * Centralized dashboard for managing, replying to, and resolving messages
- * submitted via the public "Contact Us" form.
- */
 export default function ManageMessages() {
   const queryClient = useQueryClient();
   const [selectedMessage, setSelectedMessage] = useState(null);

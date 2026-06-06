@@ -27,11 +27,6 @@ import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Global Dashboard
- * Top-level telemetry and moderation portal for BloodConnect operators.
- * Manages tenant onboarding approvals and monitors global platform health.
- */
 export default function GlobalDashboard() {
   const queryClient = useQueryClient();
 

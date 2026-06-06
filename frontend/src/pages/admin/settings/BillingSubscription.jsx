@@ -29,11 +29,6 @@ import { Input } from "../../../components/ui/Input";
 import { Modal } from "../../../components/ui/Modal";
 import api from "../../../lib/axios";
 
-/**
- * Tenant Financial & Subscription Boundary
- * Allows organization administrators to monitor their SaaS license validity,
- * review transaction history, and submit manual UTR payment references.
- */
 export default function BillingSubscription() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);

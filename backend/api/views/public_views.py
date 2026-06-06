@@ -50,10 +50,8 @@ class PublicDonorSearchView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        return Donor.objects.select_related(
+        return Donor.objects.with_availability_context().select_related(
             'organization', 'country', 'state', 'district'
-        ).prefetch_related(
-            Prefetch('donation_records', queryset=DonationRecord.objects.order_by('-donation_date'))
         ).filter(
             organization__status='ACTIVE', 
             organization__is_searchable=True

@@ -14,11 +14,6 @@ import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { toast } from "react-hot-toast";
 
-/**
- * Public Donor Card
- * Displays anonymized donor information to the public. Contact routing is strictly
- * handled via the proxy healthcare organization to maintain HIPAA/privacy compliance.
- */
 export function DonorCard({ donor }) {
   // Format the last donation date safely
   const formattedLastDonation = donor.last_donation_date

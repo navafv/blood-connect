@@ -1,7 +1,3 @@
-/**
- * Scroll Restoration Utility
- * Ensures consistent top-of-page alignment across SPA transitions.
- */
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 

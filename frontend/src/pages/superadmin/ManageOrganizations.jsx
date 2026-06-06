@@ -25,11 +25,6 @@ import { Select } from "../../components/ui/Select";
 import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Tenant Management Workspace
- * Central interface for monitoring registered organizations, toggling platform access,
- * verifying UPI payments, and forcefully extending SaaS subscriptions.
- */
 export default function ManageOrganizations() {
   const queryClient = useQueryClient();
 

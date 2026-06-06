@@ -13,11 +13,6 @@ import {
   CardContent,
 } from "../../components/ui/Card";
 
-/**
- * Legal & Compliance Boundary
- * Static presentational layer detailing cryptographic standards, multi-tenant
- * isolation, and regulatory adherence. Critical for establishing institutional trust.
- */
 export default function PrivacyPolicy() {
   const lastUpdated = "May 17, 2026";
 

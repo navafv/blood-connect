@@ -20,11 +20,6 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Archive Management Workspace
- * Reviews soft-deleted donor records across all tenants. Allows SuperAdmins to
- * restore records to the active pool or enforce permanent GDPR/HIPAA-compliant erasure.
- */
 export default function ManageArchivedDonors() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");

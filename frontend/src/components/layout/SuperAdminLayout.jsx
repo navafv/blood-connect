@@ -21,11 +21,6 @@ import toast from "react-hot-toast";
 import { Button } from "../ui/Button";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Platform Command Center Layout
- * The high-clearance shell for system-wide management, audit logging,
- * and tenant moderation.
- */
 export function SuperAdminLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();

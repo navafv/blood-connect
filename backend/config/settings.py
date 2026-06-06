@@ -262,3 +262,27 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'your-brevo-smtp-key
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'support@bloodconnect.com')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==========================================
+# PRODUCTION SECURITY HEADERS
+# ==========================================
+
+if not DEBUG:
+    # Force HTTPS redirect
+    SECURE_SSL_REDIRECT = True
+    
+    # HTTP Strict Transport Security (HSTS) - 1 Year
+    SECURE_HSTS_SECONDS = 31536000 
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Prevent client-side JS from accessing the CSRF token
+    CSRF_COOKIE_HTTPONLY = False # Must be False for Axios to read it
+    CSRF_COOKIE_SECURE = True
+    
+    # Secure Session Cookies
+    SESSION_COOKIE_SECURE = True
+    
+    # Browser Security Headers
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -1,17 +1,13 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useId } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-/**
- * Enterprise Modal Dialog
- * Features focus-trapping for accessibility, scroll-locking, and
- * premium glassmorphic depth layering.
- */
 export function Modal({ isOpen, onClose, title, children, className }) {
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
   const onCloseRef = useRef(onClose);
+  const titleId = useId();
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -82,32 +78,34 @@ export function Modal({ isOpen, onClose, title, children, className }) {
 
   if (!isOpen) return null;
 
-  // Render the modal into the document body to escape parent stacking contexts
   return createPortal(
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-0">
-      {/* Dimmed Glassmorphic Backdrop */}
       <div
         className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={() => onCloseRef.current()}
         aria-hidden="true"
       />
 
-      {/* Modal Dialog Container */}
       <div
         ref={modalRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={title ? titleId : undefined}
         className={cn(
           "relative z-101 w-full max-w-lg rounded-2xl border border-slate-700/60 bg-slate-900/95 backdrop-blur-xl p-6 sm:p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in zoom-in-95 fade-in duration-300 focus:outline-none",
           className,
         )}
       >
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/80">
-          <h2 className="text-xl font-bold tracking-tight text-white">
-            {title}
-          </h2>
+          {title && (
+            <h2
+              id={titleId}
+              className="text-xl font-bold tracking-tight text-white"
+            >
+              {title}
+            </h2>
+          )}
           <button
             onClick={() => onCloseRef.current()}
             className="rounded-full p-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/50"

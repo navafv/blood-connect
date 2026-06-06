@@ -4,11 +4,6 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 
-/**
- * Donor Directory Filter Toolbar
- * Employs a real-time, auto-filtering architecture to instantly refine
- * the parent component's data table without requiring a manual submit.
- */
 export function DonorFilters({ onFilter }) {
   const [filters, setFilters] = useState({
     bloodGroup: "",

@@ -13,5 +13,5 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
-    re_path(r'^.*$', TemplateView.as_view(template_name='index.html'), name='react-spa'),
+    re_path(r'^(?!api/|media/).*$', TemplateView.as_view(template_name='index.html'), name='spa-fallback')
 ]

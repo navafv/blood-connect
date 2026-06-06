@@ -25,11 +25,6 @@ import { Select } from "../../components/ui/Select";
 import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Tenant Support Queue
- * Centralized helpdesk for managing, replying to, and resolving tickets
- * submitted by registered organizations. Features live-syncing chat modals.
- */
 export default function SupportTickets() {
   const queryClient = useQueryClient();
 

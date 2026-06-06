@@ -27,11 +27,6 @@ import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Advertisement Manager
- * Controls global platform banners, tracking click-through rates,
- * campaign durations, and visibility states.
- */
 export default function ManageAds() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);

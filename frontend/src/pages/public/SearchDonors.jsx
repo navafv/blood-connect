@@ -39,12 +39,6 @@ const bloodGroups = [
   "O-",
 ];
 
-/**
- * Public Donor Search Interface
- * Facilitates hyper-local, cascading geographical searches against the public
- * donor registry. Implements reverse-geocoding for automated location detection
- * and cursor-based pagination for high-volume result sets.
- */
 export default function SearchDonors() {
   // --- Master Data State ---
   const [countries, setCountries] = useState([]);
@@ -68,11 +62,6 @@ export default function SearchDonors() {
   const [prevPageUrl, setPrevPageUrl] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
 
-  /**
-   * Initializes the geographic hierarchy by fetching the root level (Countries)
-   * upon component mount. Downstream levels (States, Districts) are lazy-loaded
-   * based on user selection to minimize initial payload size.
-   */
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -86,11 +75,6 @@ export default function SearchDonors() {
     fetchCountries();
   }, []);
 
-  /**
-   * Hardware Geolocation & Reverse Geocoding via OpenStreetMap (Nominatim API).
-   * Translates raw GPS coordinates into structured administrative boundaries,
-   * then cross-references them against our internal database identifiers.
-   */
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
       toast.error("Hardware geolocation is not supported by your browser.");
@@ -206,11 +190,6 @@ export default function SearchDonors() {
     setSelectedDistrict(districtObj || null);
   };
 
-  /**
-   * Query Execution Engine
-   * Constructs the filter payload and dispatches the read request. Handles both
-   * initial parameter-based queries and absolute URL overrides for pagination.
-   */
   const fetchDonors = async (overrideUrl = null) => {
     setIsSearching(true);
     setHasSearched(true);

@@ -23,10 +23,6 @@ import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Audit Logs Workspace
- * Provides an immutable, paginated view of system-level telemetry.
- */
 export default function SystemLogs() {
   const [pageUrl, setPageUrl] = useState("/superadmin/logs/");
   const [searchTerm, setSearchTerm] = useState("");

@@ -21,11 +21,6 @@ import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 import api from "../../lib/axios";
 
-/**
- * Public Contact Boundary
- * Facilitates unauthenticated communication from public users and prospective
- * tenant organizations to the system administrators.
- */
 export default function ContactUs() {
   const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'success'
   const [formData, setFormData] = useState({
@@ -40,11 +35,6 @@ export default function ContactUs() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /**
-   * Dispatches the contact payload to the public endpoint.
-   * Leverages global toast infrastructure for transient error states while
-   * maintaining a dedicated inline success state for high-visibility confirmation.
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("loading");

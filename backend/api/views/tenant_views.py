@@ -26,11 +26,11 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Donor.objects.select_related(
-            'organization', 'country', 'state', 'district'
-        ).prefetch_related(
-            Prefetch('donation_records', queryset=DonationRecord.objects.order_by('-donation_date'))
-        ).filter(organization=self.request.user.organization).order_by('-created_at')
+        return Donor.objects.get_for_tenant(
+            self.request.user.organization
+        ).select_related(
+            'country', 'state', 'district'
+        ).with_availability_context().order_by('-created_at')
     
     def perform_create(self, serializer):
         serializer.save(organization=self.request.user.organization)
@@ -60,8 +60,9 @@ class TenantDonorBulkUploadView(APIView):
                     continue
             raise ValueError(f"Invalid date format: {date_str}")
 
-        org = user.organization
+        org = request.user.organization
         valid_blood_groups = {"A+", "A-", "A1+", "A1-", "A1B+", "A1B-", "A2+", "A2-", "A2B+", "A2B-", "AB+", "AB-", "B+", "B-", "BBG", "INRA", "O+", "O-"}
+        
         try:
             decoded_file = io.TextIOWrapper(file, encoding='utf-8-sig', errors='replace')
             reader = csv.DictReader(decoded_file)
@@ -73,6 +74,7 @@ class TenantDonorBulkUploadView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             donors_to_create = []
+            donations_to_create = []
             errors = []
             
             for idx, row in enumerate(reader, start=2): 
@@ -101,19 +103,44 @@ class TenantDonorBulkUploadView(APIView):
                         date_of_birth=parsed_dob,
                         gender=gender if gender in ['M', 'F', 'O'] else 'O',
                         blood_group=blood_group,
-                        last_donation_date=parsed_last_donation,
                         is_permanently_deferred=False,
                     )
+                    donor._temp_last_donation = parsed_last_donation
                     donors_to_create.append(donor)
+
                 except Exception as e:
                     errors.append(f"Row {idx} skipped: {str(e)}")
 
             if donors_to_create:
-                Donor.objects.bulk_create(donors_to_create, ignore_conflicts=True)
+                # Bulk create donors
+                created_donors = Donor.objects.bulk_create(donors_to_create, ignore_conflicts=True)
+                
+                # Fetch them back to get actual DB IDs for the related donation records
+                saved_donors = Donor.objects.filter(
+                    organization=org, 
+                    phone_number__in=[d.phone_number for d in donors_to_create]
+                )
+                
+                # Build the historical DonationRecords
+                phone_to_donor_map = {d.phone_number: d for d in saved_donors}
+                for temp_donor in donors_to_create:
+                    if temp_donor._temp_last_donation:
+                        actual_donor = phone_to_donor_map.get(temp_donor.phone_number)
+                        if actual_donor:
+                            donations_to_create.append(DonationRecord(
+                                donor=actual_donor,
+                                organization=org,
+                                donation_type='WHOLE_BLOOD',
+                                donation_date=temp_donor._temp_last_donation,
+                                clinical_notes="Imported via bulk CSV upload."
+                            ))
+                            
+                if donations_to_create:
+                    DonationRecord.objects.bulk_create(donations_to_create, ignore_conflicts=True)
                 
             return Response({
                 "message": f"Successfully imported {len(donors_to_create)} donors.", 
-                "errors": errors # Warning flags for partial successes are passed to the frontend
+                "errors": errors 
             }, status=status.HTTP_200_OK)
             
         except Exception as e:

@@ -23,11 +23,6 @@ const STATUS_CONFIG = {
   },
 };
 
-/**
- * Standardized Donor Status Badge
- * Provides consistent iconography and glassmorphic color mapping
- * for donor eligibility states across the platform.
- */
 export function StatusBadge({ status, className = "" }) {
   // Gracefully handle missing or incorrectly cased status strings
   const normalizedStatus = status?.toUpperCase();

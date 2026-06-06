@@ -3,11 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { Droplet, Menu, X } from "lucide-react";
 import { Button } from "../ui/Button";
 
-/**
- * Public Platform Navigation
- * Global header for unauthenticated users, providing routing to core public
- * services and authentication gateways.
- */
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();

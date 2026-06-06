@@ -23,11 +23,6 @@ import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import api from "../../lib/axios";
 
-/**
- * Credential Re-issuance Boundary
- * Finalizes the password reset protocol by consuming secure URL tokens
- * and transmitting the cryptographically updated credential payload.
- */
 export default function ResetPassword() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -46,11 +41,6 @@ export default function ResetPassword() {
     confirmPassword: "",
   });
 
-  /**
-   * Pre-flight Validation
-   * Ensures the requisite cryptographic parameters are present before rendering
-   * the mutation interface.
-   */
   useEffect(() => {
     if (!uid || !token) {
       setStatus("invalid_link");
@@ -62,10 +52,6 @@ export default function ResetPassword() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /**
-   * Credential Dispatch
-   * Validates the payload locally before attempting a network mutation.
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 

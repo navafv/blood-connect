@@ -26,11 +26,6 @@ import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 import api from "../../lib/axios";
 
-/**
- * SuperAdmin Location Master Data Workspace
- * Manages the geographic regions (Countries, States, Districts) available
- * for tenant registration and donor jurisdiction locking.
- */
 export default function ManageLocations() {
   const queryClient = useQueryClient();
 

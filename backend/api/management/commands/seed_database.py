@@ -17,10 +17,9 @@ class Command(BaseCommand):
         
         # Clear data in reverse dependency order
         PaymentTransaction.objects.all().delete()
-        DonationRecord.objects.all().delete() # <-- Added to clear old ledgers
+        DonationRecord.objects.all().delete()
         
-        # Note: Using .objects instead of .all_objects just in case a soft-delete manager isn't configured
-        Donor.objects.all().delete() 
+        Donor.all_objects.all().hard_delete()
         CustomUser.objects.all().delete()
         Organization.objects.all().delete()
 

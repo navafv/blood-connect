@@ -19,11 +19,6 @@ import {
   CardContent,
 } from "../../components/ui/Card";
 
-/**
- * Donor Guidelines Page
- * Serves as a medical education boundary. Provides users with the necessary
- * transparency to self-screen before entering the donor registry.
- */
 export default function DonorGuidelines() {
   const basicRequirements = [
     { label: "Age", value: "Between 18 and 65 years old." },

@@ -12,12 +12,6 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { AdBanner } from "../../components/ads/AdBanner";
 
-/**
- * Public Landing Page
- * Serves as the primary entry point for unauthenticated traffic.
- * Optimized for fast First Contentful Paint (FCP) using mostly static markup
- * and CSS-driven micro-interactions.
- */
 export default function Home() {
   const features = [
     {

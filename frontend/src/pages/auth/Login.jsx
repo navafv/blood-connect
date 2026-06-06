@@ -15,12 +15,6 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import api from "../../lib/axios";
 
-/**
- * Authentication Entry Boundary
- * Facilitates credential exchange for JWT issuance. Assumes tokens are
- * handled securely via HttpOnly cookies by the backend, utilizing localStorage
- * strictly for UI state hydration (Role & Auth Status).
- */
 export default function Login() {
   const navigate = useNavigate();
 
@@ -38,11 +32,6 @@ export default function Login() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  /**
-   * Credential Dispatch & Hydration
-   * Routes the user to the appropriate workspace based on the role
-   * returned by the authorization server.
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);

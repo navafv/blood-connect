@@ -14,11 +14,6 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import api from "../../lib/axios";
 
-/**
- * Credential Recovery Boundary
- * Initiates the password reset protocol. Employs a deterministic success state
- * regardless of email existence to prevent user enumeration attacks.
- */
 export default function ForgotPassword() {
   // --- UI Transition State ---
   const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'success'
@@ -26,9 +21,6 @@ export default function ForgotPassword() {
   // --- Payload State ---
   const [email, setEmail] = useState("");
 
-  /**
-   * Dispatches the recovery request to the authentication server.
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("loading");

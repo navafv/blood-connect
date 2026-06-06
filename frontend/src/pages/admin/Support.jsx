@@ -27,11 +27,6 @@ import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
 
-/**
- * Tenant Support & Helpdesk Workspace
- * Facilitates direct, secure communication between Tenant Admins and SuperAdmins.
- * Utilizes React Query for real-time background synchronization of chat threads.
- */
 export default function Support() {
   const queryClient = useQueryClient();
 
