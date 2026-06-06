@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from api.models import (
     MasterCountry, MasterState, MasterDistrict, CustomUser, 
-    Organization, Donor, PaymentTransaction, DonationRecord # <-- Added DonationRecord
+    Organization, Donor, PaymentTransaction, DonationRecord
 )
 
 class Command(BaseCommand):
@@ -38,7 +38,6 @@ class Command(BaseCommand):
         # 2. Super Admin Setup
         self.stdout.write("Creating Super Admin...")
         CustomUser.objects.create_superuser(
-            username="admin@bloodconnect.com",
             email="admin@bloodconnect.com",
             password="adminpassword123",
             role="SUPER_ADMIN",
@@ -65,7 +64,6 @@ class Command(BaseCommand):
         # 4. Org Admin Setup
         self.stdout.write("Creating Organization Admin...")
         org_admin = CustomUser.objects.create_user(
-            username="staff@citygeneral.com",
             email="staff@citygeneral.com",
             password="staffpassword123",
             role="ORG_ADMIN",

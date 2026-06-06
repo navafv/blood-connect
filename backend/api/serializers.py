@@ -32,22 +32,11 @@ class MasterDistrictSerializer(serializers.ModelSerializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = [
-            'id', 'username', 'email', 'password', 'role', 
-            'phone_number', 'is_email_verified', 'is_phone_verified', 'organization'
-        ]
-        
-        extra_kwargs = {
-            'password': {'write_only': True},
-            'role': {'read_only': True}, 
-            'is_email_verified': {'read_only': True},
-            'is_phone_verified': {'read_only': True},
-            'organization': {'read_only': True} 
-        }
+        fields = ['id', 'email', 'password', 'role', 'phone_number', 'organization']
+        extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(**validated_data)
-        return user
+        return CustomUser.objects.create_user(**validated_data)
 
 
 # ==========================================

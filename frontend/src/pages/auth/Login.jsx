@@ -39,7 +39,6 @@ export default function Login() {
   // --- Unified Authentication Pipeline ---
   const loginMutation = useMutation({
     mutationFn: async (credentials) => {
-      // Backend expects 'username' instead of 'email' for default Django Auth
       const res = await api.post("/auth/login/", credentials);
       return res.data;
     },

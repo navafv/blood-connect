@@ -6,20 +6,32 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   // base: '/static/',
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
     globals: true,
-    setupFiles: './src/setupTests.js',
+    setupFiles: "./src/setupTests.js",
   },
   build: {
     outDir: "dist",
     emptyOutDir: true,
-    // Optimize the bundle by splitting large libraries
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
-          query: ["@tanstack/react-query"],
-          ui: ["lucide-react", "react-hot-toast", "recharts"],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (
+              id.includes("react") ||
+              id.includes("react-dom") ||
+              id.includes("react-router-dom")
+            ) {
+              return "vendor"; // Groups core React libs
+            }
+            if (id.includes("@tanstack/react-query")) {
+              return "query"; // Groups React Query
+            }
+            if (id.includes("lucide-react") || id.includes("recharts")) {
+              return "ui-lib"; // Groups UI utilities
+            }
+            return "vendor-other"; // Catch-all for other node_modules
+          }
         },
       },
     },

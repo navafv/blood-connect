@@ -1,3 +1,4 @@
+import email
 import secrets
 from rest_framework import permissions, status
 from rest_framework.views import APIView
@@ -28,7 +29,8 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             access_token = response.data.get('access')
             refresh_token = response.data.get('refresh')
             
-            user = CustomUser.objects.filter(email=request.data.get('email')).first()
+            email = request.data.get('email') or request.data.get('username')
+            user = CustomUser.objects.filter(email=email).first()
             actual_role = user.role if user else 'PUBLIC_USER'
             
             if user and user.is_superuser:
@@ -62,9 +64,15 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 class CookieTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
-        if refresh_token:
-            request.data['refresh'] = refresh_token
+        
+        if not refresh_token:
+            return Response(
+                {"error": "Refresh token cookie not found."}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
             
+        request.data['refresh'] = refresh_token
+        
         response = super().post(request, *args, **kwargs)
         
         if response.status_code == 200:
@@ -74,7 +82,8 @@ class CookieTokenRefreshView(TokenRefreshView):
                 expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
                 secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
                 httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                path=settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             )
             del response.data['access']
 
@@ -85,7 +94,8 @@ class CookieTokenRefreshView(TokenRefreshView):
                     expires=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
                     secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
                     httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-                    samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+                    samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                    path=settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
                 )
                 del response.data['refresh']
                 
@@ -97,10 +107,10 @@ class CurrentUserView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        org_data = None
+        user = CustomUser.objects.select_related('organization').get(pk=request.user.pk)
         
-        if getattr(user, 'organization', None):
+        org_data = None
+        if user.organization:
             org_data = {
                 "id": user.organization.id,
                 "name": user.organization.name,
