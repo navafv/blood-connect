@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import {
   MapPin,
   Phone,
@@ -14,6 +15,13 @@ import {
 import api from "../../lib/axios";
 import { DonorCard } from "../../components/donors/DonorCard";
 import { Button } from "../../components/ui/Button";
+
+// --- Cloudinary URL Optimizer ---
+// Dynamically injects format=auto and quality=auto to reduce 5MB images to ~50kb WebP
+const optimizeCloudinaryUrl = (url, width = 800) => {
+  if (!url || !url.includes("res.cloudinary.com")) return url;
+  return url.replace("/upload/", `/upload/f_auto,q_auto,w_${width}/`);
+};
 
 export default function OrganizationProfile() {
   const { slug } = useParams();
@@ -77,14 +85,46 @@ export default function OrganizationProfile() {
     );
   }
 
+  // --- SEO & Image Optimization Strategy ---
+  const pageTitle = `${org.name} | BloodConnect Emergency Directory`;
+  const pageDescription = `Contact ${org.name} located in ${org.district_name}, ${org.state_name} for emergency blood requests and donation queries.`;
+
+  // Optimize images for Lighthouse performance
+  const optimizedBanner = optimizeCloudinaryUrl(org.banner_image, 1920);
+  const optimizedGallery1 = optimizeCloudinaryUrl(org.gallery_photo_1, 800);
+  const optimizedGallery2 = optimizeCloudinaryUrl(org.gallery_photo_2, 800);
+
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
+      {/* --- Dynamic SEO and Social Media Graph Injection --- */}
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+
+        {/* Open Graph / Facebook / LinkedIn */}
+        <meta property="og:type" content="profile" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        {optimizedBanner && (
+          <meta property="og:image" content={optimizedBanner} />
+        )}
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        {optimizedBanner && (
+          <meta name="twitter:image" content={optimizedBanner} />
+        )}
+      </Helmet>
+
       {/* --- Dynamic Hero Banner --- */}
       <div className="relative h-75 md:h-100 w-full bg-slate-900 border-b border-slate-800 overflow-hidden animate-in fade-in duration-700">
-        {org.banner_image ? (
+        {optimizedBanner ? (
           <img
-            src={org.banner_image}
+            src={optimizedBanner}
             alt={org.name}
+            fetchpriority="high" // Crucial for LCP Lighthouse Score
             className="w-full h-full object-cover opacity-50 scale-105"
           />
         ) : (
@@ -172,22 +212,24 @@ export default function OrganizationProfile() {
           </div>
 
           {/* Photo Gallery Grid */}
-          {(org.gallery_photo_1 || org.gallery_photo_2) && (
+          {(optimizedGallery1 || optimizedGallery2) && (
             <div className="grid grid-cols-2 gap-4">
-              {org.gallery_photo_1 && (
+              {optimizedGallery1 && (
                 <div className="aspect-square rounded-2xl overflow-hidden border border-slate-800 shadow-xl group">
                   <img
-                    src={org.gallery_photo_1}
+                    src={optimizedGallery1}
                     alt="Facility Area 1"
+                    loading="lazy" // Defers offscreen image loading
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 </div>
               )}
-              {org.gallery_photo_2 && (
+              {optimizedGallery2 && (
                 <div className="aspect-square rounded-2xl overflow-hidden border border-slate-800 shadow-xl group">
                   <img
-                    src={org.gallery_photo_2}
+                    src={optimizedGallery2}
                     alt="Facility Area 2"
+                    loading="lazy" // Defers offscreen image loading
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 </div>

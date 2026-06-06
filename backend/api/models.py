@@ -178,16 +178,12 @@ class SoftDeleteQuerySet(models.QuerySet):
             total_updated += updated
             
         return total_updated
-    
+
     def hard_delete(self):
         return super().delete()
 
-class ActiveDonorManager(models.Manager):
-    def get_queryset(self):
-        return SoftDeleteQuerySet(self.model, using=self._db).filter(is_deleted=False)
-
     def get_for_tenant(self, organization):
-        return self.get_queryset().filter(organization=organization)
+        return self.filter(organization=organization)
 
     def with_availability_context(self):
         from .models import DonationRecord # Local import to prevent circularity
@@ -196,11 +192,14 @@ class ActiveDonorManager(models.Manager):
             queryset=DonationRecord.objects.order_by('-donation_date'),
             to_attr='prefetched_latest_donation'
         )
-        return self.get_queryset().prefetch_related(latest_donation_prefetch)
+        return self.prefetch_related(latest_donation_prefetch)
 
-class AllDonorManager(models.Manager):
+class ActiveDonorManager(models.Manager.from_queryset(SoftDeleteQuerySet)):
     def get_queryset(self):
-        return SoftDeleteQuerySet(self.model, using=self._db)
+        return super().get_queryset().filter(is_deleted=False)
+
+class AllDonorManager(models.Manager.from_queryset(SoftDeleteQuerySet)):
+    pass
 
 class Donor(models.Model):
     BLOOD_GROUP_CHOICES = (

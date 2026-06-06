@@ -122,13 +122,39 @@ export default function ManageDonors() {
   // --- Mutation Pipeline: Archive Record ---
   const deleteMutation = useMutation({
     mutationFn: async (id) => await api.delete(`/tenant/donors/${id}/`),
-    onSuccess: () => {
+
+    // 1. Immediately execute before the network request finishes
+    onMutate: async (deletedId) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["tenantDonors"] });
+
+      // Snapshot the previous value for potential rollback
+      const previousDonors = queryClient.getQueryData(["tenantDonors"]);
+
+      // Optimistically update the UI to remove the donor instantly
+      queryClient.setQueryData(["tenantDonors"], (oldDonors) =>
+        oldDonors ? oldDonors.filter((donor) => donor.id !== deletedId) : [],
+      );
+
+      return { previousDonors };
+    },
+
+    // 2. If the network request fails, roll back the UI seamlessly
+    onError: (err, deletedId, context) => {
+      queryClient.setQueryData(["tenantDonors"], context.previousDonors);
+      toast.error("Network sync failed. Archival rolled back.", {
+        icon: "📡",
+      });
+    },
+
+    // 3. Regardless of success or failure, sync strictly with the server in the background
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
       queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
-      toast.success("Donor record archived successfully.");
     },
-    onError: () => {
-      toast.error("Failed to archive record. Please verify permissions.");
+
+    onSuccess: () => {
+      toast.success("Donor record archived successfully.");
     },
   });
 

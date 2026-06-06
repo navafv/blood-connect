@@ -26,6 +26,7 @@ from .views import (
     TenantDashboardStatsView,
     TenantDonorBulkUploadView,
     TenantSupportTicketViewSet,
+    SystemCronWebhookView,
     SuperAdminStateViewSet, 
     SuperAdminPaymentViewSet, 
     SuperAdminCountryViewSet, 
@@ -68,6 +69,7 @@ urlpatterns = [
     path('superadmin/dashboard-stats/', SuperAdminDashboardStatsView.as_view(), name='superadmin-dashboard-stats'),
     path('superadmin/organizations/<int:pk>/status/', SuperAdminOrganizationStatusUpdateView.as_view(), name='superadmin-org-status'),
     path('superadmin/organizations/<int:pk>/extend-subscription/', SuperAdminExtendSubscriptionView.as_view(), name='superadmin-extend-sub'),
+    path('superadmin/system/cron-webhook/', SystemCronWebhookView.as_view(), name='system-cron-webhook'),
     
     # ==========================================
     # AUTHENTICATION & IDENTITY

@@ -72,6 +72,8 @@ export default function AddDonor() {
     has_consented: false,
   });
 
+  const [fieldErrors, setFieldErrors] = useState({});
+
   // --- Pipeline 1: Initialize Base Geographic & Tenant Data ---
   const { data: initialData, isLoading: isLoadingGeo } = useQuery({
     queryKey: ["addDonorContext"],
@@ -140,22 +142,32 @@ export default function AddDonor() {
       return response.data;
     },
     onSuccess: () => {
+      setFieldErrors({}); // Clear errors
       toast.success("Donor record provisioned securely.");
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
-      queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
       navigate("/admin/donors");
     },
     onError: (err) => {
       console.error("Submission Failure:", err.response?.data);
-      toast.error(
-        err.response?.data?.detail ||
-          "Registration failed. Please audit input fields.",
-      );
+
+      if (
+        err.response?.status === 400 &&
+        typeof err.response.data === "object"
+      ) {
+        setFieldErrors(err.response.data);
+        toast.error("Validation failed. Please check the highlighted fields.");
+      } else {
+        toast.error(
+          err.response?.data?.detail ||
+            "Registration failed due to a server error.",
+        );
+      }
     },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFieldErrors({});
 
     if (!formData.country || !formData.state || !formData.district) {
       toast.error("Geographic jurisdiction is required.");
@@ -228,53 +240,83 @@ export default function AddDonor() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Full Name Field */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label
+                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.full_name ? "text-red-400" : "text-slate-400"}`}
+                >
                   Full Name *
                 </label>
                 <Input
                   name="full_name"
                   placeholder="E.g. John Doe"
-                  className="bg-slate-950/50 border-slate-700 focus:border-rose-500 h-11"
+                  className={`h-11 ${fieldErrors.full_name ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
                   value={formData.full_name}
                   onChange={handleChange}
                   required
                 />
+                {fieldErrors.full_name && (
+                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
+                    {fieldErrors.full_name[0]}
+                  </p>
+                )}
               </div>
+
+              {/* Phone Number Field */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label
+                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.phone_number ? "text-red-400" : "text-slate-400"}`}
+                >
                   Phone Number *
                 </label>
                 <Input
                   name="phone_number"
                   type="tel"
                   placeholder="+91 98765 43210"
-                  className="bg-slate-950/50 border-slate-700 focus:border-rose-500 font-mono h-11"
+                  className={`font-mono h-11 ${fieldErrors.phone_number ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
                   value={formData.phone_number}
                   onChange={handleChange}
                   required
                 />
+                {fieldErrors.phone_number && (
+                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
+                    {fieldErrors.phone_number[0]}
+                  </p>
+                )}
               </div>
+
+              {/* Date of Birth Field */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label
+                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.date_of_birth ? "text-red-400" : "text-slate-400"}`}
+                >
                   Date of Birth *
                 </label>
                 <Input
                   name="date_of_birth"
                   type="date"
-                  className="bg-slate-950/50 border-slate-700 focus:border-rose-500 h-11"
+                  className={`h-11 ${fieldErrors.date_of_birth ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
                   value={formData.date_of_birth}
                   onChange={handleChange}
                   required
                 />
+                {fieldErrors.date_of_birth && (
+                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
+                    {fieldErrors.date_of_birth[0]}
+                  </p>
+                )}
               </div>
+
+              {/* Biological Gender Field */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label
+                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.gender ? "text-red-400" : "text-slate-400"}`}
+                >
                   Biological Gender *
                 </label>
                 <Select
                   name="gender"
-                  className="bg-slate-950/50 border-slate-700 focus:border-rose-500 h-11"
+                  className={`h-11 ${fieldErrors.gender ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30 text-red-100" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
                   value={formData.gender}
                   onChange={handleChange}
                   required
@@ -283,6 +325,11 @@ export default function AddDonor() {
                   <option value="F">Female (120-day cycle)</option>
                   <option value="O">Other</option>
                 </Select>
+                {fieldErrors.gender && (
+                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
+                    {fieldErrors.gender[0]}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -300,13 +347,16 @@ export default function AddDonor() {
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Blood Group Field */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label
+                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.blood_group ? "text-red-400" : "text-slate-400"}`}
+                >
                   Blood Group *
                 </label>
                 <Select
                   name="blood_group"
-                  className="bg-slate-950/50 border-slate-700 focus:border-rose-500 h-11"
+                  className={`h-11 ${fieldErrors.blood_group ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30 text-red-100" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
                   value={formData.blood_group}
                   onChange={handleChange}
                   required
@@ -320,18 +370,32 @@ export default function AddDonor() {
                     </option>
                   ))}
                 </Select>
+                {fieldErrors.blood_group && (
+                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
+                    {fieldErrors.blood_group[0]}
+                  </p>
+                )}
               </div>
+
+              {/* Last Donation Date Field */}
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label
+                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.last_donation_date ? "text-red-400" : "text-slate-400"}`}
+                >
                   Last Donation Date
                 </label>
                 <Input
                   name="last_donation_date"
                   type="date"
-                  className="bg-slate-950/50 border-slate-700 focus:border-rose-500 h-11"
+                  className={`h-11 ${fieldErrors.last_donation_date ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
                   value={formData.last_donation_date}
                   onChange={handleChange}
                 />
+                {fieldErrors.last_donation_date && (
+                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
+                    {fieldErrors.last_donation_date[0]}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -362,17 +426,24 @@ export default function AddDonor() {
 
               {formData.is_permanently_deferred && (
                 <div className="mt-4 pt-4 border-t border-amber-500/10 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="text-xs font-bold uppercase tracking-wider text-amber-500/70 mb-2 block">
+                  <label
+                    className={`text-xs font-bold uppercase tracking-wider mb-2 block ${fieldErrors.deferral_reason ? "text-red-400" : "text-amber-500/70"}`}
+                  >
                     Clinical Deferral Reason *
                   </label>
                   <textarea
                     name="deferral_reason"
                     placeholder="E.g., Chronic heart condition, infectious disease protocol..."
-                    className="w-full min-h-25 rounded-xl border border-amber-500/20 bg-slate-950/50 px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/30 transition-all resize-none shadow-inner"
+                    className={`w-full min-h-25 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 transition-all resize-none shadow-inner ${fieldErrors.deferral_reason ? "border border-red-500/80 bg-slate-950/50 focus:border-red-500 focus:ring-red-500/30" : "border border-amber-500/20 bg-slate-950/50 focus:border-amber-500 focus:ring-amber-500/30"}`}
                     value={formData.deferral_reason}
                     onChange={handleChange}
                     required={formData.is_permanently_deferred}
                   />
+                  {fieldErrors.deferral_reason && (
+                    <p className="text-xs text-red-400 mt-2 animate-in slide-in-from-top-1">
+                      {fieldErrors.deferral_reason[0]}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -394,45 +465,71 @@ export default function AddDonor() {
               Defaults to your organization's registered region.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <SearchableSelect
-                placeholder="Country"
-                className="bg-slate-950/50 h-11"
-                value={formData.country}
-                options={
-                  initialData?.countries?.map((c) => ({
-                    label: c.name,
-                    value: c.id.toString(),
-                  })) || []
-                }
-                onChange={handleCountryChange}
-                required
-              />
-              <SearchableSelect
-                placeholder="State/Province"
-                className="bg-slate-950/50 h-11"
-                value={formData.state}
-                options={states.map((s) => ({
-                  label: s.name,
-                  value: s.id.toString(),
-                }))}
-                onChange={handleStateChange}
-                disabled={!formData.country}
-                required
-              />
-              <SearchableSelect
-                placeholder="District/City"
-                className="bg-slate-950/50 h-11"
-                value={formData.district}
-                options={districts.map((d) => ({
-                  label: d.name,
-                  value: d.id.toString(),
-                }))}
-                onChange={(val) =>
-                  handleChange({ target: { name: "district", value: val } })
-                }
-                disabled={!formData.state}
-                required
-              />
+              {/* Country Field */}
+              <div className="space-y-2">
+                <SearchableSelect
+                  placeholder="Country *"
+                  className={`h-11 ${fieldErrors.country ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50"}`}
+                  value={formData.country}
+                  options={
+                    initialData?.countries?.map((c) => ({
+                      label: c.name,
+                      value: c.id.toString(),
+                    })) || []
+                  }
+                  onChange={handleCountryChange}
+                  required
+                />
+                {fieldErrors.country && (
+                  <p className="text-xs text-red-400 animate-in slide-in-from-top-1">
+                    {fieldErrors.country[0]}
+                  </p>
+                )}
+              </div>
+
+              {/* State Field */}
+              <div className="space-y-2">
+                <SearchableSelect
+                  placeholder="State/Province *"
+                  className={`h-11 ${fieldErrors.state ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50"}`}
+                  value={formData.state}
+                  options={states.map((s) => ({
+                    label: s.name,
+                    value: s.id.toString(),
+                  }))}
+                  onChange={handleStateChange}
+                  disabled={!formData.country}
+                  required
+                />
+                {fieldErrors.state && (
+                  <p className="text-xs text-red-400 animate-in slide-in-from-top-1">
+                    {fieldErrors.state[0]}
+                  </p>
+                )}
+              </div>
+
+              {/* District Field */}
+              <div className="space-y-2">
+                <SearchableSelect
+                  placeholder="District/City *"
+                  className={`h-11 ${fieldErrors.district ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50"}`}
+                  value={formData.district}
+                  options={districts.map((d) => ({
+                    label: d.name,
+                    value: d.id.toString(),
+                  }))}
+                  onChange={(val) =>
+                    handleChange({ target: { name: "district", value: val } })
+                  }
+                  disabled={!formData.state}
+                  required
+                />
+                {fieldErrors.district && (
+                  <p className="text-xs text-red-400 animate-in slide-in-from-top-1">
+                    {fieldErrors.district[0]}
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -444,27 +541,38 @@ export default function AddDonor() {
             aria-hidden="true"
           />
           <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-            <label className="flex items-center gap-4 cursor-pointer group flex-1">
-              <input
-                name="has_consented"
-                type="checkbox"
-                checked={formData.has_consented}
-                onChange={handleChange}
-                className="h-6 w-6 rounded border-slate-600 bg-slate-950 text-rose-500 focus:ring-rose-500 transition-all cursor-pointer"
-                required
-              />
-              <div>
-                <span className="text-base font-bold text-white flex items-center gap-2 group-hover:text-rose-100 transition-colors">
-                  <ClipboardCheck className="h-5 w-5 text-emerald-500" />{" "}
-                  Explicit Consent Verified
-                </span>
-                <p className="text-xs text-slate-400 mt-1 max-w-lg">
-                  I legally attest that this individual has authorized our
-                  organization to store their medical data and surface their
-                  masked contact information for emergency donation requests.
+            <div className="flex-1 flex flex-col">
+              <label className="flex items-center gap-4 cursor-pointer group">
+                <input
+                  name="has_consented"
+                  type="checkbox"
+                  checked={formData.has_consented}
+                  onChange={handleChange}
+                  className={`h-6 w-6 rounded bg-slate-950 transition-all cursor-pointer ${fieldErrors.has_consented ? "border-red-500 text-red-500 focus:ring-red-500" : "border-slate-600 text-rose-500 focus:ring-rose-500"}`}
+                  required
+                />
+                <div>
+                  <span
+                    className={`text-base font-bold flex items-center gap-2 transition-colors ${fieldErrors.has_consented ? "text-red-400" : "text-white group-hover:text-rose-100"}`}
+                  >
+                    <ClipboardCheck
+                      className={`h-5 w-5 ${fieldErrors.has_consented ? "text-red-500" : "text-emerald-500"}`}
+                    />{" "}
+                    Explicit Consent Verified
+                  </span>
+                  <p className="text-xs text-slate-400 mt-1 max-w-lg">
+                    I legally attest that this individual has authorized our
+                    organization to store their medical data and surface their
+                    masked contact information for emergency donation requests.
+                  </p>
+                </div>
+              </label>
+              {fieldErrors.has_consented && (
+                <p className="text-xs text-red-400 mt-2 ml-10 animate-in slide-in-from-top-1">
+                  {fieldErrors.has_consented[0]}
                 </p>
-              </div>
-            </label>
+              )}
+            </div>
 
             <Button
               type="submit"

@@ -1,4 +1,6 @@
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, generics, permissions, status
@@ -336,3 +338,37 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
         ticket.status = request.data.get('status', 'IN_PROGRESS')
         ticket.save()
         return Response({"message": "Ticket updated successfully."})
+    
+class SystemCronWebhookView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # Allow token in either the Authorization header or as a query parameter (?token=xxx)
+        provided_token = request.headers.get('Authorization') or request.query_params.get('token')
+        
+        # We use the existing SECRET_KEY as a highly secure webhook password
+        expected_token = f"Bearer {settings.SECRET_KEY}"
+
+        if provided_token != expected_token:
+            return Response({"error": "Unauthorized cron execution."}, status=status.HTTP_403_FORBIDDEN)
+
+        # === 1. Task: Purge Old Records ===
+        deleted_count = 0
+        try:
+            cutoff_date = timezone.now() - relativedelta(days=30)
+            # Utilizing the hard_delete method we built in Phase 1
+            deleted_count, _ = Donor.all_objects.filter(
+                is_deleted=True, 
+                deleted_at__lt=cutoff_date
+            ).hard_delete()
+        except Exception as e:
+            return Response({"error": f"Task Failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # === Add more daily tasks here in the future ===
+
+        return Response({
+            "message": "Daily cron jobs executed successfully.",
+            "tasks_completed": {
+                "records_purged": deleted_count
+            }
+        }, status=status.HTTP_200_OK)
