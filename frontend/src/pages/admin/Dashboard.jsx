@@ -308,47 +308,47 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={bloodGroupDistribution}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#1e293b"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="group"
-                    stroke="#64748b"
-                    tick={{ fill: "#94a3b8", fontSize: 13, fontWeight: 700 }}
-                    axisLine={false}
-                    tickLine={false}
-                    dy={10}
-                  />
-                  <YAxis
-                    stroke="#64748b"
-                    tick={{ fill: "#64748b", fontSize: 12, fontWeight: 500 }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                    dx={-10}
-                  />
-                  <Tooltip
-                    content={<CustomTooltip />}
-                    cursor={{ fill: "#1e293b", opacity: 0.4 }}
-                  />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={50}>
-                    {bloodGroupDistribution.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.count > 0 ? "#e11d48" : "#334155"}
-                        className="hover:opacity-80 transition-opacity cursor-pointer"
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={bloodGroupDistribution}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#1e293b"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="group"
+                      stroke="#64748b"
+                      tick={{ fill: "#94a3b8", fontSize: 13, fontWeight: 700 }}
+                      axisLine={false}
+                      tickLine={false}
+                      dy={10}
+                    />
+                    <YAxis
+                      stroke="#64748b"
+                      tick={{ fill: "#64748b", fontSize: 12, fontWeight: 500 }}
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                      dx={-10}
+                    />
+                    <Tooltip
+                      content={<CustomTooltip />}
+                      cursor={{ fill: "#1e293b", opacity: 0.4 }}
+                    />
+                    <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                      {bloodGroupDistribution.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.count > 0 ? "#e11d48" : "#334155"}
+                          className="hover:opacity-80 transition-opacity cursor-pointer"
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>

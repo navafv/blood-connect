@@ -5,7 +5,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, 
+  withCredentials: true,
 });
 
 // --- Concurrency / Race Condition Variables ---
@@ -90,7 +90,30 @@ api.interceptors.response.use(
       window.dispatchEvent(new CustomEvent("session-expired"));
     }
 
-    // For all other errors (400, 403, 404, 500), just reject the promise normally
+    if (error.response?.status === 403) {
+      // Avoid firing toast if we are on the login page
+      if (!window.location.pathname.includes("/login")) {
+        toast.error("Permission denied. You may need to log in again.", {
+          id: "network-403",
+        });
+      }
+    }
+
+    if (error.response?.status >= 500) {
+      toast.error(
+        "The server encountered an unexpected error. Our team has been notified.",
+        { id: "network-500" },
+      );
+    }
+
+    if (error.code === "ERR_NETWORK") {
+      toast.error(
+        "Cannot connect to the server. Please check your internet connection.",
+        { id: "network-offline" },
+      );
+    }
+
+    // For all other errors (400, 404), just reject the promise normally
     return Promise.reject(error);
   },
 );

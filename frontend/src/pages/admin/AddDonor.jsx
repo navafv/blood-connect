@@ -157,7 +157,7 @@ export default function AddDonor() {
     },
     onSuccess: () => {
       setFieldErrors({});
-      toast.success("Donor record provisioned securely.");
+      toast.success("Donor registered successfully.");
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
       queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
       navigate("/admin/donors");
@@ -233,8 +233,7 @@ export default function AddDonor() {
             </h1>
           </div>
           <p className="text-sm text-slate-400 ml-11">
-            Provision a new donor identity into your facility's active
-            jurisdiction.
+            Register a new blood donor to your facility's active directory.
           </p>
         </div>
       </div>
@@ -358,7 +357,7 @@ export default function AddDonor() {
                 <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
                   <MapPin className="h-5 w-5 text-amber-500" />
                 </div>
-                Location Binding
+                Donor Location
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -551,11 +550,11 @@ export default function AddDonor() {
                 {createMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
-                    Provisioning...
+                    Registering...
                   </>
                 ) : (
                   <>
-                    <Save className="mr-2 h-5 w-5" /> Commit Record
+                    <Save className="mr-2 h-5 w-5" /> Save Donor Record
                   </>
                 )}
               </Button>
