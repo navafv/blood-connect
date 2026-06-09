@@ -213,8 +213,8 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',
         'user': '1000/day',
-        'login': '3/min',
-        'otp': '3/min',
+        'login': '5/min',
+        'otp': '5/min',
         'password_reset': '3/hour',
         'password_reset_confirm': '3/hour',
     }

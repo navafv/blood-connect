@@ -6,7 +6,6 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
 from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
@@ -49,27 +48,31 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                     "message": "2FA verification required."
                 }, status=status.HTTP_200_OK)
             
-            # Reusable cookie kwargs to prevent typos
+            # Reusable cookie kwargs (Safe Fallbacks applied)
             cookie_kwargs = {
-                'expires': settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
-                'secure': settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-                'httponly': settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-                'samesite': settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                'secure': settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE', False),
+                'httponly': settings.SIMPLE_JWT.get('AUTH_COOKIE_HTTP_ONLY', True),
+                'samesite': settings.SIMPLE_JWT.get('AUTH_COOKIE_SAMESITE', 'Lax'),
                 'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             }
             
+            # Use max_age and convert timedelta to seconds
+            access_max_age = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
+            refresh_max_age = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
+            
             # Access Token Cookie
             response.set_cookie(
-                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                key=settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
                 value=access_token,
+                max_age=access_max_age,
                 **cookie_kwargs
             )
             
-            # Refresh Token Cookie (Overwrite expiration for refresh token)
-            cookie_kwargs['expires'] = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
+            # Refresh Token Cookie
             response.set_cookie(
-                key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                key=settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'),
                 value=refresh_token,
+                max_age=refresh_max_age,
                 **cookie_kwargs
             )
             
@@ -107,11 +110,14 @@ class Verify2FALoginView(APIView):
 
             cookie_kwargs = {
                 'expires': settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
-                'secure': settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-                'httponly': settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-                'samesite': settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                'secure': settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE', False),
+                'httponly': settings.SIMPLE_JWT.get('AUTH_COOKIE_HTTP_ONLY', True),
+                'samesite': settings.SIMPLE_JWT.get('AUTH_COOKIE_SAMESITE', 'Lax'),
                 'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             }
+
+            access_max_age = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
+            refresh_max_age = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
 
             response = Response({
                 "message": "2FA successful",
@@ -119,24 +125,25 @@ class Verify2FALoginView(APIView):
             }, status=status.HTTP_200_OK)
 
             response.set_cookie(
-                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                key=settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
                 value=str(refresh.access_token),
+                max_age=access_max_age,
                 **cookie_kwargs
             )
             
-            cookie_kwargs['expires'] = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
             response.set_cookie(
-                key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                key=settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'),
                 value=str(refresh),
+                max_age=refresh_max_age,
                 **cookie_kwargs
             )
             return response
 
-        return Response({"error": "Invalid 2FA code."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Invalid 2FA code. Check your device clock."}, status=status.HTTP_400_BAD_REQUEST)
 
 class CookieTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'))
         
         if not refresh_token:
             return Response(
@@ -144,12 +151,9 @@ class CookieTokenRefreshView(TokenRefreshView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
             
-        # Make a mutable copy of the request data to avoid Immutability crashes
         mutable_data = request.data.copy() if hasattr(request.data, 'copy') else {}
         mutable_data['refresh'] = refresh_token
         
-        # We must override the request.data behavior for the parent class
-        # by passing the modified data directly to the serializer
         serializer = self.get_serializer(data=mutable_data)
         
         try:
@@ -161,27 +165,31 @@ class CookieTokenRefreshView(TokenRefreshView):
         
         if response.status_code == 200:
             cookie_kwargs = {
-                'secure': settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-                'httponly': settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-                'samesite': settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                'secure': settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE', False),
+                'httponly': settings.SIMPLE_JWT.get('AUTH_COOKIE_HTTP_ONLY', True),
+                'samesite': settings.SIMPLE_JWT.get('AUTH_COOKIE_SAMESITE', 'Lax'),
                 'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             }
             
-            # Set new access token
+            # Use max_age and convert timedelta to seconds
+            access_max_age = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
+            
             response.set_cookie(
-                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                key=settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
                 value=response.data.get('access'),
-                expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
+                max_age=access_max_age,
                 **cookie_kwargs
             )
-            del response.data['access']
+            
+            if 'access' in response.data:
+                del response.data['access']
 
-            # Set new refresh token (if rotation is enabled)
             if 'refresh' in response.data:
+                refresh_max_age = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
                 response.set_cookie(
-                    key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                    key=settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'),
                     value=response.data['refresh'],
-                    expires=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+                    max_age=refresh_max_age,
                     **cookie_kwargs
                 )
                 del response.data['refresh']
@@ -216,22 +224,14 @@ class LogoutView(APIView):
     
     def post(self, request):
         try:
-            # 1. Extract the refresh token from the HttpOnly cookie
-            refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
-            
+            refresh_token = request.COOKIES.get(settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'))
             if refresh_token:
                 token = RefreshToken(refresh_token)
-                
-                # 2. Safely attempt to blacklist (prevents the AttributeError)
                 if hasattr(token, 'blacklist'):
                     token.blacklist()
         except Exception as e:
-            # Catch TokenError, AttributeError, or any other issue 
-            # We silently pass so we NEVER fail to log the user out
-            print(f"Token blacklisting bypassed: {str(e)}")
             pass
 
-        # 3. Build response and instruct browser to delete cookies
         response = Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
         
         cookie_kwargs = {
@@ -242,8 +242,8 @@ class LogoutView(APIView):
         if settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE'):
             cookie_kwargs['secure'] = True
             
-        response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'], **cookie_kwargs)
-        response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'], **cookie_kwargs)
+        response.delete_cookie(settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'), **cookie_kwargs)
+        response.delete_cookie(settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'), **cookie_kwargs)
         
         return response
 
@@ -254,14 +254,12 @@ class RegisterOrganizationView(APIView):
         data = request.data
         email = data.get('email', '').strip().lower()
 
-        # 1. Explicitly check for missing geographic data
         if not data.get('country_id') or not data.get('state_id') or not data.get('district_id'):
             return Response(
                 {"error": "Operational jurisdiction (Country, State, and District) must be selected."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 2. Explicitly check for duplicate emails
         if CustomUser.objects.filter(email=email).exists():
             return Response(
                 {"error": "An account with this email address already exists. Please sign in or use a different email."}, 
@@ -282,7 +280,6 @@ class RegisterOrganizationView(APIView):
                     status='PENDING'
                 )
 
-                # Secure OTP Generation
                 otp_code = str(secrets.randbelow(900000) + 100000)
 
                 admin_user = CustomUser.objects.create_user(
@@ -295,7 +292,6 @@ class RegisterOrganizationView(APIView):
                     email_otp_expires_at=timezone.now() + timedelta(minutes=10)
                 )
 
-            # --- MODERN EMAIL TEMPLATE ---
             subject = "Verify your BloodConnect Workspace"
             plain_message = f"Hello {data.get('contactName', '')},\n\nYour BloodConnect verification code is: {otp_code}.\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email."
             
@@ -638,6 +634,7 @@ class Setup2FAView(APIView):
     def post(self, request):
         user = request.user
         
+        # Guarantee a fresh secret is generated every setup attempt
         user.totp_secret = pyotp.random_base32()
         user.save()
 
@@ -659,7 +656,7 @@ class Toggle2FAView(APIView):
         
         elif action == 'enable':
             code = request.data.get('code')
-            if not user.totp_secret:
+            if not getattr(user, 'totp_secret', None):
                 return Response({"error": "2FA not initialized."}, status=status.HTTP_400_BAD_REQUEST)
                 
             totp = pyotp.TOTP(user.totp_secret)
@@ -669,6 +666,4 @@ class Toggle2FAView(APIView):
                 user.save()
                 return Response({"message": "2FA successfully enabled."})
                 
-            return Response({
-                "error": "Invalid code. If this persists, ensure your computer's clock is synced with the internet."
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid verification code. Try again."}, status=status.HTTP_400_BAD_REQUEST)
