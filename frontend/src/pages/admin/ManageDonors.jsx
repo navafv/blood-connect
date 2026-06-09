@@ -617,9 +617,9 @@ export default function ManageDonors() {
                         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                           Contact
                         </span>
-                        <span className="font-semibold text-slate-300 font-mono tracking-tight">
+                        <a href={`tel:${donor.phone_number}`} className="font-semibold text-slate-300 font-mono tracking-tight">
                           {donor.phone_number}
-                        </span>
+                        </a>
                       </div>
                       <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80">
                         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">

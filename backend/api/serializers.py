@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.db import transaction
 from .models import (
     ContactMessage, MasterCountry, MasterState, MasterDistrict,
-    CustomUser, Organization, Donor, Advertisement, PaymentTransaction, SystemLog, TenantSupportTicket, TicketReply
+    CustomUser, Organization, Donor, DonationRecord, Advertisement, 
+    PaymentTransaction, SystemLog, TenantSupportTicket, TicketReply
 )
 
 # ==========================================
@@ -26,7 +28,7 @@ class MasterDistrictSerializer(serializers.ModelSerializer):
 
 
 # ==========================================
-# 2. USER SERIALIZER (With Password Hashing & OTP Security)
+# 2. USER SERIALIZER 
 # ==========================================
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -62,17 +64,17 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 
 # ==========================================
-# 4. DONOR SERIALIZER (With Privacy Masking)
+# 4. DONOR & DONATION SERIALIZERS
 # ==========================================
 
 class DonorSerializer(serializers.ModelSerializer):
-    # This automatically grabs the output of the @property from your models.py
     is_available_now = serializers.ReadOnlyField()
     
-    # We create a specific masked phone field for the public search endpoint
-    masked_phone = serializers.SerializerMethodField()
+    # 1. We explicitly define this as a DateField so DRF accepts it from the frontend payload.
+    # It will still read from the @property when sending data back to React.
+    last_donation_date = serializers.DateField(required=False, allow_null=True)
     
-    # Added country and state string representations for the React frontend
+    masked_phone = serializers.SerializerMethodField()
     organization_name = serializers.CharField(source='organization.name', read_only=True)
     country_name = serializers.CharField(source='country.name', read_only=True)
     state_name = serializers.CharField(source='state.name', read_only=True)
@@ -85,14 +87,13 @@ class DonorSerializer(serializers.ModelSerializer):
             'phone_number', 'masked_phone', 'country', 'country_name', 
             'state', 'state_name', 'district', 'district_name',
             'organization', 'organization_name', 'last_donation_date', 
-            'is_permanently_deferred', 'deferral_reason', 'is_available_now'
+            'is_permanently_deferred', 'deferral_reason', 'is_available_now',
+            'has_consented'
         ]
-        # Prevent org staff from accidentally changing which org a donor belongs to
         read_only_fields = ['organization']
 
     def get_masked_phone(self, obj):
         if obj.phone_number and len(obj.phone_number) >= 10:
-            # Mask format logic for public safety
             return obj.phone_number[:6] + 'XXXX'
         return "INVALID/HIDDEN"
     
@@ -102,9 +103,46 @@ class DonorSerializer(serializers.ModelSerializer):
         return value
 
     def validate_last_donation_date(self, value):
+        # We can safely validate it now because we explicitly declared it as a DateField!
         if value and value > timezone.now().date():
             raise serializers.ValidationError("Last donation date cannot be in the future.")
         return value
+
+    # 2. INTERCEPT CREATION
+    @transaction.atomic
+    def create(self, validated_data):
+        # Pop the date out of the dictionary BEFORE Django tries to save the Donor
+        historical_donation = validated_data.pop('last_donation_date', None)
+        
+        # Save the Donor normally
+        donor = super().create(validated_data)
+        
+        # If the frontend provided a date, silently create the background record!
+        if historical_donation:
+            DonationRecord.objects.create(
+                donor=donor,
+                organization=donor.organization,
+                donation_date=historical_donation,
+                clinical_notes="Historical donation logged during registration/import."
+            )
+            
+        return donor
+
+    # 3. INTERCEPT UPDATES
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        historical_donation = validated_data.pop('last_donation_date', None)
+        
+        # If the admin changes the date in the edit form, log a new record
+        if historical_donation and instance.last_donation_date != historical_donation:
+            DonationRecord.objects.create(
+                donor=instance,
+                organization=instance.organization,
+                donation_date=historical_donation,
+                clinical_notes="Historical donation added via profile update."
+            )
+            
+        return super().update(instance, validated_data)
 
 class PublicDonorSearchSerializer(serializers.ModelSerializer):
     anonymous_label = serializers.SerializerMethodField()
@@ -114,6 +152,7 @@ class PublicDonorSearchSerializer(serializers.ModelSerializer):
     state_name = serializers.CharField(source='state.name', read_only=True)
     district_name = serializers.CharField(source='district.name', read_only=True)
     is_available_now = serializers.ReadOnlyField()
+    last_donation_date = serializers.ReadOnlyField()
 
     class Meta:
         model = Donor
@@ -126,7 +165,19 @@ class PublicDonorSearchSerializer(serializers.ModelSerializer):
 
     def get_anonymous_label(self, obj):
         return f"{obj.blood_group} Donor (ID: #{obj.id})"
-        
+
+# Added this so you can successfully log donations!
+class DonationRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonationRecord
+        fields = ['id', 'donor', 'organization', 'donation_type', 'donation_date', 'clinical_notes', 'created_at']
+        read_only_fields = ['organization', 'created_at']
+
+    def validate_donation_date(self, value):
+        if value > timezone.now().date():
+            raise serializers.ValidationError("Donation date cannot be in the future.")
+        return value
+
 
 # ==========================================
 # 5. ADVERTISEMENT SERIALIZER
@@ -142,10 +193,9 @@ class AdvertisementSerializer(serializers.ModelSerializer):
 
 
 # ==========================================
-# 6. SYSTEM LOG SERIALIZER (For Super Admin Dashboard)
+# 6. SYSTEM LOG SERIALIZER
 # ==========================================
 class SystemLogSerializer(serializers.ModelSerializer):
-    # Format the timestamp nicely for the React frontend
     timestamp = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     
     class Meta:
@@ -154,7 +204,7 @@ class SystemLogSerializer(serializers.ModelSerializer):
 
 
 # ==========================================
-# 7. CONTACT MESSAGE SERIALIZER (For Contact Us Form)
+# 7. CONTACT & SUPPORT SERIALIZERS
 # ==========================================
 class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:

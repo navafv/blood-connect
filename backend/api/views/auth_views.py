@@ -296,50 +296,126 @@ class RegisterOrganizationView(APIView):
             plain_message = f"Hello {data.get('contactName', '')},\n\nYour BloodConnect verification code is: {otp_code}.\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email."
             
             html_message = f"""
-            <!DOCTYPE html>
+            <!doctype html>
             <html>
-            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc;">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; padding: 40px 0;">
+
+            <body style="
+                margin: 0;
+                padding: 0;
+                background: #f8fafc;
+                font-family: Arial, sans-serif;
+                ">
+                <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px; background: #f8fafc">
                     <tr>
                         <td align="center">
-                            <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; max-width: 600px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                            <table width="600" cellpadding="0" cellspacing="0" style="
+                        max-width: 600px;
+                        background: #ffffff;
+                        border-radius: 16px;
+                        overflow: hidden;
+                        border: 1px solid #e2e8f0;
+                        ">
+                                <!-- Header -->
                                 <tr>
-                                    <td align="center" style="background-color: #0f172a; padding: 30px 20px; border-bottom: 3px solid #e11d48;">
-                                        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">BloodConnect</h1>
-                                        <p style="color: #94a3b8; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Security Gateway</p>
+                                    <td align="center" style="
+                            background: #0f172a;
+                            padding: 36px 24px;
+                            border-bottom: 4px solid #e11d48;
+                            ">
+                                        <div style="font-size: 42px; margin-bottom: 12px">🩸</div>
+
+                                        <h1 style="
+                                margin: 0;
+                                color: #ffffff;
+                                font-size: 28px;
+                                font-weight: 800;
+                            ">
+                                            BloodConnect
+                                        </h1>
+
+                                        <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
+                                            Email Verification
+                                        </p>
                                     </td>
                                 </tr>
-                                
+
+                                <!-- Content -->
                                 <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 20px;">Welcome, {data.get('contactName', 'Administrator')}</h2>
-                                        <p style="color: #475569; margin: 0 0 25px 0; font-size: 16px; line-height: 1.6;">
-                                            You are one step away from provisioning the workspace for <strong>{data.get('orgName')}</strong>. To verify your identity and activate your account, please enter the following secure authentication code:
+                                    <td style="padding: 40px 32px">
+                                        <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
+                                            Welcome, {data.get('contactName', 'Administrator')}
+                                        </h2>
+
+                                        <p style="
+                                margin: 0 0 28px;
+                                color: #475569;
+                                font-size: 16px;
+                                line-height: 1.7;
+                            ">
+                                            Verify your email address to activate the BloodConnect
+                                            workspace for
+                                            <strong>{data.get('orgName')}</strong>.
                                         </p>
-                                        
-                                        <div style="text-align: center; margin: 35px 0;">
-                                            <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; display: inline-block;">
-                                                <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #0f172a; letter-spacing: 8px;">{otp_code}</span>
+
+                                        <!-- OTP -->
+                                        <div style="text-align: center; margin: 40px 0">
+                                            <div style="
+                                display: inline-block;
+                                background: #f8fafc;
+                                border: 1px solid #cbd5e1;
+                                border-radius: 14px;
+                                padding: 20px 28px;
+                                ">
+                                                <span style="
+                                    font-size: 34px;
+                                    letter-spacing: 10px;
+                                    font-weight: 700;
+                                    color: #0f172a;
+                                    font-family: monospace;
+                                ">
+                                                    {otp_code}
+                                                </span>
                                             </div>
                                         </div>
-                                        
-                                        <p style="color: #475569; margin: 0 0 25px 0; font-size: 16px; line-height: 1.6; text-align: center;">
-                                            This code will expire in <strong style="color: #e11d48;">10 minutes</strong>.
+
+                                        <p style="
+                                text-align: center;
+                                color: #64748b;
+                                font-size: 15px;
+                                margin: 0 0 30px;
+                            ">
+                                            This verification code expires in
+                                            <strong style="color: #e11d48">10 minutes</strong>.
                                         </p>
-                                        
-                                        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
-                                        
-                                        <p style="color: #64748b; margin: 0; font-size: 13px; line-height: 1.5;">
-                                            <strong>Security Notice:</strong> Never share this code with anyone. BloodConnect staff will never ask for your password or verification codes. If you did not request this registration, please ignore this email.
+
+                                        <hr style="
+                                border: none;
+                                border-top: 1px solid #e2e8f0;
+                                margin: 32px 0;
+                            " />
+
+                                        <p style="
+                                margin: 0;
+                                color: #64748b;
+                                font-size: 13px;
+                                line-height: 1.6;
+                            ">
+                                            <strong>Security Notice:</strong>
+                                            Never share this code with anyone. If you did not request this
+                                            verification, you can safely ignore this email.
                                         </p>
                                     </td>
                                 </tr>
-                            </table>
-                            
-                            <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px;">
+
+                                <!-- Footer -->
                                 <tr>
-                                    <td align="center" style="padding: 20px; color: #94a3b8; font-size: 12px;">
-                                        &copy; {timezone.now().year} BloodConnect Global Infrastructure. All rights reserved.
+                                    <td align="center" style="
+                            padding: 24px;
+                            color: #94a3b8;
+                            font-size: 12px;
+                            background: #f8fafc;
+                            ">
+                                        © {timezone.now().year} BloodConnect. All rights reserved.
                                     </td>
                                 </tr>
                             </table>
@@ -347,6 +423,7 @@ class RegisterOrganizationView(APIView):
                     </tr>
                 </table>
             </body>
+
             </html>
             """
             
@@ -427,33 +504,99 @@ class ResendEmailOTPView(APIView):
         plain_message = f"Hello {user.first_name or 'Administrator'},\n\nYour new BloodConnect verification code is: {new_otp}.\nThis code expires in 10 minutes."
         
         html_message = f"""
-        <!DOCTYPE html>
+        <!doctype html>
         <html>
-        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc;">
-            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; padding: 40px 0;">
+
+        <body style="
+                    margin: 0;
+                    padding: 0;
+                    background: #f8fafc;
+                    font-family: Arial, sans-serif;
+                    ">
+            <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px">
                 <tr>
                     <td align="center">
-                        <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; max-width: 600px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                        <table width="600" cellpadding="0" cellspacing="0" style="
+                            max-width: 600px;
+                            background: #ffffff;
+                            border-radius: 16px;
+                            overflow: hidden;
+                            border: 1px solid #e2e8f0;
+                            ">
                             <tr>
-                                <td align="center" style="background-color: #0f172a; padding: 30px 20px; border-bottom: 3px solid #10b981;">
-                                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">BloodConnect</h1>
-                                    <p style="color: #94a3b8; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Security Gateway</p>
+                                <td align="center" style="
+                                background: #0f172a;
+                                padding: 36px 24px;
+                                border-bottom: 4px solid #10b981;
+                                ">
+                                    <div style="font-size: 42px; margin-bottom: 12px">🩸</div>
+
+                                    <h1 style="
+                                    margin: 0;
+                                    color: #ffffff;
+                                    font-size: 28px;
+                                    font-weight: 800;
+                                ">
+                                        BloodConnect
+                                    </h1>
+
+                                    <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
+                                        New Verification Code
+                                    </p>
                                 </td>
                             </tr>
+
                             <tr>
-                                <td style="padding: 40px 30px;">
-                                    <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 20px;">Hello, {user.first_name or 'Administrator'}</h2>
-                                    <p style="color: #475569; margin: 0 0 25px 0; font-size: 16px; line-height: 1.6;">
-                                        You requested a new verification code for your workspace. Please enter the following secure authentication code:
+                                <td style="padding: 40px 32px">
+                                    <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
+                                        Hello, {user.first_name or 'Administrator'}
+                                    </h2>
+
+                                    <p style="
+                                    margin: 0 0 28px;
+                                    color: #475569;
+                                    font-size: 16px;
+                                    line-height: 1.7;
+                                ">
+                                        You requested a new verification code for your BloodConnect
+                                        account.
                                     </p>
-                                    <div style="text-align: center; margin: 35px 0;">
-                                        <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; display: inline-block;">
-                                            <span style="font-family: monospace; font-size: 32px; font-weight: 700; color: #0f172a; letter-spacing: 8px;">{new_otp}</span>
+
+                                    <div style="text-align: center; margin: 40px 0">
+                                        <div style="
+                                    display: inline-block;
+                                    background: #f8fafc;
+                                    border: 1px solid #cbd5e1;
+                                    border-radius: 14px;
+                                    padding: 20px 28px;
+                                    ">
+                                            <span style="
+                                        font-size: 34px;
+                                        letter-spacing: 10px;
+                                        font-weight: 700;
+                                        color: #0f172a;
+                                        font-family: monospace;
+                                    ">
+                                                {new_otp}
+                                            </span>
                                         </div>
                                     </div>
-                                    <p style="color: #475569; margin: 0 0 25px 0; font-size: 16px; line-height: 1.6; text-align: center;">
-                                        This code will expire in <strong style="color: #10b981;">10 minutes</strong>.
+
+                                    <p style="text-align: center; color: #64748b; font-size: 15px">
+                                        This code expires in
+                                        <strong style="color: #10b981">10 minutes</strong>.
                                     </p>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td align="center" style="
+                                padding: 24px;
+                                color: #94a3b8;
+                                font-size: 12px;
+                                background: #f8fafc;
+                                ">
+                                    © {timezone.now().year} BloodConnect. All rights reserved.
                                 </td>
                             </tr>
                         </table>
@@ -461,6 +604,7 @@ class ResendEmailOTPView(APIView):
                 </tr>
             </table>
         </body>
+
         </html>
         """
 
@@ -494,51 +638,121 @@ class PasswordResetRequestView(APIView):
             plain_message = f"Hello {user.first_name or 'Administrator'},\n\nWe received a request to reset your BloodConnect password. Click the link below to proceed:\n{reset_link}\n\nThis link will expire shortly. If you did not request this, please ignore this email."
             
             html_message = f"""
-            <!DOCTYPE html>
+            <!doctype html>
             <html>
-            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc;">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; padding: 40px 0;">
+
+            <body style="
+                            margin: 0;
+                            padding: 0;
+                            background: #f8fafc;
+                            font-family: Arial, sans-serif;
+                            ">
+                <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px">
                     <tr>
                         <td align="center">
-                            <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; max-width: 600px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                            <table width="600" cellpadding="0" cellspacing="0" style="
+                                    max-width: 600px;
+                                    background: #ffffff;
+                                    border-radius: 16px;
+                                    overflow: hidden;
+                                    border: 1px solid #e2e8f0;
+                                    ">
                                 <tr>
-                                    <td align="center" style="background-color: #0f172a; padding: 30px 20px; border-bottom: 3px solid #e11d48;">
-                                        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">BloodConnect</h1>
-                                        <p style="color: #94a3b8; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Security Gateway</p>
+                                    <td align="center" style="
+                                        background: #0f172a;
+                                        padding: 36px 24px;
+                                        border-bottom: 4px solid #e11d48;
+                                        ">
+                                        <div style="font-size: 42px; margin-bottom: 12px">🩸</div>
+
+                                        <h1 style="
+                                            margin: 0;
+                                            color: #ffffff;
+                                            font-size: 28px;
+                                            font-weight: 800;
+                                        ">
+                                            BloodConnect
+                                        </h1>
+
+                                        <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
+                                            Password Reset
+                                        </p>
                                     </td>
                                 </tr>
-                                
+
                                 <tr>
-                                    <td style="padding: 40px 30px;">
-                                        <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 20px;">Hello, {user.first_name or 'Administrator'}</h2>
-                                        <p style="color: #475569; margin: 0 0 25px 0; font-size: 16px; line-height: 1.6;">
-                                            We received a request to reset the administrative password for your BloodConnect workspace associated with <strong>{email}</strong>.
+                                    <td style="padding: 40px 32px">
+                                        <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
+                                            Hello, {user.first_name or 'Administrator'}
+                                        </h2>
+
+                                        <p style="
+                                            margin: 0 0 28px;
+                                            color: #475569;
+                                            font-size: 16px;
+                                            line-height: 1.7;
+                                        ">
+                                            We received a request to reset the password for your
+                                            BloodConnect account.
                                         </p>
-                                        
-                                        <div style="text-align: center; margin: 35px 0;">
-                                            <a href="{reset_link}" style="background-color: #e11d48; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.2);">
-                                                Authenticate & Reset Password
+
+                                        <div style="text-align: center; margin: 40px 0">
+                                            <a href="{reset_link}" style="
+                                            display: inline-block;
+                                            background: #e11d48;
+                                            color: #ffffff;
+                                            text-decoration: none;
+                                            padding: 16px 30px;
+                                            border-radius: 10px;
+                                            font-size: 16px;
+                                            font-weight: 600;
+                                            ">
+                                                Reset Password
                                             </a>
                                         </div>
-                                        
-                                        <p style="color: #475569; margin: 0 0 25px 0; font-size: 14px; line-height: 1.6; text-align: center;">
-                                            Or copy and paste this secure link into your browser:<br>
-                                            <a href="{reset_link}" style="color: #2563eb; word-break: break-all; font-size: 13px; margin-top: 8px; display: inline-block;">{reset_link}</a>
+
+                                        <p style="
+                                            margin: 0 0 28px;
+                                            color: #64748b;
+                                            font-size: 14px;
+                                            line-height: 1.7;
+                                        ">
+                                            If the button above does not work, copy and paste this link
+                                            into your browser:
+                                            <br /><br />
+
+                                            <a href="{reset_link}" style="color: #2563eb; word-break: break-all">
+                                                {reset_link}
+                                            </a>
                                         </p>
-                                        
-                                        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
-                                        
-                                        <p style="color: #64748b; margin: 0; font-size: 13px; line-height: 1.5;">
-                                            <strong>Security Notice:</strong> This secure link is single-use and will expire shortly. If you did not initiate this request, your account is still secure. You can safely ignore and delete this email.
+
+                                        <hr style="
+                                            border: none;
+                                            border-top: 1px solid #e2e8f0;
+                                            margin: 32px 0;
+                                        " />
+
+                                        <p style="
+                                            margin: 0;
+                                            color: #64748b;
+                                            font-size: 13px;
+                                            line-height: 1.6;
+                                        ">
+                                            <strong>Security Notice:</strong>
+                                            If you did not request a password reset, you can safely ignore
+                                            this email.
                                         </p>
                                     </td>
                                 </tr>
-                            </table>
-                            
-                            <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px;">
+
                                 <tr>
-                                    <td align="center" style="padding: 20px; color: #94a3b8; font-size: 12px;">
-                                        &copy; {timezone.now().year} BloodConnect Global Infrastructure. All rights reserved.
+                                    <td align="center" style="
+                                        padding: 24px;
+                                        color: #94a3b8;
+                                        font-size: 12px;
+                                        background: #f8fafc;
+                                        ">
+                                        © {timezone.now().year} BloodConnect. All rights reserved.
                                     </td>
                                 </tr>
                             </table>
@@ -546,6 +760,7 @@ class PasswordResetRequestView(APIView):
                     </tr>
                 </table>
             </body>
+
             </html>
             """
             

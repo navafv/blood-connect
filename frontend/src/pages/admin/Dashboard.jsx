@@ -307,6 +307,7 @@ export default function Dashboard() {
                 </p>
               </div>
             ) : (
+              <div className="h-full w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={bloodGroupDistribution}
@@ -348,6 +349,7 @@ export default function Dashboard() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              </div>
             )}
           </CardContent>
         </Card>

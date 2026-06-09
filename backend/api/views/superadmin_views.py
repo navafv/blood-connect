@@ -1,5 +1,4 @@
 from datetime import timedelta
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.utils import timezone
 from django.utils.timezone import localtime
@@ -99,31 +98,140 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         plain_message = f"Welcome to BloodConnect, {organization.name}! Your account has been approved. Log in at {login_link}"
         
         html_message = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <span style="font-size: 40px;">🩸</span>
-            </div>
-            <h2 style="color: #0f172a; text-align: center; margin-bottom: 20px;">Welcome to BloodConnect, <br/> <span style="color: #e11d48;">{organization.name}</span>!</h2>
-            
-            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                Great news! Your organization's registration has been officially <strong>approved</strong> by our administrative team.
-            </p>
-            
-            <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                You can now log into your Tenant Dashboard to start importing your existing donor registry, inviting your hospital staff, and saving lives in your local community.
-            </p>
-            
-            <div style="text-align: center; margin: 40px 0;">
-                <a href="{login_link}" style="background-color: #e11d48; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
-                    Access Your Dashboard
-                </a>
-            </div>
-            
-            <p style="color: #94a3b8; font-size: 13px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 20px;">
-                If you have any questions, simply reply to this email or visit our Contact Us page.<br/>
-                &copy; {localtime().year} BloodConnect Platform
-            </p>
-        </div>
+        <!doctype html>
+        <html>
+
+        <body style="
+                    margin: 0;
+                    padding: 0;
+                    background: #f8fafc;
+                    font-family: Arial, sans-serif;
+                    ">
+            <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px">
+                <tr>
+                    <td align="center">
+                        <table width="600" cellpadding="0" cellspacing="0" style="
+                            max-width: 600px;
+                            background: #ffffff;
+                            border-radius: 16px;
+                            overflow: hidden;
+                            border: 1px solid #e2e8f0;
+                            ">
+                            <!-- Header -->
+
+                            <tr>
+                                <td align="center" style="
+                                background: #0f172a;
+                                padding: 36px 24px;
+                                border-bottom: 4px solid #10b981;
+                                ">
+                                    <div style="font-size: 42px; margin-bottom: 12px">🩸</div>
+
+                                    <h1 style="
+                                    margin: 0;
+                                    color: #ffffff;
+                                    font-size: 28px;
+                                    font-weight: 800;
+                                ">
+                                        BloodConnect
+                                    </h1>
+
+                                    <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
+                                        Organization Approved
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Content -->
+
+                            <tr>
+                                <td style="padding: 40px 32px">
+                                    <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
+                                        Welcome to BloodConnect!
+                                    </h2>
+
+                                    <p style="
+                                    margin: 0 0 24px;
+                                    color: #475569;
+                                    font-size: 16px;
+                                    line-height: 1.7;
+                                ">
+                                        Great news — your organization
+                                        <strong style="color: #0f172a">{organization.name}</strong>
+                                        has been successfully approved by the BloodConnect
+                                        administration team.
+                                    </p>
+
+                                    <p style="
+                                    margin: 0 0 30px;
+                                    color: #475569;
+                                    font-size: 16px;
+                                    line-height: 1.7;
+                                ">
+                                        You can now access your dashboard, manage donors, invite staff
+                                        members, and start coordinating blood donation activities in
+                                        your region.
+                                    </p>
+
+                                    <!-- CTA -->
+
+                                    <div style="text-align: center; margin: 40px 0">
+                                        <a href="{login_link}" style="
+                                    display: inline-block;
+                                    background: #10b981;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    padding: 16px 32px;
+                                    border-radius: 10px;
+                                    font-size: 16px;
+                                    font-weight: 600;
+                                    ">
+                                            Access Dashboard
+                                        </a>
+                                    </div>
+
+                                    <!-- Info Box -->
+
+                                    <div style="
+                                    background: #f8fafc;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 12px;
+                                    padding: 18px;
+                                    margin-top: 20px;
+                                ">
+                                        <p style="
+                                    margin: 0;
+                                    color: #64748b;
+                                    font-size: 14px;
+                                    line-height: 1.6;
+                                    ">
+                                            Your administrator account is now active and ready to use.
+                                            If you need assistance, simply reply to this email and our
+                                            support team will help you.
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+
+                            <tr>
+                                <td align="center" style="
+                                padding: 24px;
+                                color: #94a3b8;
+                                font-size: 12px;
+                                background: #f8fafc;
+                                ">
+                                    © {localtime().year} BloodConnect. All rights reserved.
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+
+        </html>
         """
         
         send_async_email(
@@ -260,18 +368,136 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
         plain_message = f"Hello {message.name},\n\n{reply_text}\n\nBest regards,\nThe BloodConnect Team"
         
         html_message = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h3 style="color: #0f172a; margin-bottom: 20px;">BloodConnect Support</h3>
-            <p style="color: #475569; font-size: 15px; line-height: 1.6;">Hello {message.name},</p>
-            <div style="color: #475569; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">{reply_text}</div>
-            <br/>
-            <p style="color: #475569; font-size: 15px;">Best regards,<br/><strong>The BloodConnect Team</strong></p>
-            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-            <p style="color: #94a3b8; font-size: 12px; font-style: italic;">
-                In response to your message:<br/>
-                "{message.message}"
-            </p>
-        </div>
+        <!doctype html>
+        <html>
+
+        <body style="
+                    margin: 0;
+                    padding: 0;
+                    background: #f8fafc;
+                    font-family: Arial, sans-serif;
+                    ">
+            <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px">
+                <tr>
+                    <td align="center">
+                        <table width="600" cellpadding="0" cellspacing="0" style="
+                            max-width: 600px;
+                            background: #ffffff;
+                            border-radius: 16px;
+                            overflow: hidden;
+                            border: 1px solid #e2e8f0;
+                            ">
+                            <!-- Header -->
+
+                            <tr>
+                                <td align="center" style="
+                                background: #0f172a;
+                                padding: 36px 24px;
+                                border-bottom: 4px solid #3b82f6;
+                                ">
+                                    <div style="font-size: 42px; margin-bottom: 12px">🩸</div>
+
+                                    <h1 style="
+                                    margin: 0;
+                                    color: #ffffff;
+                                    font-size: 28px;
+                                    font-weight: 800;
+                                ">
+                                        BloodConnect
+                                    </h1>
+
+                                    <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
+                                        Support Team Reply
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Content -->
+
+                            <tr>
+                                <td style="padding: 40px 32px">
+                                    <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
+                                        Hello, {message.name}
+                                    </h2>
+
+                                    <p style="
+                                    margin: 0 0 28px;
+                                    color: #475569;
+                                    font-size: 16px;
+                                    line-height: 1.7;
+                                ">
+                                        Our support team has replied to your message regarding:
+                                        <strong>{message.subject}</strong>
+                                    </p>
+
+                                    <!-- Reply Box -->
+
+                                    <div style="
+                                    background: #f8fafc;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 12px;
+                                    padding: 24px;
+                                    margin: 30px 0;
+                                ">
+                                        <p style="
+                                    margin: 0;
+                                    color: #334155;
+                                    font-size: 15px;
+                                    line-height: 1.8;
+                                    white-space: pre-wrap;
+                                    ">
+                                            {reply_text}
+                                        </p>
+                                    </div>
+
+                                    <p style="
+                                    margin: 0;
+                                    color: #475569;
+                                    font-size: 15px;
+                                    line-height: 1.7;
+                                ">
+                                        Best regards,<br />
+                                        <strong>BloodConnect Support Team</strong>
+                                    </p>
+
+                                    <hr style="
+                                    border: none;
+                                    border-top: 1px solid #e2e8f0;
+                                    margin: 32px 0;
+                                " />
+
+                                    <p style="
+                                    margin: 0;
+                                    color: #94a3b8;
+                                    font-size: 12px;
+                                    line-height: 1.6;
+                                ">
+                                        Original message: <br /><br />
+
+                                        "{message.message}"
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+
+                            <tr>
+                                <td align="center" style="
+                                padding: 24px;
+                                color: #94a3b8;
+                                font-size: 12px;
+                                background: #f8fafc;
+                                ">
+                                    © {timezone.now().year} BloodConnect. All rights reserved.
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+
+        </html>
         """
         
         try:
@@ -408,27 +634,157 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
             # Modern HTML Template
             status_color = "#10b981" if new_status == 'RESOLVED' else "#3b82f6"
             html_message = f"""
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h3 style="color: #0f172a; margin-bottom: 20px;">BloodConnect Support Update</h3>
-                <p style="color: #475569; font-size: 15px;">Hello {ticket.created_by.first_name or 'Administrator'},</p>
-                <p style="color: #475569; font-size: 15px;">There is an update on your ticket: <strong>{ticket.subject}</strong></p>
-                
-                <div style="margin: 20px 0; padding: 15px; background-color: #f8fafc; border-left: 4px solid {status_color}; border-radius: 4px;">
-                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #64748b; text-transform: uppercase; font-weight: bold;">Current Status: {ticket.get_status_display()}</p>
-            """
-            
-            if message:
-                html_message += f"""
-                    <p style="margin: 0 0 5px 0; font-weight: bold; color: #0f172a;">Support Team Response:</p>
-                    <div style="color: #475569; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">{message}</div>
-                """
-                
-            html_message += """
-                </div>
-                <p style="color: #475569; font-size: 15px;">You can reply to this message directly from your Tenant Dashboard.</p>
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-                <p style="color: #94a3b8; font-size: 12px;">&copy; BloodConnect Global Infrastructure</p>
-            </div>
+            <!doctype html>
+            <html>
+
+            <body style="
+                            margin: 0;
+                            padding: 0;
+                            background: #f8fafc;
+                            font-family: Arial, sans-serif;
+                            ">
+                <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px">
+                    <tr>
+                        <td align="center">
+                            <table width="600" cellpadding="0" cellspacing="0" style="
+                                    max-width: 600px;
+                                    background: #ffffff;
+                                    border-radius: 16px;
+                                    overflow: hidden;
+                                    border: 1px solid #e2e8f0;
+                                    ">
+                                <!-- Header -->
+
+                                <tr>
+                                    <td align="center" style="
+                                                background:#0f172a;
+                                                padding:36px 24px;
+                                                border-bottom:4px solid {status_color};
+                                                ">
+                                        <div style="font-size: 42px; margin-bottom: 12px">🩸</div>
+
+                                        <h1 style="
+                                            margin: 0;
+                                            color: #ffffff;
+                                            font-size: 28px;
+                                            font-weight: 800;
+                                        ">
+                                            BloodConnect
+                                        </h1>
+
+                                        <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
+                                            Support Ticket Update
+                                        </p>
+                                    </td>
+                                </tr>
+
+                                <!-- Content -->
+
+                                <tr>
+                                    <td style="padding: 40px 32px">
+                                        <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
+                                            Hello, {ticket.created_by.first_name or 'Administrator'}
+                                        </h2>
+
+                                        <p style="
+                                            margin: 0 0 28px;
+                                            color: #475569;
+                                            font-size: 16px;
+                                            line-height: 1.7;
+                                        ">
+                                            There has been an update to your support ticket:
+                                            <strong>{ticket.subject}</strong>
+                                        </p>
+
+                                        <!-- Status Box -->
+
+                                        <div style="
+                                                background:#f8fafc;
+                                                border-left:4px solid {status_color};
+                                                border-radius:10px;
+                                                padding:22px;
+                                                margin:30px 0;
+                                                ">
+                                            <p style="
+                                            margin: 0 0 14px;
+                                            font-size: 13px;
+                                            font-weight: 700;
+                                            letter-spacing: 1px;
+                                            text-transform: uppercase;
+                                            color: #64748b;
+                                            ">
+                                                Current Status
+                                            </p>
+
+                                            <p style="
+                                                margin:0;
+                                                font-size:18px;
+                                                font-weight:700;
+                                                color:{status_color};
+                                                ">
+                                                {ticket.get_status_display()}
+                                            </p>
+                                        </div>
+                                        """
+            if message: html_message += f"""
+                                        <div style="
+                                            background: #ffffff;
+                                            border: 1px solid #e2e8f0;
+                                            border-radius: 12px;
+                                            padding: 24px;
+                                            margin-top: 24px;
+                                        ">
+                                            <p style="
+                                            margin: 0 0 14px;
+                                            color: #0f172a;
+                                            font-size: 15px;
+                                            font-weight: 700;
+                                            ">
+                                                Support Team Response
+                                            </p>
+
+                                            <div style="
+                                            color: #475569;
+                                            font-size: 15px;
+                                            line-height: 1.8;
+                                            white-space: pre-wrap;
+                                            ">
+                                                {message}
+                                            </div>
+                                        </div>
+                                        """
+            html_message += f"""
+                                        <p style="
+                                            margin: 32px 0 0;
+                                            color: #475569;
+                                            font-size: 15px;
+                                            line-height: 1.7;
+                                        ">
+                                            You can continue this conversation directly from your
+                                            BloodConnect dashboard.
+                                        </p>
+                                    </td>
+                                </tr>
+
+                                <!-- Footer -->
+
+                                <tr>
+                                    <td align="center" style="
+                                        padding: 24px;
+                                        color: #94a3b8;
+                                        font-size: 12px;
+                                        background: #f8fafc;
+                                        ">
+                                        © {timezone.now().year} BloodConnect. All rights reserved.
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+
+            </html>
             """
             
             # Dispatch safely so a failed email doesn't crash the status update
@@ -460,7 +816,7 @@ class SystemCronWebhookView(APIView):
         # === 1. Task: Purge Old Records ===
         deleted_count = 0
         try:
-            cutoff_date = timezone.now() - relativedelta(days=30)
+            cutoff_date = timezone.now() - timedelta(days=30)
             
             # Fetch the stale records
             old_records = Donor.all_objects.filter(

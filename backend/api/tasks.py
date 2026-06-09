@@ -1,10 +1,10 @@
 import threading
 import logging
 import time
+from datetime import timedelta
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-from dateutil.relativedelta import relativedelta
 from .models import Donor
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def send_async_email(subject, plain_message, recipient_list, html_message=None):
                     fail_silently=False,
                 )
                 logger.info(f"Successfully sent async email to {recipient_list}")
-                return # Exit the thread gracefully on success
+                return  # Exit the thread gracefully on success
                 
             except Exception as e:
                 logger.warning(f"Attempt {attempt + 1} failed for {recipient_list}: {str(e)}")
@@ -42,13 +42,16 @@ def send_async_email(subject, plain_message, recipient_list, html_message=None):
 
     # Spawn and start the background thread
     thread = threading.Thread(target=send_email_thread)
-    thread.daemon = True # Ensures the thread closes if the main server restarts
+    thread.daemon = True  # Ensures the thread closes if the main server restarts
     thread.start()
+
 
 def purge_old_deleted_records():
     try:
-        cutoff_date = timezone.now() - relativedelta(months=1)
-        Donor.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
-        logger.info("Successfully purged old records.")
+        cutoff_date = timezone.now() - timedelta(days=30)
+        
+        # Capture the count of deleted items for the logger
+        deleted_count, _ = Donor.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
+        logger.info(f"Successfully purged {deleted_count} old soft-deleted records.")
     except Exception as e:
         logger.error(f"Failed to purge records: {str(e)}")

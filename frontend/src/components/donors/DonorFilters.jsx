@@ -10,7 +10,6 @@ export function DonorFilters({ onFilter }) {
     searchQuery: "",
   });
 
-  // Ref to hold the debounce timeout
   const filterTimeoutRef = useRef(null);
 
   const bloodGroups = [
@@ -34,30 +33,25 @@ export function DonorFilters({ onFilter }) {
     "O-",
   ];
 
-  // Cleanup timeout on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
       if (filterTimeoutRef.current) clearTimeout(filterTimeoutRef.current);
     };
   }, []);
 
-  // Trigger parent filter immediately on state change for a snappy UX
   const handleChange = (e) => {
     const { name, value } = e.target;
     const newFilters = { ...filters, [name]: value };
 
-    // 1. Update local UI state instantly so typing feels responsive
     setFilters(newFilters);
 
-    // 2. Clear the previous timeout
     if (filterTimeoutRef.current) {
       clearTimeout(filterTimeoutRef.current);
     }
 
-    // 3. Set a new timeout to delay the heavy filtering logic
     filterTimeoutRef.current = setTimeout(() => {
       onFilter(newFilters);
-    }, 300); // 300ms debounce
+    }, 300);
   };
 
   const handleReset = () => {
@@ -76,7 +70,6 @@ export function DonorFilters({ onFilter }) {
   return (
     <div className="bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800/60 shadow-sm mb-6">
       <div className="flex flex-col md:flex-row gap-5">
-        {/* Search by Name/Phone/ID */}
         <div className="flex-2 relative group">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">
             Search Directory

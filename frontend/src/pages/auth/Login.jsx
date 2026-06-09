@@ -22,104 +22,119 @@ export default function Login() {
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  // --- UI Transition State ---
+  // UI State
   const [showPassword, setShowPassword] = useState(false);
 
-  // --- 2FA Gateway State ---
+  // 2FA State
   const [requires2FA, setRequires2FA] = useState(false);
   const [tempToken, setTempToken] = useState("");
   const [otpCode, setOtpCode] = useState("");
 
-  // --- Payload State ---
+  // Form State
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
   const from = location.state?.from || null;
 
-  // Reusable helper to finish login and route the user
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  // Complete Login
   const completeLogin = (role) => {
     localStorage.setItem("isAuthenticated", "true");
     localStorage.setItem("userRole", role);
-    queryClient.removeQueries({ queryKey: ["auth-session-verify"] });
 
-    toast.success("Authentication successful. Initializing workspace.");
+    queryClient.removeQueries({
+      queryKey: ["auth-session-verify"],
+    });
+
+    toast.success("Login successful");
 
     if (from) {
       navigate(from, { replace: true });
     } else {
-      if (role === "SUPER_ADMIN") navigate("/superadmin", { replace: true });
-      else navigate("/admin", { replace: true });
+      if (role === "SUPER_ADMIN") {
+        navigate("/superadmin", { replace: true });
+      } else {
+        navigate("/admin", { replace: true });
+      }
     }
   };
 
-  // --- Step 1: Initial Email/Password Pipeline ---
+  // Login Mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials) => {
       const res = await api.post("/auth/login/", credentials);
       return res.data;
     },
+
     onSuccess: (data) => {
-      // FIX: Check if the backend intercepted us and demanded 2FA
       if (data.requires_2fa) {
         setTempToken(data.temp_token);
         setRequires2FA(true);
-        toast("2FA Code Required", { icon: "🔐" });
+
+        toast("Enter your verification code", {
+          icon: "🔐",
+        });
       } else {
-        // Standard login (2FA disabled)
         const userRole = data.role || data.user?.role;
         completeLogin(userRole);
       }
     },
+
     onError: (err) => {
-      console.error("Authentication Failure:", err);
-      toast.dismiss();
+      console.error("Login Error:", err);
 
       if (err.response?.status === 401) {
-        toast.error(
-          "Invalid credentials. Please verify your email and password.",
-        );
+        toast.error("Invalid email or password");
       } else if (err.response?.status === 403) {
-        toast.error("Account suspended or pending verification.");
+        toast.error("Your account is pending approval");
       } else if (err.response?.status === 429) {
-        toast.error("Too many login attempts. Please try again later.");
+        toast.error("Too many attempts. Please try again later");
       } else {
         toast.error(
-          err.response?.data?.detail || "System error during authentication.",
+          err.response?.data?.detail || "Unable to complete login request",
         );
       }
     },
   });
 
-  // --- Step 2: 2FA Verification Pipeline ---
+  // 2FA Verification
   const verify2FAMutation = useMutation({
     mutationFn: async (payload) => {
       const res = await api.post("/auth/login/2fa/", payload);
       return res.data;
     },
+
     onSuccess: (data) => {
       completeLogin(data.role);
     },
+
     onError: (err) => {
-      toast.error(err.response?.data?.error || "Invalid 2FA code.");
+      toast.error(err.response?.data?.error || "Invalid verification code");
     },
   });
 
+  // Login Submit
   const handleSubmit = (e) => {
     e.preventDefault();
+
     loginMutation.mutate({
       email: formData.email,
       password: formData.password,
     });
   };
 
+  // 2FA Submit
   const handle2FASubmit = (e) => {
     e.preventDefault();
+
     verify2FAMutation.mutate({
       temp_token: tempToken,
       code: otpCode,
@@ -127,96 +142,111 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10 relative overflow-hidden">
+      {/* Ambient Background */}{" "}
       <div
-        className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none"
+        className="absolute top-[-10%] right-[-5%] w-md h-112 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"
+        className="absolute bottom-[-10%] left-[-5%] w-md h-112 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"
         aria-hidden="true"
       />
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        <div className="flex justify-center mb-8">
-          <div className="h-16 w-16 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-center shadow-inner">
+      {/* Main Container */}
+      <div className="w-full max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <Link
+            to="/"
+            className="group flex items-center justify-center h-16 w-16 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl transition-all duration-300 hover:border-rose-500/40"
+          >
             {requires2FA ? (
-              <ShieldCheck className="h-8 w-8 text-blue-500" />
+              <ShieldCheck className="h-8 w-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />
             ) : (
-              <Droplet className="h-8 w-8 text-rose-500" />
+              <Droplet className="h-8 w-8 text-rose-500 transition-transform duration-300 group-hover:scale-110" />
             )}
-          </div>
-        </div>
-        <h2 className="text-center text-2xl font-bold leading-9 tracking-tight text-white">
-          {requires2FA ? "Two-Factor Auth" : "Access your workspace"}
-        </h2>
-        <p className="mt-2 text-center text-sm text-slate-400">
-          {requires2FA
-            ? "Enter the 6-digit code from your authenticator app."
-            : "Enter your administrative credentials to continue."}
-        </p>
-      </div>
+          </Link>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-        <div className="bg-slate-900/60 backdrop-blur-xl px-6 py-10 shadow-2xl sm:rounded-3xl sm:px-12 border border-slate-800/80">
-          {/* DYNAMIC FORM RENDERING */}
+          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-white text-center">
+            {requires2FA ? "Two-Factor Verification" : "Welcome Back"}
+          </h1>
+
+          <p className="mt-3 text-sm text-slate-400 text-center leading-relaxed max-w-sm">
+            {requires2FA
+              ? "Enter the 6-digit verification code from your authenticator app."
+              : "Sign in to access your BloodConnect organization dashboard."}
+          </p>
+        </div>
+
+        {/* Auth Card */}
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl shadow-2xl px-6 sm:px-10 py-10">
           {!requires2FA ? (
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email */}
               <div className="space-y-2">
                 <label
-                  className="text-xs font-bold uppercase tracking-wider text-slate-400"
                   htmlFor="email"
+                  className="text-xs font-bold uppercase tracking-wider text-slate-400"
                 >
                   Email Address
                 </label>
+
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-rose-500 transition-colors" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+
                   <Input
                     id="email"
                     name="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="admin@organization.com"
-                    className="pl-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 h-12 transition-all"
                     required
                     value={formData.email}
                     onChange={handleChange}
                     disabled={loginMutation.isPending}
+                    className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label
-                    className="text-xs font-bold uppercase tracking-wider text-slate-400"
                     htmlFor="password"
+                    className="text-xs font-bold uppercase tracking-wider text-slate-400"
                   >
                     Password
                   </label>
+
                   <Link
                     to="/forgot-password"
-                    className="text-sm font-semibold text-rose-500 hover:text-rose-400 transition-colors"
+                    className="text-sm font-medium text-rose-500 hover:text-rose-400 transition-colors"
                   >
                     Forgot password?
                   </Link>
                 </div>
+
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-rose-500 transition-colors" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     placeholder="••••••••"
-                    className="pl-12 pr-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 h-12 transition-all"
                     required
                     value={formData.password}
                     onChange={handleChange}
                     disabled={loginMutation.isPending}
+                    className="pl-12 pr-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
                   />
+
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 focus:outline-none transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -227,22 +257,23 @@ export default function Login() {
                 </div>
               </div>
 
+              {/* Submit */}
               <div className="pt-2">
                 <Button
                   type="submit"
                   variant="primary"
-                  className="w-full flex justify-center items-center py-6 text-base font-semibold shadow-lg hover:shadow-rose-500/20 transition-all rounded-xl gap-2"
                   disabled={loginMutation.isPending}
+                  className="w-full py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-rose-500/20 transition-all gap-2"
                 >
                   {loginMutation.isPending ? (
                     <>
-                      <Loader2 className="h-5 w-5 animate-spin" />{" "}
-                      Authenticating...
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Signing In...
                     </>
                   ) : (
                     <>
-                      <Lock className="h-5 w-5" /> Secure Sign In{" "}
-                      <ArrowRight className="h-5 w-5 ml-1" />
+                      Sign In
+                      <ArrowRight className="h-5 w-5" />
                     </>
                   )}
                 </Button>
@@ -254,50 +285,62 @@ export default function Login() {
               className="space-y-6 animate-in slide-in-from-right-8 duration-500"
             >
               <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Verification Code
+                </label>
+
                 <Input
                   type="text"
                   maxLength={6}
                   required
+                  autoFocus
                   value={otpCode}
                   onChange={(e) =>
                     setOtpCode(e.target.value.replace(/\D/g, ""))
                   }
-                  className="bg-slate-950/50 border-slate-700 text-center text-3xl tracking-[0.5em] font-mono h-16 text-white"
                   placeholder="000000"
-                  autoFocus
+                  className="h-16 text-center text-3xl tracking-[0.5em] font-mono bg-slate-950/50 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500/20"
                 />
               </div>
+
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full h-12 text-base font-bold shadow-lg"
                 disabled={verify2FAMutation.isPending || otpCode.length !== 6}
+                className="w-full py-6 text-base font-semibold rounded-xl shadow-lg transition-all"
               >
                 {verify2FAMutation.isPending ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  "Verify Identity"
+                  "Verify & Continue"
                 )}
               </Button>
+
               <button
                 type="button"
-                onClick={() => setRequires2FA(false)}
-                className="w-full text-sm text-slate-400 hover:text-white transition-colors text-center mt-4 block"
+                onClick={() => {
+                  setRequires2FA(false);
+                  setOtpCode("");
+                }}
+                className="w-full text-sm text-slate-400 hover:text-white transition-colors"
               >
-                &larr; Cancel and return to login
+                ← Back to login
               </button>
             </form>
           )}
 
+          {/* Footer */}
           {!requires2FA && (
-            <div className="mt-8 text-center text-sm text-slate-400 border-t border-slate-800/80 pt-6">
-              Not a registered organization?{" "}
-              <Link
-                to="/register-org"
-                className="font-semibold leading-6 text-white hover:text-rose-400 transition-colors"
-              >
-                Request Access
-              </Link>
+            <div className="mt-8 pt-6 border-t border-slate-800/80 text-center">
+              <p className="text-sm text-slate-400">
+                Need organization access?{" "}
+                <Link
+                  to="/register-org"
+                  className="font-semibold text-white hover:text-rose-400 transition-colors"
+                >
+                  Register Organization
+                </Link>
+              </p>
             </div>
           )}
         </div>

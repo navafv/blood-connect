@@ -198,7 +198,7 @@ class TenantDashboardStatsView(APIView):
             recent_donations = donors.filter(annotated_last_donation__gte=thirty_days_ago).count()
             
             # 4. Blood Group Distribution
-            bg_counts = donors.values('blood_group').annotate(count=Count('blood_group')).order_by('-count')
+            bg_counts = donors.values('blood_group').annotate(count=Count('blood_group')).order_by('blood_group')
             blood_distribution = [
                 {
                     "group": i.get('blood_group') or "Unknown", 

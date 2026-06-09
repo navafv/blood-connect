@@ -6,8 +6,6 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
   withCredentials: true, 
-  // xsrfCookieName: 'csrftoken',
-  // xsrfHeaderName: 'X-CSRFToken',
 });
 
 // --- Concurrency / Race Condition Variables ---
@@ -76,6 +74,7 @@ api.interceptors.response.use(
         // Clean up UI state
         localStorage.removeItem("isAuthenticated");
         localStorage.removeItem("userRole");
+
         // This freezes the screen with a modal, allowing the user to copy unsaved text!
         window.dispatchEvent(new CustomEvent("session-expired"));
 
