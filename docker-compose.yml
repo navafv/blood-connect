@@ -3,28 +3,61 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    restart: always
+    container_name: bloodconnect_db
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: bloodconnect
     volumes:
-      - postgres_prod_data:/var/lib/postgresql/data
-    # Do NOT expose port 5432 to the outside world in production!
-    # The web service can still communicate with it via the internal Docker network.
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile - --error-logfile -
+    container_name: bloodconnect_web
+    restart: unless-stopped
+    # Automatically apply migrations before starting the Gunicorn server
+    command: >
+      sh -c "python manage.py migrate && 
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      # Map local media so uploads aren't lost if the container restarts locally
+      # (In production, Cloudinary handles this)
+      - ./backend/media:/app/backend/media
     ports:
       - "8000:8000"
-    env_file:
-      - .env.production  # Load all secrets from a file NOT committed to git
     depends_on:
       - db
+    environment:
+      # Core Django Config
+      - DEBUG=True # Ensure this is False in your actual production environment
+      - SECRET_KEY=django-insecure-dev-key-replace-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,web
+      
+      # Database connection (Matches the 'db' service above)
+      - DATABASE_URL=postgres://postgres:postgrespassword@db:5432/bloodconnect
+      
+      # Security & CORS (Allowing the Docker container port)
+      - CORS_ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+      - FRONTEND_URL=http://localhost:8000
+      
+      # Cloudinary Config (Will pull from your host machine's environment/dotenv)
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      
+      # Brevo Email SMTP Config
+      - EMAIL_HOST=smtp-relay.brevo.com
+      - EMAIL_PORT=587
+      - EMAIL_USE_TLS=True
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
 
 volumes:
-  postgres_prod_data:
+  postgres_data:
