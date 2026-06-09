@@ -174,6 +174,9 @@ class CustomUser(AbstractUser):
     is_phone_verified = models.BooleanField(default=False)
     email_verification_otp = models.CharField(max_length=6, null=True, blank=True)
     email_otp_expires_at = models.DateTimeField(null=True, blank=True)
+
+    is_2fa_enabled = models.BooleanField(default=False)
+    totp_secret = models.CharField(max_length=255, blank=True, null=True)
     
     organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True, related_name='staff_members')
 

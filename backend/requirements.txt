@@ -116,6 +116,7 @@ Pygments==2.19.2
 PyJWT==2.10.1
 PyMatting==1.1.15
 pyOpenSSL==26.1.0
+pyotp==2.9.0
 pyparsing==3.3.2
 pyperclip==1.11.0
 pyphen==0.17.2

@@ -1,4 +1,5 @@
 import secrets
+import pyotp
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,6 +16,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
+from django.core.signing import dumps, loads, BadSignature, SignatureExpired
 
 from ..tasks import send_async_email
 from ..models import CustomUser, Organization
@@ -30,13 +32,22 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             access_token = response.data.get('access')
             refresh_token = response.data.get('refresh')
             
-            # Fetch user to assign role
+            # Fetch user to assign role and check 2FA
             email = request.data.get('email') or request.data.get('username')
             user = CustomUser.objects.filter(email=email).first()
-            actual_role = user.role if user else 'PUBLIC_USER'
+            actual_role = getattr(user, 'role', 'PUBLIC_USER') if user else 'PUBLIC_USER'
             
             if user and user.is_superuser:
                 actual_role = 'SUPER_ADMIN'
+                
+            # --- 2FA INTERCEPTION GATEWAY ---
+            if user and getattr(user, 'is_2fa_enabled', False):
+                temp_token = dumps({'user_id': user.id}, salt='2fa-login')
+                return Response({
+                    "requires_2fa": True,
+                    "temp_token": temp_token,
+                    "message": "2FA verification required."
+                }, status=status.HTTP_200_OK)
             
             # Reusable cookie kwargs to prevent typos
             cookie_kwargs = {
@@ -44,7 +55,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                 'secure': settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
                 'httponly': settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
                 'samesite': settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
-                'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/') # Added missing path!
+                'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             }
             
             # Access Token Cookie
@@ -71,6 +82,58 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
         return response
     
+class Verify2FALoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
+
+    def post(self, request):
+        temp_token = request.data.get('temp_token')
+        code = request.data.get('code')
+
+        try:
+            data = loads(temp_token, salt='2fa-login', max_age=300)
+            user = CustomUser.objects.get(id=data['user_id'])
+        except (BadSignature, SignatureExpired, CustomUser.DoesNotExist):
+            return Response({"error": "Session expired or invalid. Please login again."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        totp = pyotp.TOTP(user.totp_secret)
+        
+        if totp.verify(code, valid_window=1):
+            refresh = RefreshToken.for_user(user)
+            actual_role = getattr(user, 'role', 'PUBLIC_USER')
+            if user.is_superuser:
+                actual_role = 'SUPER_ADMIN'
+
+            cookie_kwargs = {
+                'expires': settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
+                'secure': settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                'httponly': settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                'samesite': settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
+            }
+
+            response = Response({
+                "message": "2FA successful",
+                "role": actual_role,
+            }, status=status.HTTP_200_OK)
+
+            response.set_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                value=str(refresh.access_token),
+                **cookie_kwargs
+            )
+            
+            cookie_kwargs['expires'] = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
+            response.set_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                value=str(refresh),
+                **cookie_kwargs
+            )
+            return response
+
+        return Response({"error": "Invalid 2FA code."}, status=status.HTTP_400_BAD_REQUEST)
+
 class CookieTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
@@ -304,7 +367,6 @@ class RegisterOrganizationView(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            # Only unexpected system errors (like DB going down) will hit this now
             return Response({"error": "An unexpected error occurred during registration. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class VerifyEmailOTPView(APIView):
@@ -357,7 +419,6 @@ class ResendEmailOTPView(APIView):
         if user.is_email_verified:
             return Response({"error": "Email already verified."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Prevents spamming the resend button within the first minute
         if user.email_otp_expires_at and user.email_otp_expires_at > (timezone.now() + timedelta(minutes=9)):
             return Response({"error": "Please wait before requesting another code."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
@@ -366,7 +427,6 @@ class ResendEmailOTPView(APIView):
         user.email_otp_expires_at = timezone.now() + timedelta(minutes=10)
         user.save()
 
-        # --- MODERN RESPONSIVE EMAIL TEMPLATE ---
         subject = "New Verification Code for BloodConnect"
         plain_message = f"Hello {user.first_name or 'Administrator'},\n\nYour new BloodConnect verification code is: {new_otp}.\nThis code expires in 10 minutes."
         
@@ -423,21 +483,17 @@ class PasswordResetRequestView(APIView):
     throttle_scope = 'password_reset'
 
     def post(self, request):
-        # 1. Sanitize the input
         email = request.data.get('email', '').strip().lower()
         if not email:
             return Response({"error": "Email address is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2. Look up the user
         user = CustomUser.objects.filter(email=email).first()
 
-        # 3. Only process the email if the user exists and is active
         if user and user.is_active:
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             reset_link = f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
 
-            # --- MODERN RESPONSIVE EMAIL TEMPLATE ---
             subject = "BloodConnect Security: Password Reset Request"
             plain_message = f"Hello {user.first_name or 'Administrator'},\n\nWe received a request to reset your BloodConnect password. Click the link below to proceed:\n{reset_link}\n\nThis link will expire shortly. If you did not request this, please ignore this email."
             
@@ -504,7 +560,6 @@ class PasswordResetRequestView(APIView):
                 html_message=html_message
             )
 
-        # 4. ALWAYS return 200 OK to prevent email enumeration hacking
         return Response(
             {"message": "If an authorized account exists, a recovery payload has been dispatched."}, 
             status=status.HTTP_200_OK
@@ -532,10 +587,8 @@ class PasswordResetConfirmView(APIView):
         except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
             user = None
 
-        # Constant-time comparison happens inside check_token
         if user is not None and default_token_generator.check_token(user, token):
             try:
-                # Utilizes Django's built-in password validators (e.g., MinimumLengthValidator)
                 validate_password(new_password, user=user)
             except ValidationError as e:
                 return Response(
@@ -543,7 +596,6 @@ class PasswordResetConfirmView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # set_password hashes the password before saving it to the database
             user.set_password(new_password)
             user.save()
             
@@ -552,8 +604,71 @@ class PasswordResetConfirmView(APIView):
                 status=status.HTTP_200_OK
             )
         else:
-            # Fallback error for invalid user or bad token
             return Response(
                 {"error": "The security token is invalid or has expired. Please request a new recovery link."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class SecuritySettingsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        return Response({"is_2fa_enabled": getattr(request.user, 'is_2fa_enabled', False)})
+
+    def post(self, request):
+        user = request.user
+        old_pass = request.data.get('old_password')
+        new_pass = request.data.get('new_password')
+
+        if not user.check_password(old_pass):
+            return Response({"error": "Incorrect current password."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            validate_password(new_pass, user=user)
+        except ValidationError as e:
+            return Response({"error": list(e.messages)[0]}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_pass)
+        user.save()
+        return Response({"message": "Password updated securely."})
+
+class Setup2FAView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        
+        user.totp_secret = pyotp.random_base32()
+        user.save()
+
+        totp = pyotp.TOTP(user.totp_secret)
+        uri = totp.provisioning_uri(name=user.email, issuer_name="BloodConnect")
+        return Response({"qr_uri": uri})
+
+class Toggle2FAView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        action = request.data.get('action')
+
+        if action == 'disable':
+            user.is_2fa_enabled = False
+            user.save()
+            return Response({"message": "2FA has been disabled."})
+        
+        elif action == 'enable':
+            code = request.data.get('code')
+            if not user.totp_secret:
+                return Response({"error": "2FA not initialized."}, status=status.HTTP_400_BAD_REQUEST)
+                
+            totp = pyotp.TOTP(user.totp_secret)
+            
+            if totp.verify(code, valid_window=1):
+                user.is_2fa_enabled = True
+                user.save()
+                return Response({"message": "2FA successfully enabled."})
+                
+            return Response({
+                "error": "Invalid code. If this persists, ensure your computer's clock is synced with the internet."
+            }, status=status.HTTP_400_BAD_REQUEST)
