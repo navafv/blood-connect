@@ -51,5 +51,5 @@ RUN SECRET_KEY="dummy_secret_key_for_build" \
 # Expose the port Gunicorn will listen on
 EXPOSE 8000
 
-# Start Gunicorn (WSGI, since Daphne was removed)
+# Start Gunicorn (WSGI)
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
