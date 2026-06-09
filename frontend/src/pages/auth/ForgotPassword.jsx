@@ -90,23 +90,6 @@ export default function ForgotPassword() {
                 a recovery payload has been dispatched.
               </p>
 
-              {/* Developer Environment Alert */}
-              <div className="p-5 bg-slate-950 rounded-xl border border-slate-800 shadow-inner mb-8 text-left">
-                <div className="flex items-center gap-2 mb-2">
-                  <Terminal className="h-4 w-4 text-rose-500" />
-                  <p className="text-xs font-bold uppercase tracking-wider text-rose-500">
-                    Developer Notice
-                  </p>
-                </div>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  Email routing is currently suppressed. Check your{" "}
-                  <strong className="text-slate-300">
-                    Django terminal stdout
-                  </strong>{" "}
-                  to retrieve the generated recovery link.
-                </p>
-              </div>
-
               <Link to="/login" className="block w-full">
                 <Button
                   variant="outline"

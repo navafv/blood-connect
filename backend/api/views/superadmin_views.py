@@ -2,12 +2,15 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.utils import timezone
+from django.utils.timezone import localtime
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from django.db.models.deletion import ProtectedError
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from ..tasks import send_async_email
 from ..models import (
@@ -29,18 +32,28 @@ class IsSuperAdmin(permissions.BasePermission):
             request.user.is_authenticated and 
             (request.user.role == 'SUPER_ADMIN' or request.user.is_superuser)
         )
+
+class ProtectedDestroyMixin:
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {"detail": "Cannot delete this location because it is actively used by organizations or donors."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
-class SuperAdminCountryViewSet(viewsets.ModelViewSet):
+class SuperAdminCountryViewSet(ProtectedDestroyMixin, viewsets.ModelViewSet):
     serializer_class = MasterCountrySerializer
     permission_classes = [IsSuperAdmin]
-    queryset = MasterCountry.objects.all() # The model Meta handles the ordering
+    queryset = MasterCountry.objects.all()
 
-class SuperAdminStateViewSet(viewsets.ModelViewSet):
+class SuperAdminStateViewSet(ProtectedDestroyMixin, viewsets.ModelViewSet):
     serializer_class = MasterStateSerializer
     permission_classes = [IsSuperAdmin]
     queryset = MasterState.objects.all()
 
-class SuperAdminDistrictViewSet(viewsets.ModelViewSet):
+class SuperAdminDistrictViewSet(ProtectedDestroyMixin, viewsets.ModelViewSet):
     serializer_class = MasterDistrictSerializer
     permission_classes = [IsSuperAdmin]
     queryset = MasterDistrict.objects.all()
@@ -69,6 +82,7 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         organization.status = new_status
         organization.save()
 
+        # Send email if newly activated
         if old_status != 'ACTIVE' and new_status == 'ACTIVE':
             self.send_approval_email(organization)
 
@@ -78,8 +92,11 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         }, status=status.HTTP_200_OK)
 
     def send_approval_email(self, organization):
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        login_link = f"{frontend_url}/login"
+        
         subject = "Welcome to BloodConnect! Your Dashboard is Ready 🩸"
-        plain_message = f"Welcome to BloodConnect, {organization.name}! Your account has been approved. Log in at http://localhost:5173/login"
+        plain_message = f"Welcome to BloodConnect, {organization.name}! Your account has been approved. Log in at {login_link}"
         
         html_message = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
@@ -97,19 +114,19 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
             </p>
             
             <div style="text-align: center; margin: 40px 0;">
-                <a href="http://localhost:5173/login" style="background-color: #e11d48; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+                <a href="{login_link}" style="background-color: #e11d48; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
                     Access Your Dashboard
                 </a>
             </div>
             
             <p style="color: #94a3b8; font-size: 13px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 20px;">
                 If you have any questions, simply reply to this email or visit our Contact Us page.<br/>
-                &copy; 2026 BloodConnect Platform
+                &copy; {localtime().year} BloodConnect Platform
             </p>
         </div>
         """
         
-        send_async_email.delay(
+        send_async_email(
             subject=subject,
             plain_message=plain_message,
             recipient_list=[organization.contact_email],
@@ -134,19 +151,27 @@ class SuperAdminDashboardStatsView(APIView):
             } 
             for o in pending_orgs_qs
         ]
+        
+        logs_qs = SystemLog.objects.all().order_by('-timestamp')[:5]
+        system_logs_data = [
+            {
+                "id": log.id,
+                "type": getattr(log, 'level', 'system').lower(),
+                "message": log.message,
+                "time": localtime(log.timestamp).strftime("%I:%M %p")
+            }
+            for log in logs_qs
+        ]
 
         return Response({
             "globalStats": {
-                "totalOrganizations": Organization.objects.count(),
+                "totalOrganizations": Organization.objects.exclude(status='SUSPENDED').count(),
                 "pendingApprovals": Organization.objects.filter(status='PENDING').count(),
                 "globalDonors": Donor.objects.count(),
                 "activeSubscriptions": Organization.objects.filter(status='ACTIVE').count()
             },
             "pendingOrgs": pending_orgs_data,
-            # If your SystemLog model utilizes relationships, values() safely joins them at the DB level!
-            "systemLogs": SystemLog.objects.all().order_by('-timestamp')[:5].values(
-                'id', 'level', 'message', 'timestamp'
-            )
+            "systemLogs": system_logs_data
         }, status=status.HTTP_200_OK)
 
 class SuperAdminSystemLogListView(generics.ListAPIView):
@@ -155,16 +180,37 @@ class SuperAdminSystemLogListView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
-        return SystemLog.objects.all().order_by('-timestamp')
+        queryset = SystemLog.objects.all().order_by('-timestamp')
+        
+        # 1. Extract query parameters from the frontend request
+        search = self.request.query_params.get('search', None)
+        level = self.request.query_params.get('level', None)
+        
+        # 2. Apply Severity Filter
+        if level and level != 'ALL':
+            queryset = queryset.filter(level=level)
+            
+        # 3. Apply Text Search (Source OR Message)
+        if search:
+            queryset = queryset.filter(
+                Q(source__icontains=search) | 
+                Q(message__icontains=search)
+            )
+            
+        return queryset
 
 class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
     queryset = Advertisement.objects.all().order_by('-created_at')
     serializer_class = AdvertisementSerializer
     permission_classes = [IsSuperAdmin]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def create(self, request, *args, **kwargs):
-        duration_months = int(request.data.get('duration_months', 1))
+        try:
+            duration_months = int(request.data.get('duration_months', 1))
+        except ValueError:
+            return Response({"error": "Duration must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+            
         expires_at = timezone.now() + timedelta(days=30 * duration_months)
         
         serializer = self.get_serializer(data=request.data)
@@ -176,7 +222,11 @@ class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def extend(self, request, pk=None):
         ad = self.get_object()
-        months = int(request.data.get('months', 1))
+        
+        try:
+            months = int(request.data.get('months', 1))
+        except ValueError:
+            return Response({"error": "Months must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
         
         if ad.is_expired: 
             ad.expires_at = timezone.now() + timedelta(days=30 * months)
@@ -184,14 +234,14 @@ class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
             ad.expires_at += timedelta(days=30 * months)
             
         ad.save()
-        return Response({'message': 'Ad extended', 'expires_at': ad.expires_at})
+        return Response({'message': 'Ad extended', 'expires_at': ad.expires_at}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def toggle(self, request, pk=None):
         ad = self.get_object()
         ad.is_active = not ad.is_active
         ad.save()
-        return Response({'message': 'Status updated', 'is_active': ad.is_active})
+        return Response({'message': 'Status updated', 'is_active': ad.is_active}, status=status.HTTP_200_OK)
 
 class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
     queryset = ContactMessage.objects.all().order_by('-created_at')
@@ -224,23 +274,26 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
         </div>
         """
         
-        send_async_email.delay(
-            subject=subject,
-            plain_message=plain_message,
-            recipient_list=[message.email],
-            html_message=html_message
-        )
+        try:
+            send_async_email(
+                subject=subject,
+                plain_message=plain_message,
+                recipient_list=[message.email],
+                html_message=html_message
+            )
+        except Exception as e:
+            return Response({"error": "Message saved, but the email failed to send. Check SMTP settings."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         message.is_resolved = True
         message.save()
-        return Response({"message": "Reply sent successfully and ticket resolved."})
+        return Response({"message": "Reply sent successfully and ticket resolved."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def toggle(self, request, pk=None):
         message = self.get_object()
         message.is_resolved = not message.is_resolved
         message.save()
-        return Response({'message': 'Status updated', 'is_resolved': message.is_resolved})
+        return Response({'message': 'Status updated', 'is_resolved': message.is_resolved}, status=status.HTTP_200_OK)
 
 class SuperAdminArchivedDonorViewSet(viewsets.ModelViewSet):
     serializer_class = DonorSerializer
@@ -295,12 +348,12 @@ class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
                 
             org.save()
             payment.save()
-            return Response({"message": "Payment approved and subscription extended."})
+            return Response({"message": "Payment approved and subscription extended."}, status=status.HTTP_200_OK)
             
         elif action_type == 'REJECT':
             payment.status = 'REJECTED'
             payment.save()
-            return Response({"message": "Payment rejected."})
+            return Response({"message": "Payment rejected."}, status=status.HTTP_200_OK)
             
         return Response({"error": "Invalid action parameter."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -309,7 +362,11 @@ class SuperAdminExtendSubscriptionView(APIView):
     
     def post(self, request, pk):
         org = get_object_or_404(Organization, pk=pk)
-        years = int(request.data.get('years', 1))
+        
+        try:
+            years = int(request.data.get('years', 1))
+        except ValueError:
+            return Response({"error": "Invalid year format."}, status=status.HTTP_400_BAD_REQUEST)
         
         org.is_paid = True
         if org.subscription_expires_at and org.subscription_expires_at > timezone.now():
@@ -318,7 +375,7 @@ class SuperAdminExtendSubscriptionView(APIView):
             org.subscription_expires_at = timezone.now() + timedelta(days=365 * years)
             
         org.save()
-        return Response({"message": f"Extended successfully by {years} year(s)."})
+        return Response({"message": f"Extended successfully by {years} year(s)."}, status=status.HTTP_200_OK)
 
 class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
     serializer_class = TenantSupportTicketSerializer
@@ -331,36 +388,91 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
     def reply(self, request, pk=None):
         ticket = self.get_object()
         message = request.data.get('message')
+        new_status = request.data.get('status', 'IN_PROGRESS')
         
         if message: 
             TicketReply.objects.create(ticket=ticket, sender=request.user, message=message)
             
-        ticket.status = request.data.get('status', 'IN_PROGRESS')
+        ticket.status = new_status
         ticket.save()
-        return Response({"message": "Ticket updated successfully."})
+
+        # --- TENANT NOTIFICATION PROTOCOL ---
+        if message or new_status == 'RESOLVED':
+            subject = f"Update on Support Ticket: TCKT-{str(ticket.id).zfill(4)}"
+            
+            # Simple plain text fallback
+            plain_message = f"Hello {ticket.created_by.first_name or 'Admin'},\n\nYour support ticket '{ticket.subject}' has been updated.\n\nStatus: {ticket.get_status_display()}"
+            if message:
+                plain_message += f"\n\nSupport Team: {message}"
+                
+            # Modern HTML Template
+            status_color = "#10b981" if new_status == 'RESOLVED' else "#3b82f6"
+            html_message = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h3 style="color: #0f172a; margin-bottom: 20px;">BloodConnect Support Update</h3>
+                <p style="color: #475569; font-size: 15px;">Hello {ticket.created_by.first_name or 'Administrator'},</p>
+                <p style="color: #475569; font-size: 15px;">There is an update on your ticket: <strong>{ticket.subject}</strong></p>
+                
+                <div style="margin: 20px 0; padding: 15px; background-color: #f8fafc; border-left: 4px solid {status_color}; border-radius: 4px;">
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #64748b; text-transform: uppercase; font-weight: bold;">Current Status: {ticket.get_status_display()}</p>
+            """
+            
+            if message:
+                html_message += f"""
+                    <p style="margin: 0 0 5px 0; font-weight: bold; color: #0f172a;">Support Team Response:</p>
+                    <div style="color: #475569; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">{message}</div>
+                """
+                
+            html_message += """
+                </div>
+                <p style="color: #475569; font-size: 15px;">You can reply to this message directly from your Tenant Dashboard.</p>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+                <p style="color: #94a3b8; font-size: 12px;">&copy; BloodConnect Global Infrastructure</p>
+            </div>
+            """
+            
+            # Dispatch safely so a failed email doesn't crash the status update
+            try:
+                send_async_email(
+                    subject=subject,
+                    plain_message=plain_message,
+                    recipient_list=[ticket.created_by.email],
+                    html_message=html_message
+                )
+            except Exception as e:
+                print(f"Failed to dispatch ticket notification: {e}")
+
+        return Response({"message": "Ticket updated successfully."}, status=status.HTTP_200_OK)
     
 class SystemCronWebhookView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        # Allow token in either the Authorization header or as a query parameter (?token=xxx)
-        provided_token = request.headers.get('Authorization') or request.query_params.get('token')
+        auth_header = request.headers.get('Authorization', '')
+        query_token = request.query_params.get('token', '')
         
-        # We use the existing SECRET_KEY as a highly secure webhook password
-        expected_token = f"Bearer {settings.SECRET_KEY}"
+        provided_token = query_token if query_token else auth_header.replace('Bearer ', '').strip()
+        expected_token = getattr(settings, 'CRON_SECRET_KEY', settings.SECRET_KEY)
 
-        if provided_token != expected_token:
+        if not provided_token or provided_token != expected_token:
             return Response({"error": "Unauthorized cron execution."}, status=status.HTTP_403_FORBIDDEN)
 
         # === 1. Task: Purge Old Records ===
         deleted_count = 0
         try:
             cutoff_date = timezone.now() - relativedelta(days=30)
-            # Utilizing the hard_delete method we built in Phase 1
-            deleted_count, _ = Donor.all_objects.filter(
+            
+            # Fetch the stale records
+            old_records = Donor.all_objects.filter(
                 is_deleted=True, 
                 deleted_at__lt=cutoff_date
-            ).hard_delete()
+            )
+            
+            # Iterate and call your custom hard_delete() on each instance
+            for donor in old_records:
+                donor.hard_delete()
+                deleted_count += 1
+            
         except Exception as e:
             return Response({"error": f"Task Failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

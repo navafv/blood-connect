@@ -71,7 +71,7 @@ export default function BillingSubscription() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["tenant-payments"]);
+      queryClient.invalidateQueries({ queryKey: ["tenant-payments"] });
       setIsModalOpen(false);
       setUtrNumber("");
       toast.success("Payment reference submitted for verification.", {

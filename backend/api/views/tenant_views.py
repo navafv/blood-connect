@@ -1,7 +1,5 @@
 import csv
 import io
-import secrets
-import string
 from datetime import datetime, timedelta
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.views import APIView
@@ -26,14 +24,21 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        user = self.request.user
+        
+        if user.role != 'ORG_ADMIN' or not getattr(user, 'organization', None):
+            return Donor.objects.none() # Return empty queryset safely instead of crashing
+            
         return Donor.objects.get_for_tenant(
-            self.request.user.organization
+            user.organization
         ).select_related(
             'country', 'state', 'district'
         ).with_availability_context().order_by('-created_at')
     
     def perform_create(self, serializer):
-        serializer.save(organization=self.request.user.organization)
+        user = self.request.user
+        if user.role == 'ORG_ADMIN' and getattr(user, 'organization', None):
+            serializer.save(organization=user.organization)
 
 class TenantDonorBulkUploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -42,8 +47,9 @@ class TenantDonorBulkUploadView(APIView):
     @transaction.atomic
     def post(self, request):
         user = request.user
-        if not getattr(user, 'organization', None):
-            return Response({"error": "No organization linked to this account."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if user.role != 'ORG_ADMIN' or not getattr(user, 'organization', None):
+            return Response({"error": "Unauthorized. Tenant administrators only."}, status=status.HTTP_403_FORBIDDEN)
 
         file = request.FILES.get('file')
         if not file or not file.name.endswith('.csv'):
@@ -52,7 +58,6 @@ class TenantDonorBulkUploadView(APIView):
         def parse_flexible_date(date_str):
             if not date_str or not str(date_str).strip(): 
                 return None
-            # Tries standard, US, and EU date formats
             for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%d-%m-%Y', '%d/%m/%Y', '%Y/%m/%d'):
                 try:
                     return datetime.strptime(str(date_str).strip(), fmt).date()
@@ -83,10 +88,12 @@ class TenantDonorBulkUploadView(APIView):
                     phone_number = str(row.get('phone_number', '')).strip()
                     blood_group = str(row.get('blood_group', '')).strip().upper()
                     gender = str(row.get('gender', 'O')).strip().upper()[:1]
+                    
                     if not full_name or not phone_number or not blood_group:
                         raise ValueError("Missing required text fields (name, phone, or blood group).")
                     if blood_group not in valid_blood_groups:
                         raise ValueError(f"Unrecognized blood group: '{blood_group}'")
+                        
                     parsed_dob = parse_flexible_date(row.get('date_of_birth'))
                     if not parsed_dob:
                         raise ValueError("Date of birth is required.")
@@ -105,6 +112,7 @@ class TenantDonorBulkUploadView(APIView):
                         blood_group=blood_group,
                         is_permanently_deferred=False,
                     )
+                    # Use a private attribute to pass the data temporarily 
                     donor._temp_last_donation = parsed_last_donation
                     donors_to_create.append(donor)
 
@@ -113,7 +121,7 @@ class TenantDonorBulkUploadView(APIView):
 
             if donors_to_create:
                 # Bulk create donors
-                created_donors = Donor.objects.bulk_create(donors_to_create, ignore_conflicts=True)
+                Donor.objects.bulk_create(donors_to_create, ignore_conflicts=True)
                 
                 # Fetch them back to get actual DB IDs for the related donation records
                 saved_donors = Donor.objects.filter(
@@ -124,7 +132,7 @@ class TenantDonorBulkUploadView(APIView):
                 # Build the historical DonationRecords
                 phone_to_donor_map = {d.phone_number: d for d in saved_donors}
                 for temp_donor in donors_to_create:
-                    if temp_donor._temp_last_donation:
+                    if getattr(temp_donor, '_temp_last_donation', None):
                         actual_donor = phone_to_donor_map.get(temp_donor.phone_number)
                         if actual_donor:
                             donations_to_create.append(DonationRecord(
@@ -153,12 +161,20 @@ class TenantDashboardStatsView(APIView):
         try:
             user = request.user
             
+            if user.role != 'ORG_ADMIN':
+                return Response(
+                    {"error": "Unauthorized access. Tenant administrators only."}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
             if not hasattr(user, 'organization') or not user.organization:
                 return Response({"error": "No organization linked."}, status=status.HTTP_400_BAD_REQUEST)
                 
+            # The query is perfectly isolated to the active tenant's organization!
             donors = Donor.objects.filter(organization=user.organization).annotate(
                 annotated_last_donation=Max('donation_records__donation_date')
             )
+            
             today = timezone.now().date()
             thirty_days_ago = today - timedelta(days=30)
             
@@ -226,23 +242,35 @@ class TenantOrganizationView(generics.RetrieveUpdateAPIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_object(self):
-        if not self.request.user.organization:
+        user = self.request.user
+        
+        if getattr(user, 'role', '') != 'ORG_ADMIN':
+            raise PermissionDenied("Unauthorized. Only Tenant Administrators can access this profile.")
+            
+        if not getattr(user, 'organization', None):
             raise PermissionDenied("You are not associated with any organization.")
-        return self.request.user.organization
+            
+        return user.organization
 
 class TenantPaymentView(generics.ListCreateAPIView):
     serializer_class = PaymentTransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if not self.request.user.organization:
+        user = self.request.user
+        
+        if getattr(user, 'role', '') != 'ORG_ADMIN':
+            raise PermissionDenied("Only Tenant Administrators can view financial ledgers.")
+            
+        if not getattr(user, 'organization', None):
             return PaymentTransaction.objects.none()
+            
         return PaymentTransaction.objects.select_related(
             'organization', 'submitted_by'
-        ).filter(organization=self.request.user.organization).order_by('-created_at')
+        ).filter(organization=user.organization).order_by('-created_at')
 
     def perform_create(self, serializer):
-        if self.request.user.role != 'ORG_ADMIN':
+        if getattr(self.request.user, 'role', '') != 'ORG_ADMIN':
             raise PermissionDenied("Only Admins can submit payments.")
         serializer.save(organization=self.request.user.organization, submitted_by=self.request.user, amount=999.00)
 
@@ -251,27 +279,43 @@ class TenantSupportTicketViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if not self.request.user.organization:
+        user = self.request.user
+        
+        if getattr(user, 'role', '') != 'ORG_ADMIN':
             return TenantSupportTicket.objects.none()
+            
+        if not getattr(user, 'organization', None):
+            return TenantSupportTicket.objects.none()
+            
         return TenantSupportTicket.objects.select_related(
             'organization', 'created_by'
         ).prefetch_related(
             'replies__sender'
-        ).filter(organization=self.request.user.organization).order_by('-created_at')
+        ).filter(organization=user.organization).order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(organization=self.request.user.organization, created_by=self.request.user)
+        user = self.request.user
+        if getattr(user, 'role', '') != 'ORG_ADMIN' or not getattr(user, 'organization', None):
+            raise PermissionDenied("Only Tenant Administrators can open support tickets.")
+            
+        serializer.save(organization=user.organization, created_by=user)
 
     @action(detail=True, methods=['post'])
     def reply(self, request, pk=None):
+        user = request.user
+        if getattr(user, 'role', '') != 'ORG_ADMIN':
+            return Response({"error": "Unauthorized action."}, status=status.HTTP_403_FORBIDDEN)
+            
         ticket = self.get_object()
         if not request.data.get('message'):
             return Response({"error": "Message is required"}, status=status.HTTP_400_BAD_REQUEST)
             
-        TicketReply.objects.create(ticket=ticket, sender=request.user, message=request.data.get('message'))
+        TicketReply.objects.create(ticket=ticket, sender=user, message=request.data.get('message'))
+        
         if ticket.status == 'RESOLVED':
             ticket.status = 'OPEN'
             ticket.save()
+            
         return Response({"message": "Reply sent successfully."})
     
 class LogDonationView(APIView):
@@ -279,8 +323,9 @@ class LogDonationView(APIView):
 
     def post(self, request, donor_id):
         user = request.user
-        if not getattr(user, 'organization', None):
-            return Response({"error": "Unauthorized."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if user.role != 'ORG_ADMIN' or not getattr(user, 'organization', None):
+            return Response({"error": "Unauthorized. Tenant administrators only."}, status=status.HTTP_403_FORBIDDEN)
 
         # Ensure the donor actually belongs to this hospital
         donor = get_object_or_404(Donor, id=donor_id, organization=user.organization)

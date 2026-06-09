@@ -175,23 +175,6 @@ export default function VerifyEmail() {
               </CardHeader>
 
               <CardContent className="pt-8 px-8 pb-8">
-                {/* Developer Environment Alert */}
-                <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 shadow-inner mb-6 text-left">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Terminal className="h-4 w-4 text-emerald-500" />
-                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-500">
-                      Developer Notice
-                    </p>
-                  </div>
-                  <p className="text-sm text-slate-400 leading-relaxed">
-                    Check your{" "}
-                    <strong className="text-slate-300">
-                      Django terminal stdout
-                    </strong>{" "}
-                    to retrieve the generated OTP token.
-                  </p>
-                </div>
-
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-400 sr-only">

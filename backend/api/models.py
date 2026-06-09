@@ -94,6 +94,7 @@ class Organization(models.Model):
     address_line = models.TextField()
 
     # Mini-Website Image Fields
+    logo = models.ImageField(upload_to='organization/logos/', blank=True, null=True, help_text="Square logo for dashboard & public profile")
     banner_image = models.ImageField(upload_to='organization/banners/', blank=True, null=True)
 
     # SaaS Management & Privacy

@@ -46,7 +46,7 @@ export default function ManageMessages() {
     mutationFn: async (payload) =>
       api.post(`/superadmin/messages/${selectedMessage.id}/reply/`, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-messages"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-messages"] });
       closeModal();
       toast.success("Reply dispatched successfully.", { icon: "📨" });
     },
@@ -62,7 +62,7 @@ export default function ManageMessages() {
   const toggleMutation = useMutation({
     mutationFn: async (id) => api.post(`/superadmin/messages/${id}/toggle/`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-messages"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-messages"] });
       toast.success("Ticket status updated.");
     },
     onError: () => toast.error("Failed to modify ticket status."),
@@ -72,7 +72,7 @@ export default function ManageMessages() {
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.delete(`/superadmin/messages/${id}/`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-messages"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-messages"] });
       toast.success("Message deleted permanently.");
     },
     onError: () => toast.error("Failed to delete message."),
@@ -378,24 +378,6 @@ export default function ManageMessages() {
 
             {/* Email Reply Form */}
             <form onSubmit={handleReplySubmit} className="space-y-5">
-              {/* Developer Environment Alert */}
-              <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl text-left shadow-inner">
-                <div className="flex items-center gap-2 mb-2">
-                  <Terminal className="h-4 w-4 text-emerald-500" />
-                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-500">
-                    Developer Notice
-                  </p>
-                </div>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  If SMTP routing is suppressed in your local environment, the
-                  reply payload will be printed to your{" "}
-                  <strong className="text-slate-300">
-                    Django terminal stdout
-                  </strong>{" "}
-                  instead of being emailed.
-                </p>
-              </div>
-
               <div className="space-y-2">
                 <label className="text-sm font-bold text-white flex items-center gap-2">
                   <Reply className="h-4 w-4 text-blue-400" /> Dispatch Response

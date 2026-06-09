@@ -13,6 +13,7 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Activity,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -24,16 +25,13 @@ import api from "../../lib/axios";
 export default function RegisterOrg() {
   const navigate = useNavigate();
 
-  // --- UI Transition State ---
-  const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'success'
+  const [status, setStatus] = useState("idle");
   const [showPassword, setShowPassword] = useState(false);
 
-  // --- Geographic Master Data State ---
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [districts, setDistricts] = useState([]);
 
-  // --- Payload State ---
   const [formData, setFormData] = useState({
     orgName: "",
     orgType: "HOSPITAL",
@@ -46,20 +44,26 @@ export default function RegisterOrg() {
     is_searchable: true,
   });
 
+  // Allowed organization types matching backend choices
+  const orgTypeOptions = [
+    { label: "Hospital", value: "HOSPITAL" },
+    { label: "Blood Bank", value: "BLOOD_BANK" },
+    { label: "NGO / Volunteer Group", value: "NGO" },
+    { label: "Private Clinic", value: "CLINIC" },
+  ];
+
   useEffect(() => {
     const fetchCountries = async () => {
       try {
         const response = await api.get("/locations/countries/");
         setCountries(response.data);
       } catch (err) {
-        console.error("Geographic initialization failed:", err);
         toast.error("Failed to load regional data. Please refresh the page.");
       }
     };
     fetchCountries();
   }, []);
 
-  // --- Cascading Geographic Handlers ---
   const handleCountryChange = async (val) => {
     setFormData({
       ...formData,
@@ -69,7 +73,6 @@ export default function RegisterOrg() {
     });
     setStates([]);
     setDistricts([]);
-
     if (val) {
       try {
         const response = await api.get(`/locations/states/?country=${val}`);
@@ -83,7 +86,6 @@ export default function RegisterOrg() {
   const handleStateChange = async (val) => {
     setFormData({ ...formData, state_id: val, district_id: "" });
     setDistricts([]);
-
     if (val) {
       try {
         const response = await api.get(`/locations/districts/?state=${val}`);
@@ -112,16 +114,13 @@ export default function RegisterOrg() {
       setStatus("success");
       toast.success("Organization provisioned successfully.");
 
-      // Delay routing to allow success state animation to complete
       setTimeout(() => {
         navigate("/verify-email", { state: { email: formData.email } });
       }, 2500);
     } catch (err) {
-      console.error("Provisioning Failure:", err);
       setStatus("idle");
       toast.error(
         err.response?.data?.error ||
-          err.response?.data?.detail ||
           "Registration failed. Please verify your inputs and try again.",
       );
     }
@@ -129,7 +128,6 @@ export default function RegisterOrg() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* --- Ambient Environmental Glows --- */}
       <div
         className="absolute top-[-10%] right-[-5%] w-125 h-125 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none"
         aria-hidden="true"
@@ -139,7 +137,6 @@ export default function RegisterOrg() {
         aria-hidden="true"
       />
 
-      {/* --- Brand Header --- */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         <div className="flex justify-center">
           <Link
@@ -162,11 +159,9 @@ export default function RegisterOrg() {
         </p>
       </div>
 
-      {/* --- Registration Form Console --- */}
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-150 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 mb-10">
         <div className="bg-slate-900/60 backdrop-blur-xl px-6 py-10 shadow-2xl sm:rounded-3xl sm:px-10 border border-slate-800/80">
           {status === "success" ? (
-            /* Success State */
             <div className="text-center animate-in fade-in zoom-in duration-500 py-12">
               <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6 relative">
                 <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md animate-pulse" />
@@ -182,10 +177,9 @@ export default function RegisterOrg() {
               <Loader2 className="h-8 w-8 text-rose-500 animate-spin mx-auto" />
             </div>
           ) : (
-            /* Form State */
             <form className="space-y-8" onSubmit={handleSubmit}>
               {/* 1. Identity Matrix */}
-              <div className="space-y-5 pb-8 border-b border-slate-800/80">
+              <div className="space-y-5 pb-8 border-b border-slate-800/80 relative z-40">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-rose-500" /> 1.
                   Institutional Identity
@@ -202,6 +196,21 @@ export default function RegisterOrg() {
                       value={formData.orgName}
                       onChange={handleChange}
                       disabled={status === "loading"}
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 relative">
+                    <SearchableSelect
+                      value={formData.orgType}
+                      onChange={(val) =>
+                        handleChange({
+                          target: { name: "orgType", value: val },
+                        })
+                      }
+                      options={orgTypeOptions}
+                      placeholder="Select Organization Type"
+                      className="bg-slate-950/50"
+                      required
                     />
                   </div>
 
@@ -325,7 +334,7 @@ export default function RegisterOrg() {
               </div>
 
               {/* 3. Global Directory Preference */}
-              <div className="space-y-5">
+              <div className="space-y-5 relative z-0">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                   <Globe className="h-4 w-4 text-blue-500" /> 3. Directory
                   Integration
@@ -334,7 +343,6 @@ export default function RegisterOrg() {
                 <label className="flex items-start gap-4 p-5 rounded-2xl border border-slate-700 bg-slate-900/50 cursor-pointer hover:bg-slate-800/80 transition-all shadow-inner group">
                   <div className="flex h-6 items-center shrink-0 mt-0.5">
                     <input
-                      id="is_searchable"
                       name="is_searchable"
                       type="checkbox"
                       checked={formData.is_searchable}
@@ -361,7 +369,7 @@ export default function RegisterOrg() {
               </div>
 
               {/* Submission Matrix */}
-              <div className="pt-4">
+              <div className="pt-4 relative z-0">
                 <Button
                   type="submit"
                   variant="primary"
@@ -370,7 +378,7 @@ export default function RegisterOrg() {
                 >
                   {status === "loading" ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
                       Provisioning Workspace...
                     </>
                   ) : (
@@ -384,7 +392,6 @@ export default function RegisterOrg() {
             </form>
           )}
 
-          {/* Alternate Routing */}
           {status !== "success" && (
             <div className="mt-8 text-center text-sm text-slate-400 border-t border-slate-800/80 pt-6">
               Already possess an administrative account?{" "}

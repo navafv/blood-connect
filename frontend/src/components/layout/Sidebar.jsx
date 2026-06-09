@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Users,
@@ -20,6 +21,7 @@ import api from "../../lib/axios";
 export function Sidebar({ isOpen, setIsOpen }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const menuItems = [
     { name: "Overview", path: "/admin", icon: LayoutDashboard },
@@ -42,6 +44,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
     } catch (error) {
       toast.error("Session purged locally.", { id: loading });
     } finally {
+      queryClient.clear();
       localStorage.removeItem("isAuthenticated");
       localStorage.removeItem("userRole");
       navigate("/login", { replace: true });

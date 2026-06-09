@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
@@ -25,6 +26,7 @@ export function SuperAdminLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const navLinks = [
     { name: "Global Dashboard", path: "/superadmin", icon: LayoutDashboard },
@@ -53,14 +55,25 @@ export function SuperAdminLayout() {
     },
   ];
 
+  // Prevent scrolling on body when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [isMobileMenuOpen]);
+
   const handleLogout = async () => {
-    const loading = toast.loading("Terminating administrative session...");
+    const loadingId = toast.loading("Terminating administrative session...");
     try {
       await api.post("/auth/logout/");
-      toast.success("SuperAdmin logged out.", { id: loading });
+      toast.success("SuperAdmin logged out securely.", { id: loadingId });
     } catch (err) {
-      toast.error("Session purged locally.", { id: loading });
+      // Even if the server fails, we must clear the client state so the user isn't trapped
+      toast.error("Session purged locally.", { id: loadingId });
     } finally {
+      queryClient.clear();
       localStorage.removeItem("isAuthenticated");
       localStorage.removeItem("userRole");
       navigate("/login", { replace: true });
@@ -74,7 +87,16 @@ export function SuperAdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+    <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row font-sans selection:bg-indigo-500/30 selection:text-indigo-200 relative">
+      {/* Mobile Menu Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* --- Sidebar Navigation --- */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 border-r border-slate-800 flex flex-col transition-transform duration-300 md:relative md:translate-x-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
@@ -97,6 +119,7 @@ export function SuperAdminLayout() {
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="md:hidden text-slate-400 p-2 hover:bg-slate-800 rounded-lg"
+            aria-label="Close menu"
           >
             <X className="h-5 w-5" />
           </button>
@@ -158,15 +181,16 @@ export function SuperAdminLayout() {
       {/* --- Main Content --- */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 md:px-8 shrink-0">
+        <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 md:px-8 shrink-0 z-10">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="md:hidden text-slate-300"
+            aria-label="Open menu"
           >
             <Menu className="h-6 w-6" />
           </button>
 
-          <div className="flex-1 md:flex items-center justify-end gap-6">
+          <div className="flex-1 md:flex items-center justify-end gap-6 hidden sm:flex">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
               <Activity className="h-3 w-3 text-emerald-500" /> System
               Operational

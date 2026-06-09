@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'cloudinary',
     'cloudinary_storage',
@@ -212,9 +213,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/day',
         'user': '1000/day',
-        'login': '5/min',
-        'otp': '5/min',
+        'login': '3/min',
+        'otp': '3/min',
         'password_reset': '3/hour',
+        'password_reset_confirm': '3/hour',
     }
 }
 

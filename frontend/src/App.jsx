@@ -1,12 +1,10 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./hooks/useScrollRestoration";
 import PageLoader from "./components/ui/PageLoader";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 
 // --- Core Layouts ---
-// Imported synchronously to ensure the application shell renders immediately.
 import { PublicLayout } from "./components/layout/PublicLayout";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { SuperAdminLayout } from "./components/layout/SuperAdminLayout";
@@ -14,7 +12,6 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { SessionExpiredModal } from "./components/auth/SessionExpiredModal";
 
 // --- Route-Level Code Splitting ---
-// Public Domain
 const Home = lazy(() => import("./pages/public/Home"));
 const SearchDonors = lazy(() => import("./pages/public/SearchDonors"));
 const AboutUs = lazy(() => import("./pages/public/AboutUs"));
@@ -26,14 +23,12 @@ const OrganizationProfile = lazy(
   () => import("./pages/public/OrganizationProfile"),
 );
 
-// Authentication Domain
 const Login = lazy(() => import("./pages/auth/Login"));
 const RegisterOrg = lazy(() => import("./pages/auth/RegisterOrg"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 
-// Tenant Administration Domain
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const ManageDonors = lazy(() => import("./pages/admin/ManageDonors"));
 const AddDonor = lazy(() => import("./pages/admin/AddDonor"));
@@ -41,11 +36,13 @@ const Support = lazy(() => import("./pages/admin/Support"));
 const ProfileSettings = lazy(
   () => import("./pages/admin/settings/ProfileSettings"),
 );
+const SecuritySettings = lazy(
+  () => import("./pages/admin/settings/SecuritySettings"),
+);
 const BillingSubscription = lazy(
   () => import("./pages/admin/settings/BillingSubscription"),
 );
 
-// System Administration Domain
 const GlobalDashboard = lazy(
   () => import("./pages/superadmin/GlobalDashboard"),
 );
@@ -67,13 +64,11 @@ function App() {
   const [isSessionExpired, setIsSessionExpired] = useState(false);
 
   useEffect(() => {
-    // Listen for the custom event dispatched by Axios when a 401 occurs
     const handleSessionExpiration = () => {
       setIsSessionExpired(true);
     };
 
     window.addEventListener("session-expired", handleSessionExpiration);
-
     return () => {
       window.removeEventListener("session-expired", handleSessionExpiration);
     };
@@ -81,8 +76,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Toaster position="top-right" />
-
+      {/* Session Expired Modal catches 401 errors globally */}
       <SessionExpiredModal
         isOpen={isSessionExpired}
         onClose={() => setIsSessionExpired(false)}
@@ -120,6 +114,10 @@ function App() {
                 <Route path="add-donor" element={<AddDonor />} />
                 <Route path="support" element={<Support />} />
                 <Route path="settings" element={<ProfileSettings />} />
+                <Route
+                  path="settings/security"
+                  element={<SecuritySettings />}
+                />
                 <Route
                   path="settings/billing"
                   element={<BillingSubscription />}

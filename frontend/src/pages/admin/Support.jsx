@@ -63,7 +63,7 @@ export default function Support() {
     mutationFn: async (payload) =>
       api.post("/tenant/support-tickets/", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["tenant-support-tickets"]);
+      queryClient.invalidateQueries({ queryKey: ["tenant-support-tickets"] });
       setIsCreateModalOpen(false);
       setSubject("");
       setMessage("");
@@ -79,7 +79,7 @@ export default function Support() {
     mutationFn: async (payload) =>
       api.post(`/tenant/support-tickets/${selectedTicketId}/reply/`, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["tenant-support-tickets"]);
+      queryClient.invalidateQueries({ queryKey: ["tenant-support-tickets"] });
       setReplyText("");
       toast.success("Reply dispatched.", { icon: "📨" });
     },

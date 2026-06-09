@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Terminal,
@@ -14,7 +14,6 @@ import {
   ServerCrash,
   RefreshCw,
 } from "lucide-react";
-import toast from "react-hot-toast";
 
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
@@ -46,13 +45,36 @@ export default function SystemLogs() {
   });
 
   const logs = data?.results || [];
-  const nextUrl = data?.next
-    ? data.next.replace(api.defaults.baseURL, "")
-    : null;
-  const prevUrl = data?.previous
-    ? data.previous.replace(api.defaults.baseURL, "")
-    : null;
+
+  // Robust URL parsing to handle full domain URLs returned by Django's pagination
+  const getRelativeUrl = (fullUrl) => {
+    if (!fullUrl) return null;
+    try {
+      const urlObj = new URL(fullUrl);
+      let path = urlObj.pathname;
+      if (path.startsWith("/api")) {
+        path = path.replace("/api", "");
+      }
+      return path + urlObj.search;
+    } catch (e) {
+      return fullUrl;
+    }
+  };
+
+  const nextUrl = getRelativeUrl(data?.next);
+  const prevUrl = getRelativeUrl(data?.previous);
   const totalCount = data?.count || 0;
+
+  // Reset to Page 1 when searching or filtering
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setPageUrl("/superadmin/logs/");
+  };
+
+  const handleFilterChange = (e) => {
+    setLevelFilter(e.target.value);
+    setPageUrl("/superadmin/logs/");
+  };
 
   const getLevelConfig = (level) => {
     switch (level) {
@@ -105,14 +127,14 @@ export default function SystemLogs() {
             placeholder="Search by source or message..."
             className="pl-11 bg-slate-950/50 border-slate-700 h-11 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-slate-500 ml-2" />
           <Select
             value={levelFilter}
-            onChange={(e) => setLevelFilter(e.target.value)}
+            onChange={handleFilterChange}
             className="bg-slate-950/50 border-slate-700 h-11 w-full sm:w-56 focus:border-rose-500"
           >
             <option value="ALL">All Severity Levels</option>
@@ -146,6 +168,7 @@ export default function SystemLogs() {
           </Button>
         </div>
 
+        {/* --- DESKTOP VIEW (Table) --- */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left font-mono text-sm">
             <thead className="bg-slate-950/40 text-xs uppercase text-slate-500 font-bold border-b border-slate-800/50">
@@ -222,76 +245,65 @@ export default function SystemLogs() {
             </tbody>
           </table>
         </div>
-        <div className="md:hidden flex flex-col">
-          <div className="divide-y divide-slate-800/50 text-slate-300">
-            {isLoading ? (
-              <tr>
-                <td
-                  colSpan="4"
-                  className="px-6 py-24 text-center text-slate-500"
-                >
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-4" />
-                  <p className="text-sm tracking-widest uppercase">
-                    Connecting to stream...
-                  </p>
-                </td>
-              </tr>
-            ) : isError ? (
-              <tr>
-                <td colSpan="4" className="px-6 py-24 text-center">
-                  <div className="h-16 w-16 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ServerCrash className="h-8 w-8 text-rose-500" />
-                  </div>
-                  <p className="text-rose-400 font-medium">
-                    Failed to read log stream.
-                  </p>
-                </td>
-              </tr>
-            ) : logs.length === 0 ? (
-              <tr>
-                <td
-                  colSpan="4"
-                  className="px-6 py-24 text-center text-slate-500"
-                >
-                  No log entries match your criteria.
-                </td>
-              </tr>
-            ) : (
-              logs.map((log) => {
-                const config = getLevelConfig(log.level);
-                const Icon = config.icon;
 
-                return (
-                  <div
-                    key={log.id}
-                    className="p-4 hover:bg-slate-900/50 transition-colors flex flex-col gap-2.5 font-mono text-sm"
-                  >
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        className={`${config.badge} gap-1.5 font-bold uppercase`}
-                      >
-                        <Icon className="h-3 w-3" /> {log.level}
-                      </Badge>
-                      <span className="text-xs text-slate-400 font-medium">
-                        {log.timestamp}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block mb-1">
-                        Source
-                      </span>
-                      <span className="text-slate-400 font-medium bg-slate-950/50 px-2 py-1 rounded-md border border-slate-800/80 break-all">
-                        [{log.source}]
-                      </span>
-                    </div>
-                    <div className="text-slate-200 mt-1 leading-relaxed bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 shadow-inner wrap-break-word">
-                      {log.message}
-                    </div>
+        {/* --- MOBILE VIEW (Cards) --- */}
+        {/* FIX: Removed table tags (tr/td) inside div to prevent hydration errors */}
+        <div className="md:hidden flex flex-col divide-y divide-slate-800/50 text-slate-300">
+          {isLoading ? (
+            <div className="px-6 py-24 flex flex-col items-center justify-center text-slate-500">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-4" />
+              <p className="text-sm tracking-widest uppercase">
+                Connecting to stream...
+              </p>
+            </div>
+          ) : isError ? (
+            <div className="px-6 py-24 flex flex-col items-center justify-center">
+              <div className="h-16 w-16 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ServerCrash className="h-8 w-8 text-rose-500" />
+              </div>
+              <p className="text-rose-400 font-medium">
+                Failed to read log stream.
+              </p>
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="px-6 py-24 text-center text-slate-500">
+              No log entries match your criteria.
+            </div>
+          ) : (
+            logs.map((log) => {
+              const config = getLevelConfig(log.level);
+              const Icon = config.icon;
+
+              return (
+                <div
+                  key={log.id}
+                  className="p-5 hover:bg-slate-900/50 transition-colors flex flex-col gap-3 font-mono text-sm"
+                >
+                  <div className="flex items-center justify-between">
+                    <Badge
+                      className={`${config.badge} gap-1.5 font-bold uppercase`}
+                    >
+                      <Icon className="h-3 w-3" /> {log.level}
+                    </Badge>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {log.timestamp}
+                    </span>
                   </div>
-                );
-              })
-            )}
-          </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block mb-1">
+                      Source
+                    </span>
+                    <span className="text-slate-400 font-medium bg-slate-950/50 px-2 py-1 rounded-md border border-slate-800/80 break-all">
+                      [{log.source}]
+                    </span>
+                  </div>
+                  <div className="text-slate-200 mt-1 leading-relaxed bg-slate-900/50 p-3 rounded-lg border border-slate-800/50 shadow-inner wrap-break-word">
+                    {log.message}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </Card>
 

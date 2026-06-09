@@ -13,7 +13,6 @@ import {
   SearchX,
   Building2,
   ShieldCheck,
-  Terminal,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -67,8 +66,13 @@ export default function SupportTickets() {
         payload,
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-tenant-tickets"]);
+      queryClient.invalidateQueries({
+        queryKey: ["superadmin-tenant-tickets"],
+      });
+
+      setSelectedTicketId(null);
       setReplyText("");
+
       toast.success("Response dispatched successfully.", { icon: "📨" });
     },
     onError: (err) => {
@@ -330,139 +334,119 @@ export default function SupportTickets() {
         title="Tenant Support Interface"
       >
         {activeTicket && (
-          <div className="space-y-6 flex flex-col max-h-[80vh]">
-            {/* Header / Context */}
-            <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 shadow-inner shrink-0">
-              <div className="flex justify-between items-start border-b border-slate-800/80 pb-3 mb-3">
-                <div>
-                  <h3 className="text-white font-bold text-lg tracking-tight">
-                    {activeTicket.organization_name}
-                  </h3>
-                  <p className="text-xs font-medium text-slate-500 font-mono tracking-tight mt-0.5">
-                    TCKT-{activeTicket.id.toString().padStart(4, "0")} •{" "}
-                    {activeTicket.subject}
+          <div className="flex flex-col h-[75vh] sm:h-[80vh] w-full">
+            {/* 1. Header & Original Inquiry - PINNED TOP */}
+            <div className="shrink-0 mb-4 overflow-y-auto pr-1">
+              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 shadow-inner">
+                <div className="flex justify-between items-start border-b border-slate-800/80 pb-3 mb-3">
+                  <div>
+                    <h3 className="text-white font-bold text-lg tracking-tight">
+                      {activeTicket.organization_name}
+                    </h3>
+                    <p className="text-xs font-medium text-slate-500 font-mono tracking-tight mt-0.5">
+                      TCKT-{activeTicket.id.toString().padStart(4, "0")} •{" "}
+                      {activeTicket.subject}
+                    </p>
+                  </div>
+                  {getStatusBadge(activeTicket.status)}
+                </div>
+                <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800/50">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Original Inquiry
                   </p>
-                </div>
-                {getStatusBadge(activeTicket.status)}
-              </div>
-
-              {/* Original Query (Simulated as first message) */}
-              <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800/50">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                  Original Inquiry
-                </p>
-                <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
-                  {activeTicket.message}
-                </div>
-                <div className="text-xs font-medium text-slate-500 mt-3 flex items-center gap-1.5">
-                  <Clock className="h-3 w-3" />{" "}
-                  {formatDate(activeTicket.created_at)}
+                  <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    {activeTicket.message}
+                  </div>
+                  <div className="text-xs font-medium text-slate-500 mt-3 flex items-center gap-1.5">
+                    <Clock className="h-3 w-3" />{" "}
+                    {formatDate(activeTicket.created_at)}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Chat Thread */}
-            <div className="flex-1 space-y-5 overflow-y-auto pr-2 custom-scrollbar min-h-62.5 p-2">
+            {/* 2. Chat Thread - FLEX GROW (SCROLLABLE) */}
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4 custom-scrollbar">
               {activeTicket.replies?.map((reply) => (
                 <div
                   key={reply.id}
-                  className={`flex flex-col animate-in fade-in duration-300 ${reply.is_superadmin ? "items-end slide-in-from-right-4" : "items-start slide-in-from-left-4"}`}
+                  className={`flex flex-col animate-in fade-in duration-300 ${
+                    reply.is_superadmin ? "items-end" : "items-start"
+                  }`}
                 >
                   <div
-                    className={`p-4 rounded-2xl max-w-[85%] text-sm shadow-md leading-relaxed border ${
+                    className={`p-4 rounded-2xl max-w-[90%] sm:max-w-[80%] text-sm shadow-md border ${
                       reply.is_superadmin
-                        ? "bg-blue-600/20 text-blue-100 border-blue-500/30 rounded-tr-sm"
-                        : "bg-slate-800 text-slate-200 border-slate-700/50 rounded-tl-sm"
+                        ? "bg-blue-600/20 text-blue-100 border-blue-500/30"
+                        : "bg-slate-800 text-slate-200 border-slate-700/50"
                     }`}
                   >
-                    {reply.is_superadmin ? (
-                      <p className="text-xs font-bold text-blue-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
-                        <ShieldCheck className="h-3.5 w-3.5" /> Support Team
-                      </p>
-                    ) : (
-                      <p className="text-xs font-bold text-slate-400 mb-1.5 flex items-center gap-1.5">
-                        <Building2 className="h-3.5 w-3.5" />{" "}
-                        {reply.sender_name}
-                      </p>
-                    )}
+                    <p
+                      className={`text-xs font-bold mb-1.5 flex items-center gap-1.5 ${reply.is_superadmin ? "text-blue-400" : "text-slate-400"}`}
+                    >
+                      {reply.is_superadmin ? (
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                      ) : (
+                        <Building2 className="h-3.5 w-3.5" />
+                      )}
+                      {reply.is_superadmin ? "Support Team" : reply.sender_name}
+                    </p>
                     <span className="whitespace-pre-wrap">{reply.message}</span>
                   </div>
-                  <span className="text-xs font-medium text-slate-500 mt-1.5 flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {formatDate(reply.created_at)}
+                  <span className="text-xs font-medium text-slate-500 mt-1.5">
+                    {formatDate(reply.created_at)}
                   </span>
                 </div>
               ))}
             </div>
 
-            {/* Reply Actions */}
+            {/* 3. Reply Actions - PINNED BOTTOM */}
             <form
               onSubmit={handleReplySubmit}
-              className="space-y-4 pt-4 border-t border-slate-800/80 shrink-0"
+              className="shrink-0 bg-slate-900 border-t border-slate-800 pt-4"
             >
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Compose Response
-                </label>
+              <div className="space-y-2 mb-4">
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Type a response to the tenant organization..."
+                  placeholder="Type a response..."
                   className="w-full rounded-xl border border-slate-700 bg-slate-950/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all resize-none shadow-inner"
                   disabled={replyMutation.isPending}
-                  autoFocus
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-3 bg-slate-950 p-2 rounded-lg border border-slate-800 w-full sm:w-auto">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-2">
-                    Ticket Status:
-                  </label>
-                  <Select
-                    value={updateStatus}
-                    onChange={(e) => setUpdateStatus(e.target.value)}
-                    className="bg-slate-900 border-slate-700 py-1.5 h-auto text-sm w-full sm:w-40 focus:border-blue-500"
-                    disabled={replyMutation.isPending}
-                  >
-                    <option value="OPEN">Open</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="RESOLVED">Resolved</option>
-                  </Select>
-                </div>
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                <Select
+                  value={updateStatus}
+                  onChange={(e) => setUpdateStatus(e.target.value)}
+                  className="bg-slate-950 border-slate-700 w-full sm:w-40"
+                  disabled={replyMutation.isPending}
+                >
+                  <option value="OPEN">Open</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="RESOLVED">Resolved</option>
+                </Select>
 
-                <div className="flex gap-3 w-full sm:w-auto justify-end">
+                <div className="flex gap-3 w-full sm:w-auto">
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => {
-                      setSelectedTicketId(null);
-                      setReplyText("");
-                    }}
-                    disabled={replyMutation.isPending}
-                    className="text-slate-400 hover:text-white"
+                    onClick={() => setSelectedTicketId(null)}
+                    className="flex-1 sm:flex-none"
                   >
                     Close
                   </Button>
                   <Button
                     type="submit"
                     variant="primary"
-                    className="bg-blue-600 hover:bg-blue-500 shadow-lg font-bold min-w-32"
-                    disabled={
-                      replyMutation.isPending ||
-                      (!replyText.trim() &&
-                        updateStatus === activeTicket.status)
-                    }
+                    className="flex-1 sm:flex-none bg-blue-600 font-bold"
+                    disabled={replyMutation.isPending}
                   >
                     {replyMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />{" "}
-                        Updating...
-                      </>
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" /> Submit Update
-                      </>
+                      "Submit Update"
                     )}
                   </Button>
                 </div>

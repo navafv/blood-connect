@@ -85,7 +85,7 @@ export default function ManageAds() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-ads"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-ads"] });
       closeFormModal();
       toast.success(
         selectedAd
@@ -106,7 +106,7 @@ export default function ManageAds() {
   const toggleMutation = useMutation({
     mutationFn: async (id) => api.post(`/superadmin/ads/${id}/toggle/`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-ads"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-ads"] });
       toast.success("Campaign visibility updated.");
     },
     onError: () => toast.error("Failed to toggle campaign visibility."),
@@ -119,7 +119,7 @@ export default function ManageAds() {
         months: extendMonths,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-ads"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-ads"] });
       setIsExtendModalOpen(false);
       setSelectedAd(null);
       toast.success("Campaign duration extended.");
@@ -131,7 +131,7 @@ export default function ManageAds() {
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.delete(`/superadmin/ads/${id}/`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-ads"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-ads"] });
       toast.success("Campaign deleted permanently.");
     },
     onError: () => toast.error("Failed to delete campaign."),
@@ -147,6 +147,7 @@ export default function ManageAds() {
       image: null,
     });
     setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setIsFormModalOpen(true);
   };
 
@@ -156,6 +157,7 @@ export default function ManageAds() {
     setImagePreview(
       ad.image.startsWith("http") ? ad.image : `${baseURL}${ad.image}`,
     );
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setIsFormModalOpen(true);
   };
 

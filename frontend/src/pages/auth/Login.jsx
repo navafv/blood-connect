@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Droplet,
   Mail,
@@ -19,6 +19,7 @@ import api from "../../lib/axios";
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   // --- UI Transition State ---
   const [showPassword, setShowPassword] = useState(false);
@@ -43,38 +44,37 @@ export default function Login() {
       return res.data;
     },
     onSuccess: (data) => {
-      // Hydrate client-side routing state flags
       const userRole = data.role || data.user?.role;
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userRole", userRole);
+      queryClient.removeQueries({ queryKey: ["auth-session-verify"] });
 
       toast.success("Authentication successful. Initializing workspace.");
 
-      // --- Seamless Redirection Logic ---
       if (from) {
-        // Return them exactly where they were
         navigate(from, { replace: true });
       } else {
-        // Default routing based on role
-        if (userRole === "SUPER_ADMIN") {
+        if (userRole === "SUPER_ADMIN")
           navigate("/superadmin", { replace: true });
-        } else {
-          navigate("/admin", { replace: true });
-        }
+        else navigate("/admin", { replace: true });
       }
     },
     onError: (err) => {
       console.error("Authentication Failure:", err);
+      toast.dismiss(); // Clear any loading toasts
+
       if (err.response?.status === 401) {
         toast.error(
           "Invalid credentials. Please verify your email and password.",
         );
       } else if (err.response?.status === 403) {
         toast.error("Account suspended or pending verification.");
+      } else if (err.response?.status === 429) {
+        // Handle the rate limiter you configured in the backend!
+        toast.error("Too many login attempts. Please try again later.");
       } else {
         toast.error(
-          err.response?.data?.detail ||
-            "System error during authentication. Please try again later.",
+          err.response?.data?.detail || "System error during authentication.",
         );
       }
     },
@@ -124,7 +124,7 @@ export default function Login() {
       </div>
 
       {/* --- Authentication Form Console --- */}
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-110 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
         <div className="bg-slate-900/60 backdrop-blur-xl px-6 py-10 shadow-2xl sm:rounded-3xl sm:px-12 border border-slate-800/80">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Identity Input */}

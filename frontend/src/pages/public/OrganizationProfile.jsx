@@ -91,8 +91,7 @@ export default function OrganizationProfile() {
 
   // Optimize images for Lighthouse performance
   const optimizedBanner = optimizeCloudinaryUrl(org.banner_image, 1920);
-  const optimizedGallery1 = optimizeCloudinaryUrl(org.gallery_photo_1, 800);
-  const optimizedGallery2 = optimizeCloudinaryUrl(org.gallery_photo_2, 800);
+  const optimizedLogo = optimizeCloudinaryUrl(org.logo, 400);
 
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
@@ -118,7 +117,7 @@ export default function OrganizationProfile() {
         )}
       </Helmet>
 
-      {/* --- Dynamic Hero Banner --- */}
+      {/* --- Dynamic Hero Banner (Isolated from the content below it) --- */}
       <div className="relative h-75 md:h-100 w-full bg-slate-900 border-b border-slate-800 overflow-hidden animate-in fade-in duration-700">
         {optimizedBanner ? (
           <img
@@ -133,32 +132,49 @@ export default function OrganizationProfile() {
           </div>
         )}
 
-        {/* Vignette Overlays */}
-        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/60 to-transparent" />
-        <div className="absolute inset-0 bg-linear-to-r from-slate-950/80 to-transparent" />
+        {/* Vignette Overlay */}
+        
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/40 to-transparent" />
+      </div>
 
-        <div className="absolute bottom-0 left-0 w-full p-6 md:p-10">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="animate-in slide-in-from-left-8 duration-700 delay-100">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4">
-                Verified {org.org_type}
+      {/* --- Profile Header (Floats over the seam using negative top margin) --- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
+        <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-8 -mt-22 md:-mt-44 mb-8">
+          {/* Institutional Logo Profile Picture */}
+          <div className="relative shrink-0 animate-in zoom-in-90 duration-500 delay-100">
+            {optimizedLogo ? (
+              <img
+                src={optimizedLogo}
+                alt="Logo"
+                className="w-20 h-20 md:w-40 md:h-40 rounded-2xl border-4 border-slate-950 bg-slate-900 object-cover shadow-2xl"
+              />
+            ) : (
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-slate-950 bg-slate-800 flex items-center justify-center shadow-2xl">
+                <Building2 className="w-12 h-12 md:w-16 md:h-16 text-slate-500" />
               </div>
-              <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-3">
-                {org.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-4 text-slate-300 font-medium">
-                <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/50">
-                  <MapPin className="h-4 w-4 text-rose-500" />
-                  {org.district_name}, {org.state_name}
-                </span>
-              </div>
+            )}
+          </div>
+
+          {/* Title & Badges */}
+          <div className="animate-in slide-in-from-left-8 duration-700 delay-100 pb-2 md:pb-4 flex-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">
+              Verified {org.org_type.replace("_", " ")}
+            </div>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-3">
+              {org.name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-4 text-slate-300 font-medium">
+              <span className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/50 shadow-sm">
+                <MapPin className="h-4 w-4 text-rose-500" />
+                {org.district_name}, {org.state_name}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       {/* --- Main Content Grid --- */}
-      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Left Column: Institutional Details */}
         <div className="lg:col-span-1 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
           <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
@@ -210,32 +226,6 @@ export default function OrganizationProfile() {
                 "Committed to saving lives through secure, community-driven blood donation management."}
             </p>
           </div>
-
-          {/* Photo Gallery Grid */}
-          {(optimizedGallery1 || optimizedGallery2) && (
-            <div className="grid grid-cols-2 gap-4">
-              {optimizedGallery1 && (
-                <div className="aspect-square rounded-2xl overflow-hidden border border-slate-800 shadow-xl group">
-                  <img
-                    src={optimizedGallery1}
-                    alt="Facility Area 1"
-                    loading="lazy" // Defers offscreen image loading
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-              )}
-              {optimizedGallery2 && (
-                <div className="aspect-square rounded-2xl overflow-hidden border border-slate-800 shadow-xl group">
-                  <img
-                    src={optimizedGallery2}
-                    alt="Facility Area 2"
-                    loading="lazy" // Defers offscreen image loading
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Right Column: Embedded Donor Directory */}

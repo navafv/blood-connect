@@ -44,8 +44,10 @@ export default function ManageLocations() {
     isError: isErrorC,
   } = useQuery({
     queryKey: ["admin-countries"],
-    queryFn: async () =>
-      (await api.get("/superadmin/locations/countries/")).data,
+    queryFn: async () => {
+      const res = await api.get("/superadmin/locations/countries/");
+      return res.data.results || res.data;
+    },
   });
 
   const {
@@ -54,7 +56,10 @@ export default function ManageLocations() {
     isError: isErrorS,
   } = useQuery({
     queryKey: ["admin-states"],
-    queryFn: async () => (await api.get("/superadmin/locations/states/")).data,
+    queryFn: async () => {
+      const res = await api.get("/superadmin/locations/states/");
+      return res.data.results || res.data;
+    },
   });
 
   const {
@@ -63,8 +68,10 @@ export default function ManageLocations() {
     isError: isErrorD,
   } = useQuery({
     queryKey: ["admin-districts"],
-    queryFn: async () =>
-      (await api.get("/superadmin/locations/districts/")).data,
+    queryFn: async () => {
+      const res = await api.get("/superadmin/locations/districts/");
+      return res.data.results || res.data;
+    },
   });
 
   // --- Mutation Pipeline: Upsert Location ---
@@ -77,7 +84,7 @@ export default function ManageLocations() {
       return await api.post(endpoint, payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries([`admin-${activeTab}`]);
+      queryClient.invalidateQueries({ queryKey: [`admin-${activeTab}`] });
       toast.success(`${activeTab.slice(0, -1)} data saved successfully.`, {
         className: "capitalize",
       });
@@ -96,7 +103,7 @@ export default function ManageLocations() {
     mutationFn: async ({ id, tab }) =>
       await api.delete(`/superadmin/locations/${tab}/${id}/`),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries([`admin-${variables.tab}`]);
+      queryClient.invalidateQueries({ queryKey: [`admin-${variables.tab}`] });
       toast.success("Location deleted permanently.");
     },
     onError: (err) => {

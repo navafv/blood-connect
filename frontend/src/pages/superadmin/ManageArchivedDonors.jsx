@@ -43,7 +43,7 @@ export default function ManageArchivedDonors() {
     mutationFn: async (id) =>
       api.post(`/superadmin/archived-donors/${id}/restore/`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-archives"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-archives"] });
       toast.success("Record restored to the active registry.");
     },
     onError: () => toast.error("Failed to restore record. Check system logs."),
@@ -54,7 +54,7 @@ export default function ManageArchivedDonors() {
     mutationFn: async (id) =>
       api.delete(`/superadmin/archived-donors/${id}/hard_delete_record/`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-archives"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-archives"] });
       toast.success("Record permanently purged from the database.");
     },
     onError: () => toast.error("Failed to purge record."),

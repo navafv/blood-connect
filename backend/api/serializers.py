@@ -54,8 +54,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'slug', 'name', 'org_type', 'contact_email', 'contact_phone', 
             'description', 'country', 'country_name', 'state', 'state_name', 
-            'district', 'district_name', 'address_line', 
-            'banner_image', 'gallery_photo_1', 'gallery_photo_2',
+            'district', 'district_name', 'address_line', 'logo', 'banner_image',
             'is_paid', 'is_searchable', 'subscription_expires_at', 'has_active_subscription', 
             'status', 'created_at'
         ]

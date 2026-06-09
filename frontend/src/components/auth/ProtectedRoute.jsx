@@ -13,14 +13,14 @@ export const ProtectedRoute = ({
   const {
     data: user,
     isLoading,
-    isError,
+    error,
   } = useQuery({
     queryKey: ["auth-session-verify"],
     queryFn: async () => {
       const response = await api.get("/auth/me/");
       return response.data;
     },
-    retry: false,
+    retry: 1,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -35,7 +35,7 @@ export const ProtectedRoute = ({
     );
   }
 
-  if (isError || !user) {
+  if (error || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -43,18 +43,14 @@ export const ProtectedRoute = ({
 
   // 1. SuperAdmin Guard
   if (requireSuperAdmin && user.role !== "SUPER_ADMIN") {
-    // If an OrgAdmin tries to access SuperAdmin, send them to their dashboard
     if (user.role === "ORG_ADMIN") return <Navigate to="/admin" replace />;
-    // Otherwise kick to home
     return <Navigate to="/" replace />;
   }
 
-  // 2. OrgAdmin Guard (Prevents PUBLIC_USER from accessing tenant dashboard)
+  // 2. OrgAdmin Guard
   if (requireOrgAdmin && user.role !== "ORG_ADMIN") {
-    // If SuperAdmin tries to access tenant dashboard, send them to global dashboard
     if (user.role === "SUPER_ADMIN")
       return <Navigate to="/superadmin" replace />;
-    // If public user, kick to home
     return <Navigate to="/" replace />;
   }
 

@@ -5,7 +5,6 @@ import {
   UserPlus,
   ArrowLeft,
   Loader2,
-  Heart,
   Activity,
   MapPin,
   ClipboardCheck,
@@ -87,15 +86,30 @@ export default function AddDonor() {
     staleTime: Infinity,
   });
 
-  // Auto-hydrate the form with the organization's regional lock
+  // Auto-hydrate the form AND fetch the dependent dropdown options
   useEffect(() => {
     if (initialData && !formData.country) {
+      const org = initialData.org;
+
       setFormData((prev) => ({
         ...prev,
-        country: initialData.org.country?.toString() || "",
-        state: initialData.org.state?.toString() || "",
-        district: initialData.org.district?.toString() || "",
+        country: org.country?.toString() || "",
+        state: org.state?.toString() || "",
+        district: org.district?.toString() || "",
       }));
+
+      if (org.country) {
+        api
+          .get(`/locations/states/?country=${org.country}`)
+          .then((res) => setStates(res.data))
+          .catch(() => toast.error("Failed to hydrate states."));
+      }
+      if (org.state) {
+        api
+          .get(`/locations/districts/?state=${org.state}`)
+          .then((res) => setDistricts(res.data))
+          .catch(() => toast.error("Failed to hydrate districts."));
+      }
     }
   }, [initialData]);
 
@@ -142,14 +156,13 @@ export default function AddDonor() {
       return response.data;
     },
     onSuccess: () => {
-      setFieldErrors({}); // Clear errors
+      setFieldErrors({});
       toast.success("Donor record provisioned securely.");
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
+      queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
       navigate("/admin/donors");
     },
     onError: (err) => {
-      console.error("Submission Failure:", err.response?.data);
-
       if (
         err.response?.status === 400 &&
         typeof err.response.data === "object"
@@ -200,14 +213,14 @@ export default function AddDonor() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       {/* --- Workspace Header --- */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6 relative z-10">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Link to="/admin/donors">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 rounded-full hover:bg-slate-800 text-slate-400"
+                className="h-8 w-8 p-0 rounded-full hover:bg-slate-800 text-slate-400 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -226,128 +239,198 @@ export default function AddDonor() {
         </div>
       </div>
 
-      {/* --- Modular Form Layout --- */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Module 1: Identity & Demographics */}
-        <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl">
-          <CardHeader className="border-b border-slate-800/60 pb-5">
-            <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shrink-0">
-                <UserCircle className="h-5 w-5 text-blue-500" />
-              </div>
-              Identity & Demographics
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Full Name Field */}
-              <div className="space-y-2">
-                <label
-                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.full_name ? "text-red-400" : "text-slate-400"}`}
-                >
-                  Full Name *
-                </label>
-                <Input
-                  name="full_name"
-                  placeholder="E.g. John Doe"
-                  className={`h-11 ${fieldErrors.full_name ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
-                  value={formData.full_name}
-                  onChange={handleChange}
-                  required
-                />
-                {fieldErrors.full_name && (
-                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
-                    {fieldErrors.full_name[0]}
-                  </p>
-                )}
-              </div>
+      {/* --- Modular Two-Column Layout --- */}
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
+        {/* LEFT COLUMN: Identity & Location (HIGHER Z-INDEX TO OVERLAP RIGHT COLUMN ON MOBILE) */}
+        <div className="lg:col-span-2 space-y-6 relative z-30">
+          {/* Module 1: Identity & Demographics */}
+          <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl relative z-20">
+            <CardHeader className="border-b border-slate-800/60 pb-4">
+              <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shrink-0">
+                  <UserCircle className="h-5 w-5 text-blue-500" />
+                </div>
+                Identity & Demographics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2 sm:col-span-2">
+                  <label
+                    className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.full_name ? "text-red-400" : "text-slate-400"}`}
+                  >
+                    Full Name *
+                  </label>
+                  <Input
+                    name="full_name"
+                    placeholder="E.g. John Doe"
+                    className={`h-11 ${fieldErrors.full_name ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                    value={formData.full_name}
+                    onChange={handleChange}
+                    required
+                    autoFocus
+                  />
+                  {fieldErrors.full_name && (
+                    <p className="text-xs text-red-400 mt-1">
+                      {fieldErrors.full_name[0]}
+                    </p>
+                  )}
+                </div>
 
-              {/* Phone Number Field */}
-              <div className="space-y-2">
-                <label
-                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.phone_number ? "text-red-400" : "text-slate-400"}`}
-                >
-                  Phone Number *
-                </label>
-                <Input
-                  name="phone_number"
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  className={`font-mono h-11 ${fieldErrors.phone_number ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
-                  value={formData.phone_number}
-                  onChange={handleChange}
-                  required
-                />
-                {fieldErrors.phone_number && (
-                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
-                    {fieldErrors.phone_number[0]}
-                  </p>
-                )}
-              </div>
+                <div className="space-y-2">
+                  <label
+                    className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.phone_number ? "text-red-400" : "text-slate-400"}`}
+                  >
+                    Phone Number *
+                  </label>
+                  <Input
+                    name="phone_number"
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    className={`font-mono h-11 ${fieldErrors.phone_number ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    required
+                  />
+                  {fieldErrors.phone_number && (
+                    <p className="text-xs text-red-400 mt-1">
+                      {fieldErrors.phone_number[0]}
+                    </p>
+                  )}
+                </div>
 
-              {/* Date of Birth Field */}
-              <div className="space-y-2">
-                <label
-                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.date_of_birth ? "text-red-400" : "text-slate-400"}`}
-                >
-                  Date of Birth *
-                </label>
-                <Input
-                  name="date_of_birth"
-                  type="date"
-                  className={`h-11 ${fieldErrors.date_of_birth ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
-                  value={formData.date_of_birth}
-                  onChange={handleChange}
-                  required
-                />
-                {fieldErrors.date_of_birth && (
-                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
-                    {fieldErrors.date_of_birth[0]}
-                  </p>
-                )}
-              </div>
+                <div className="space-y-2">
+                  <label
+                    className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.date_of_birth ? "text-red-400" : "text-slate-400"}`}
+                  >
+                    Date of Birth *
+                  </label>
+                  <Input
+                    name="date_of_birth"
+                    type="date"
+                    className={`h-11 ${fieldErrors.date_of_birth ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                    value={formData.date_of_birth}
+                    onChange={handleChange}
+                    max={new Date().toISOString().split("T")[0]}
+                    required
+                  />
+                  {fieldErrors.date_of_birth && (
+                    <p className="text-xs text-red-400 mt-1">
+                      {fieldErrors.date_of_birth[0]}
+                    </p>
+                  )}
+                </div>
 
-              {/* Biological Gender Field */}
-              <div className="space-y-2">
-                <label
-                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.gender ? "text-red-400" : "text-slate-400"}`}
-                >
-                  Biological Gender *
-                </label>
-                <Select
-                  name="gender"
-                  className={`h-11 ${fieldErrors.gender ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30 text-red-100" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
-                  value={formData.gender}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="M">Male (90-day cycle)</option>
-                  <option value="F">Female (120-day cycle)</option>
-                  <option value="O">Other</option>
-                </Select>
-                {fieldErrors.gender && (
-                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
-                    {fieldErrors.gender[0]}
-                  </p>
-                )}
+                <div className="space-y-2 sm:col-span-2">
+                  <label
+                    className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.gender ? "text-red-400" : "text-slate-400"}`}
+                  >
+                    Biological Gender *
+                  </label>
+                  <Select
+                    name="gender"
+                    className={`h-11 ${fieldErrors.gender ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30 text-red-100" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                    value={formData.gender}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="M">Male (90-day cycle)</option>
+                    <option value="F">Female (120-day cycle)</option>
+                    <option value="O">Other</option>
+                  </Select>
+                  {fieldErrors.gender && (
+                    <p className="text-xs text-red-400 mt-1">
+                      {fieldErrors.gender[0]}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Module 2: Medical Context */}
-        <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl">
-          <CardHeader className="border-b border-slate-800/60 pb-5">
-            <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                <Activity className="h-5 w-5 text-emerald-500" />
+          {/* Module 2: Geographic Jurisdiction (Z-INDEX OVERRIDE APPLIED HERE) */}
+          <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl overflow-visible relative z-30">
+            <CardHeader className="border-b border-slate-800/60 pb-4">
+              <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
+                  <MapPin className="h-5 w-5 text-amber-500" />
+                </div>
+                Location Binding
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-xs text-slate-400 mb-5 font-medium uppercase tracking-wider">
+                Defaults to your organization's registered region.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="space-y-2">
+                  <SearchableSelect
+                    placeholder="Country *"
+                    className={`h-11 ${fieldErrors.country ? "border-red-500/80 focus:border-red-500" : "bg-slate-950/50"}`}
+                    value={formData.country}
+                    options={
+                      initialData?.countries?.map((c) => ({
+                        label: c.name,
+                        value: c.id.toString(),
+                      })) || []
+                    }
+                    onChange={handleCountryChange}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <SearchableSelect
+                    placeholder="State/Province *"
+                    className={`h-11 ${fieldErrors.state ? "border-red-500/80 focus:border-red-500" : "bg-slate-950/50"}`}
+                    value={formData.state}
+                    options={states.map((s) => ({
+                      label: s.name,
+                      value: s.id.toString(),
+                    }))}
+                    onChange={handleStateChange}
+                    disabled={!formData.country}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <SearchableSelect
+                    placeholder="District/City *"
+                    className={`h-11 ${fieldErrors.district ? "border-red-500/80 focus:border-red-500" : "bg-slate-950/50"}`}
+                    value={formData.district}
+                    options={districts.map((d) => ({
+                      label: d.name,
+                      value: d.id.toString(),
+                    }))}
+                    onChange={(val) =>
+                      handleChange({ target: { name: "district", value: val } })
+                    }
+                    disabled={!formData.state}
+                    required
+                  />
+                </div>
               </div>
-              Medical Context
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Blood Group Field */}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* RIGHT COLUMN: Medical & Submission (LOWER Z-INDEX SO LEFT COLUMN DROPDOWNS OVERLAP IT) */}
+        <div className="lg:col-span-1 space-y-6 relative z-10">
+          {/* Module 3: Medical Context */}
+          <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl relative z-10">
+            <CardHeader className="border-b border-slate-800/60 pb-4">
+              <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                  <Activity className="h-5 w-5 text-emerald-500" />
+                </div>
+                Medical Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
               <div className="space-y-2">
                 <label
                   className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.blood_group ? "text-red-400" : "text-slate-400"}`}
@@ -356,13 +439,13 @@ export default function AddDonor() {
                 </label>
                 <Select
                   name="blood_group"
-                  className={`h-11 ${fieldErrors.blood_group ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30 text-red-100" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                  className={`h-11 ${fieldErrors.blood_group ? "border-red-500/80 text-red-100" : "bg-slate-950/50 border-slate-700"}`}
                   value={formData.blood_group}
                   onChange={handleChange}
                   required
                 >
                   <option value="" disabled>
-                    Select Confirmed Group
+                    Select Group
                   </option>
                   {BLOOD_GROUPS.map((bg) => (
                     <option key={bg} value={bg}>
@@ -371,13 +454,12 @@ export default function AddDonor() {
                   ))}
                 </Select>
                 {fieldErrors.blood_group && (
-                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
+                  <p className="text-xs text-red-400 mt-1">
                     {fieldErrors.blood_group[0]}
                   </p>
                 )}
               </div>
 
-              {/* Last Donation Date Field */}
               <div className="space-y-2">
                 <label
                   className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.last_donation_date ? "text-red-400" : "text-slate-400"}`}
@@ -387,212 +469,99 @@ export default function AddDonor() {
                 <Input
                   name="last_donation_date"
                   type="date"
-                  className={`h-11 ${fieldErrors.last_donation_date ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                  className={`h-11 ${fieldErrors.last_donation_date ? "border-red-500/80" : "bg-slate-950/50 border-slate-700"}`}
                   value={formData.last_donation_date}
+                  max={new Date().toISOString().split("T")[0]}
                   onChange={handleChange}
                 />
-                {fieldErrors.last_donation_date && (
-                  <p className="text-xs text-red-400 mt-1 animate-in slide-in-from-top-1">
-                    {fieldErrors.last_donation_date[0]}
-                  </p>
-                )}
               </div>
-            </div>
 
-            {/* Deferral Sub-Module */}
-            <div className="p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 shadow-inner">
-              <label className="flex items-start gap-4 cursor-pointer group">
-                <div className="mt-1">
+              <div className="pt-4 border-t border-slate-800/60">
+                <label className="flex items-start gap-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 cursor-pointer hover:bg-amber-500/10 transition-colors">
                   <input
                     type="checkbox"
                     name="is_permanently_deferred"
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-950 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-900 transition-all cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-950 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-900 transition-all cursor-pointer"
                     checked={formData.is_permanently_deferred}
                     onChange={handleChange}
                   />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-bold text-amber-500 flex items-center gap-2 mb-1 group-hover:text-amber-400 transition-colors">
-                    <ShieldAlert className="h-4 w-4" /> Permanent Medical
-                    Deferral
-                  </span>
-                  <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
-                    Mark this donor as medically ineligible. They will remain in
-                    your system for internal auditing but will be permanently
-                    hidden from the public emergency directory.
-                  </p>
-                </div>
-              </label>
-
-              {formData.is_permanently_deferred && (
-                <div className="mt-4 pt-4 border-t border-amber-500/10 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label
-                    className={`text-xs font-bold uppercase tracking-wider mb-2 block ${fieldErrors.deferral_reason ? "text-red-400" : "text-amber-500/70"}`}
-                  >
-                    Clinical Deferral Reason *
-                  </label>
-                  <textarea
-                    name="deferral_reason"
-                    placeholder="E.g., Chronic heart condition, infectious disease protocol..."
-                    className={`w-full min-h-25 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 transition-all resize-none shadow-inner ${fieldErrors.deferral_reason ? "border border-red-500/80 bg-slate-950/50 focus:border-red-500 focus:ring-red-500/30" : "border border-amber-500/20 bg-slate-950/50 focus:border-amber-500 focus:ring-amber-500/30"}`}
-                    value={formData.deferral_reason}
-                    onChange={handleChange}
-                    required={formData.is_permanently_deferred}
-                  />
-                  {fieldErrors.deferral_reason && (
-                    <p className="text-xs text-red-400 mt-2 animate-in slide-in-from-top-1">
-                      {fieldErrors.deferral_reason[0]}
+                  <div className="flex-1">
+                    <span className="text-sm font-bold text-amber-500 flex items-center gap-2 mb-1">
+                      <ShieldAlert className="h-4 w-4" /> Medical Deferral
+                    </span>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Mark as medically ineligible. They will be hidden from the
+                      public emergency directory.
                     </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  </div>
+                </label>
 
-        {/* Module 3: Geographic Jurisdiction */}
-        <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl overflow-visible">
-          <CardHeader className="border-b border-slate-800/60 pb-5">
-            <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
-                <MapPin className="h-5 w-5 text-amber-500" />
-              </div>
-              Location Binding
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <p className="text-xs text-slate-400 mb-4 font-medium uppercase tracking-wider">
-              Defaults to your organization's registered region.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Country Field */}
-              <div className="space-y-2">
-                <SearchableSelect
-                  placeholder="Country *"
-                  className={`h-11 ${fieldErrors.country ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50"}`}
-                  value={formData.country}
-                  options={
-                    initialData?.countries?.map((c) => ({
-                      label: c.name,
-                      value: c.id.toString(),
-                    })) || []
-                  }
-                  onChange={handleCountryChange}
-                  required
-                />
-                {fieldErrors.country && (
-                  <p className="text-xs text-red-400 animate-in slide-in-from-top-1">
-                    {fieldErrors.country[0]}
-                  </p>
+                {formData.is_permanently_deferred && (
+                  <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <textarea
+                      name="deferral_reason"
+                      placeholder="Required: Deferral Reason (e.g. Chronic condition)..."
+                      className={`w-full min-h-25 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 transition-all resize-none shadow-inner ${fieldErrors.deferral_reason ? "border border-red-500/80 bg-slate-950/50" : "border border-amber-500/20 bg-slate-950/50 focus:border-amber-500"}`}
+                      value={formData.deferral_reason}
+                      onChange={handleChange}
+                      required={formData.is_permanently_deferred}
+                    />
+                  </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
 
-              {/* State Field */}
-              <div className="space-y-2">
-                <SearchableSelect
-                  placeholder="State/Province *"
-                  className={`h-11 ${fieldErrors.state ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50"}`}
-                  value={formData.state}
-                  options={states.map((s) => ({
-                    label: s.name,
-                    value: s.id.toString(),
-                  }))}
-                  onChange={handleStateChange}
-                  disabled={!formData.country}
-                  required
-                />
-                {fieldErrors.state && (
-                  <p className="text-xs text-red-400 animate-in slide-in-from-top-1">
-                    {fieldErrors.state[0]}
-                  </p>
-                )}
-              </div>
-
-              {/* District Field */}
-              <div className="space-y-2">
-                <SearchableSelect
-                  placeholder="District/City *"
-                  className={`h-11 ${fieldErrors.district ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50"}`}
-                  value={formData.district}
-                  options={districts.map((d) => ({
-                    label: d.name,
-                    value: d.id.toString(),
-                  }))}
-                  onChange={(val) =>
-                    handleChange({ target: { name: "district", value: val } })
-                  }
-                  disabled={!formData.state}
-                  required
-                />
-                {fieldErrors.district && (
-                  <p className="text-xs text-red-400 animate-in slide-in-from-top-1">
-                    {fieldErrors.district[0]}
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Module 4: Authorization & Submission */}
-        <Card className="border-rose-500/20 bg-slate-900/60 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-          <div
-            className="absolute inset-0 bg-linear-to-r from-rose-500/5 to-transparent pointer-events-none"
-            aria-hidden="true"
-          />
-          <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-            <div className="flex-1 flex flex-col">
-              <label className="flex items-center gap-4 cursor-pointer group">
+          {/* Module 4: Authorization & Submission */}
+          <Card className="border-rose-500/30 bg-slate-900/80 backdrop-blur-xl shadow-2xl relative overflow-hidden z-10">
+            <div className="absolute inset-0 bg-linear-to-br from-rose-500/10 to-transparent pointer-events-none" />
+            <CardContent className="p-6 relative z-10 flex flex-col gap-6">
+              <label className="flex items-start gap-3 cursor-pointer group">
                 <input
                   name="has_consented"
                   type="checkbox"
                   checked={formData.has_consented}
                   onChange={handleChange}
-                  className={`h-6 w-6 rounded bg-slate-950 transition-all cursor-pointer ${fieldErrors.has_consented ? "border-red-500 text-red-500 focus:ring-red-500" : "border-slate-600 text-rose-500 focus:ring-rose-500"}`}
+                  className={`mt-1 h-5 w-5 rounded bg-slate-950 transition-all cursor-pointer ${fieldErrors.has_consented ? "border-red-500 text-red-500 focus:ring-red-500" : "border-slate-600 text-emerald-500 focus:ring-emerald-500"}`}
                   required
                 />
                 <div>
                   <span
-                    className={`text-base font-bold flex items-center gap-2 transition-colors ${fieldErrors.has_consented ? "text-red-400" : "text-white group-hover:text-rose-100"}`}
+                    className={`text-sm font-bold flex items-center gap-2 transition-colors ${fieldErrors.has_consented ? "text-red-400" : "text-white group-hover:text-rose-100"}`}
                   >
                     <ClipboardCheck
-                      className={`h-5 w-5 ${fieldErrors.has_consented ? "text-red-500" : "text-emerald-500"}`}
-                    />{" "}
+                      className={`h-4 w-4 ${fieldErrors.has_consented ? "text-red-500" : "text-emerald-500"}`}
+                    />
                     Explicit Consent Verified
                   </span>
-                  <p className="text-xs text-slate-400 mt-1 max-w-lg">
-                    I legally attest that this individual has authorized our
-                    organization to store their medical data and surface their
-                    masked contact information for emergency donation requests.
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    I attest that this individual has authorized our facility to
+                    store their medical data and surface their masked contact
+                    information to the public.
                   </p>
                 </div>
               </label>
-              {fieldErrors.has_consented && (
-                <p className="text-xs text-red-400 mt-2 ml-10 animate-in slide-in-from-top-1">
-                  {fieldErrors.has_consented[0]}
-                </p>
-              )}
-            </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full md:w-auto min-w-50 h-14 text-base font-bold shadow-[0_0_20px_rgba(225,29,72,0.2)] hover:shadow-[0_0_30px_rgba(225,29,72,0.4)] transition-all"
-              disabled={createMutation.isPending}
-            >
-              {createMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
-                  Provisioning...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-5 w-5" /> Commit Record
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full h-14 text-base font-bold shadow-[0_0_20px_rgba(225,29,72,0.2)] hover:shadow-[0_0_30px_rgba(225,29,72,0.4)] transition-all"
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
+                    Provisioning...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-5 w-5" /> Commit Record
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </form>
     </div>
   );

@@ -189,6 +189,7 @@ export default function ManageOrganizations() {
             <thead className="bg-slate-950/40 text-xs uppercase text-slate-500 font-bold border-b border-slate-800/80">
               <tr>
                 <th className="px-6 py-5">Organization Details</th>
+                <th className="px-6 py-5">Location</th>
                 <th className="px-6 py-5">Platform Access</th>
                 <th className="px-6 py-5">Subscription Status</th>
                 <th className="px-6 py-5 text-right">Billing Actions</th>
@@ -286,6 +287,19 @@ export default function ManageOrganizations() {
                             </p>
                             <p className="text-xs font-medium text-slate-500 mt-1 font-mono tracking-tight">
                               {org.contact_email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <p className="font-bold text-white text-sm">
+                              {org.district_name}
+                            </p>
+                            <p className="text-xs font-medium text-slate-500 mt-1 font-mono tracking-tight">
+                              {org.state_name}, {org.country_name}
                             </p>
                           </div>
                         </div>

@@ -4,7 +4,7 @@ from rest_framework.throttling import AnonRateThrottle
 from rest_framework.pagination import PageNumberPagination
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.db.models import F, Prefetch
+from django.db.models import F
 from django.utils import timezone
 
 from ..models import MasterCountry, MasterState, MasterDistrict, Donor, Advertisement, ContactMessage, Organization, DonationRecord
@@ -50,12 +50,31 @@ class PublicDonorSearchView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        return Donor.objects.with_availability_context().select_related(
+        # 1. Start with the base secure queryset (Only active, searchable organizations)
+        queryset = Donor.objects.with_availability_context().select_related(
             'organization', 'country', 'state', 'district'
         ).filter(
             organization__status='ACTIVE', 
             organization__is_searchable=True
         )
+
+        # 2. Extract query parameters sent by the React frontend
+        country = self.request.query_params.get('country')
+        state = self.request.query_params.get('state')
+        district = self.request.query_params.get('district')
+        blood_group = self.request.query_params.get('blood_group')
+
+        # 3. Dynamically chain filters based on provided parameters
+        if country:
+            queryset = queryset.filter(country__name__iexact=country)
+        if state:
+            queryset = queryset.filter(state__name__iexact=state)
+        if district:
+            queryset = queryset.filter(district__name__iexact=district)
+        if blood_group:
+            queryset = queryset.filter(blood_group__iexact=blood_group)
+
+        return queryset
 
 class ActiveAdvertisementView(generics.ListAPIView):
     serializer_class = AdvertisementSerializer
@@ -71,6 +90,7 @@ class ContactMessageCreateView(generics.CreateAPIView):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [AnonRateThrottle]
 
 
 class AdClickRedirectView(APIView):

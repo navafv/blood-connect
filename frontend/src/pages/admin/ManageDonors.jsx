@@ -17,6 +17,8 @@ import {
   MapPin,
   Save,
   MessageCircle,
+  Clock,
+  Filter,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -30,6 +32,7 @@ import {
 import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
 import { Input } from "../../components/ui/Input";
+import { Select } from "../../components/ui/Select"; // Ensure this is imported!
 import { DonorFilters } from "../../components/donors/DonorFilters";
 import api from "../../lib/axios";
 
@@ -41,6 +44,9 @@ export default function ManageDonors() {
     bloodGroup: "",
     searchQuery: "",
   });
+
+  // NEW: Status Filter State
+  const [statusFilter, setStatusFilter] = useState("AVAILABLE");
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
@@ -96,7 +102,6 @@ export default function ManageDonors() {
   // --- Mutation Pipeline: Edit Record ---
   const editMutation = useMutation({
     mutationFn: async (updatedData) => {
-      // Use PATCH to execute a partial update securely
       const response = await api.patch(
         `/tenant/donors/${updatedData.id}/`,
         updatedData,
@@ -123,23 +128,15 @@ export default function ManageDonors() {
   const deleteMutation = useMutation({
     mutationFn: async (id) => await api.delete(`/tenant/donors/${id}/`),
 
-    // 1. Immediately execute before the network request finishes
     onMutate: async (deletedId) => {
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ["tenantDonors"] });
-
-      // Snapshot the previous value for potential rollback
       const previousDonors = queryClient.getQueryData(["tenantDonors"]);
-
-      // Optimistically update the UI to remove the donor instantly
       queryClient.setQueryData(["tenantDonors"], (oldDonors) =>
         oldDonors ? oldDonors.filter((donor) => donor.id !== deletedId) : [],
       );
-
       return { previousDonors };
     },
 
-    // 2. If the network request fails, roll back the UI seamlessly
     onError: (err, deletedId, context) => {
       queryClient.setQueryData(["tenantDonors"], context.previousDonors);
       toast.error("Network sync failed. Archival rolled back.", {
@@ -147,7 +144,6 @@ export default function ManageDonors() {
       });
     },
 
-    // 3. Regardless of success or failure, sync strictly with the server in the background
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["tenantDonors"] });
       queryClient.invalidateQueries({ queryKey: ["tenant-dashboard-stats"] });
@@ -251,15 +247,24 @@ export default function ManageDonors() {
 
   // --- Client-Side Search & Filter Engine ---
   const filteredDonors = donors.filter((donor) => {
-    // STRICT FILTER: Only display "Available Now" donors
-    if (!donor.is_available_now) return false;
+    // 1. Apply Status Filter
+    if (statusFilter === "AVAILABLE" && !donor.is_available_now) return false;
+    if (
+      statusFilter === "RESTING" && 
+      (donor.is_available_now || donor.is_permanently_deferred)
+    )
+      return false;
+    if (statusFilter === "DEFERRED" && !donor.is_permanently_deferred)
+      return false;
 
+    // 2. Apply Blood Group Filter
     const matchesBloodGroup = activeFilters.bloodGroup
       ? donor.blood_group === activeFilters.bloodGroup
       : true;
 
-    const searchLower = activeFilters.searchQuery.toLowerCase();
-    const matchesSearch = activeFilters.searchQuery
+    // 3. Apply Text Search
+    const searchLower = activeFilters.searchQuery?.toLowerCase() || "";
+    const matchesSearch = searchLower
       ? donor.full_name.toLowerCase().includes(searchLower) ||
         donor.phone_number.includes(searchLower)
       : true;
@@ -360,8 +365,23 @@ export default function ManageDonors() {
         <CardHeader className="border-b border-slate-800/60 pb-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <CardTitle className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-              Active Registry <Badge variant="success">Available Only</Badge>
+              Active Registry
             </CardTitle>
+
+            {/* Status Filter Dropdown */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-slate-500" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-300 focus:outline-none focus:border-rose-500 transition-colors"
+              >
+                <option value="ALL">All Donors</option>
+                <option value="AVAILABLE">Available Only</option>
+                <option value="RESTING">Resting Period Only</option>
+                <option value="DEFERRED">Deferred Only</option>
+              </select>
+            </div>
           </div>
           <DonorFilters onFilter={setActiveFilters} />
         </CardHeader>
@@ -389,17 +409,16 @@ export default function ManageDonors() {
                 Retry Connection
               </Button>
             </div>
-          ) : donors.filter((d) => d.is_available_now).length === 0 ? (
+          ) : donors.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center px-4 animate-in fade-in duration-500">
               <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
                 <Users className="h-10 w-10 text-slate-500" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
-                No Available Donors
+                Registry Empty
               </h3>
               <p className="text-slate-400 max-w-sm mb-8 leading-relaxed text-sm">
-                Your organizational pool currently has no donors eligible to
-                donate.
+                Your organizational pool currently has no donors registered.
               </p>
               <Link to="/admin/add-donor">
                 <Button variant="primary" className="shadow-lg">
@@ -414,10 +433,7 @@ export default function ManageDonors() {
                 No Matches Found
               </h3>
               <p className="text-slate-400 text-sm max-w-sm">
-                No available records match the query:{" "}
-                <strong className="text-slate-300">
-                  "{activeFilters.searchQuery}"
-                </strong>
+                No records match your search query or status filters.
               </p>
             </div>
           ) : (
@@ -474,14 +490,33 @@ export default function ManageDonors() {
                             {donor.district_name || "Unknown"}
                           </span>
                         </td>
+
+                        {/* DYNAMIC BADGE */}
                         <td className="px-6 py-4">
-                          <Badge
-                            variant="success"
-                            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          >
-                            Available
-                          </Badge>
+                          {donor.is_available_now ? (
+                            <Badge
+                              variant="success"
+                              className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            >
+                              Available
+                            </Badge>
+                          ) : donor.is_permanently_deferred ? (
+                            <Badge
+                              variant="danger"
+                              className="bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            >
+                              Deferred
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="warning"
+                              className="bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1"
+                            >
+                              <Clock className="h-3 w-3" /> Resting
+                            </Badge>
+                          )}
                         </td>
+
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <a
@@ -601,12 +636,29 @@ export default function ManageDonors() {
 
                     <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
                       <div>
-                        <Badge
-                          variant="success"
-                          className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                        >
-                          Available
-                        </Badge>
+                        {/* DYNAMIC BADGE MOBILE */}
+                        {donor.is_available_now ? (
+                          <Badge
+                            variant="success"
+                            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          >
+                            Available
+                          </Badge>
+                        ) : donor.is_permanently_deferred ? (
+                          <Badge
+                            variant="danger"
+                            className="bg-rose-500/10 text-rose-400 border-rose-500/20"
+                          >
+                            Deferred
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="warning"
+                            className="bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1"
+                          >
+                            <Clock className="h-3 w-3" /> Resting
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -682,15 +734,15 @@ export default function ManageDonors() {
             className="space-y-6"
           >
             <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/80 mb-6">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+              <div className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
                 Target Donor
-              </p>
-              <p className="text-sm font-semibold text-white flex items-center gap-2">
+              </div>
+              <div className="text-sm font-semibold text-white flex items-center gap-2">
                 {donorToLog.full_name}{" "}
                 <Badge variant="primary" className="py-0">
                   {donorToLog.blood_group}
                 </Badge>
-              </p>
+              </div>
             </div>
 
             <div className="space-y-4">
