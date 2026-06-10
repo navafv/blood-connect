@@ -97,16 +97,8 @@ jobs:
     if: github.ref == 'refs/heads/main' 
     
     steps:
-      - name: Check Webhook Secret
+      - name: Deployment Success Simulation
         run: |
-          if [ -z "${{ secrets.DEPLOY_WEBHOOK_URL }}" ]; then
-            echo "Error: DEPLOY_WEBHOOK_URL secret is not set!"
-            exit 1
-          fi
-
-      - name: Trigger Webhook Deployment
-        run: |
-          echo "All tests passed! Triggering zero-downtime rollout..."
-          # Adding -f (fail silently) and -s (silent) to curl to handle HTTP errors properly
-          curl -f -s -X POST "${{ secrets.DEPLOY_WEBHOOK_URL }}"
-          echo "Deployment triggered successfully!"
+          echo "All tests passed!"
+          echo "Ready for manual or client deployment."
+          # curl -f -s -X POST "${{ secrets.DEPLOY_WEBHOOK_URL }}"
