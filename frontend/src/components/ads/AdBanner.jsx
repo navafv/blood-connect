@@ -23,7 +23,7 @@ export function AdBanner({ className = "" }) {
 
     timerRef.current = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-    }, 6000); // Change ad every 6 seconds
+    }, 6000);
 
     return () => clearInterval(timerRef.current);
   }, [ads.length, isPaused]);
@@ -32,7 +32,7 @@ export function AdBanner({ className = "" }) {
   if (isLoading || ads.length === 0) return null;
 
   const baseURL =
-    import.meta.env.VITE_API_URL?.replace("/api", "") ||
+    import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
     "http://localhost:8000";
 
   return (
@@ -51,7 +51,6 @@ export function AdBanner({ className = "" }) {
             href={`${baseURL}/api/public/ads/${ad.id}/click/`}
             target="_blank"
             rel="noopener noreferrer"
-            // The absolute positioning stacks them. The opacity transition handles the crossfade.
             className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
               isActive
                 ? "opacity-100 z-10"
@@ -67,6 +66,7 @@ export function AdBanner({ className = "" }) {
               className={`w-full h-full object-cover transition-transform duration-6000 ease-linear ${
                 isActive ? "scale-105" : "scale-100"
               }`}
+              loading="lazy"
             />
 
             {/* Dark Gradient Overlay for Text Readability */}
@@ -82,7 +82,8 @@ export function AdBanner({ className = "" }) {
               <h3 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg truncate">
                 {ad.title}
               </h3>
-              <p className="text-sm text-slate-300 font-medium mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+
+              <p className="text-sm text-slate-300 font-medium mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                 Click to learn more &rarr;
               </p>
             </div>

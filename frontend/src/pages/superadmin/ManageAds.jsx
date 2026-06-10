@@ -47,7 +47,7 @@ export default function ManageAds() {
   const [extendMonths, setExtendMonths] = useState("1");
 
   const baseURL =
-    import.meta.env.VITE_API_URL?.replace("/api", "") ||
+    import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
     "http://localhost:8000";
 
   // --- Query Pipeline: Fetch Campaigns ---

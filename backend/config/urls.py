@@ -7,7 +7,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 
 urlpatterns = [
     # Django Admin
-    path('admin/', admin.site.urls),
+    path('supersecureadmin/', admin.site.urls),
     
     # Core API URLs
     path('api/', include('api.urls')),
@@ -25,5 +25,5 @@ if settings.DEBUG:
 
 urlpatterns += [
     # Catch-all for React SPA fallback (ignores api, media, schema, and static paths)
-    re_path(r'^(?!api/|media/|static/).*$', TemplateView.as_view(template_name='index.html'), name='spa-fallback')
+    re_path(r'^(?!api/|media/|static/|supersecureadmin/).*$', TemplateView.as_view(template_name='index.html'), name='spa-fallback')
 ]

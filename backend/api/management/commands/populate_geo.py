@@ -3,19 +3,38 @@ from django.db import transaction
 from api.models import MasterCountry, MasterState, MasterDistrict
 
 class Command(BaseCommand):
-    help = 'Populates or updates the database with Country, State, and District data'
+    help = 'Populates or updates the database with comprehensive Country, State, and District data'
 
     @transaction.atomic
     def handle(self, *args, **kwargs):
-        # The hierarchical mock data based on your React frontend
+        # Hierarchical data dictionary for rapid database seeding
         geo_data = {
             'India': {
                 'code': 'IN',
                 'timezone_offset': 'Asia/Kolkata',
                 'is_whitelisted': True,
                 'states': {
-                    'Kerala': ['Kannur', 'Kozhikode', 'Ernakulam', 'Trivandrum'],
-                    'Karnataka': ['Bangalore', 'Mysore', 'Mangalore']
+                    'Kerala': [
+                        'Alappuzha', 'Ernakulam', 'Idukki', 'Kannur', 'Kasaragod',
+                        'Kollam', 'Kottayam', 'Kozhikode', 'Malappuram', 'Palakkad',
+                        'Pathanamthitta', 'Thiruvananthapuram', 'Thrissur', 'Wayanad'
+                    ],
+                    'Karnataka': [
+                        'Bengaluru Urban', 'Bengaluru Rural', 'Mysuru', 'Dakshina Kannada',
+                        'Udupi', 'Belagavi', 'Dharwad', 'Ballari', 'Kalaburagi', 'Tumakuru'
+                    ],
+                    'Tamil Nadu': [
+                        'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli',
+                        'Salem', 'Tirunelveli', 'Kanyakumari', 'Erode', 'Vellore'
+                    ],
+                    'Maharashtra': [
+                        'Mumbai City', 'Mumbai Suburban', 'Pune', 'Nagpur',
+                        'Thane', 'Nashik', 'Aurangabad', 'Solapur', 'Kolhapur'
+                    ],
+                    'Delhi': [
+                        'New Delhi', 'Central Delhi', 'East Delhi', 'North Delhi',
+                        'South Delhi', 'West Delhi', 'Shahdara'
+                    ]
                 }
             },
             'UAE': {
@@ -23,8 +42,8 @@ class Command(BaseCommand):
                 'timezone_offset': 'Asia/Dubai',
                 'is_whitelisted': True,
                 'states': {
-                    'Dubai': ['Deira', 'Bur Dubai', 'Downtown'],
-                    'Abu Dhabi': ['Al Reem', 'Yas Island']
+                    'Dubai': ['Deira', 'Bur Dubai', 'Downtown', 'Jumeirah'],
+                    'Abu Dhabi': ['Al Reem', 'Yas Island', 'Al Ain', 'Saadiyat']
                 }
             }
         }
@@ -32,7 +51,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.WARNING('Starting geographic data population...'))
 
         for country_name, country_info in geo_data.items():
-            # 1. Update or create the Country (Allows changing whitelist status later)
+            # 1. Update or create the Country (Allows changing whitelist status later safely)
             country, created = MasterCountry.objects.update_or_create(
                 name=country_name,
                 defaults={
