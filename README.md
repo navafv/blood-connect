@@ -117,7 +117,7 @@ blood-connect/
 ## 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/navafv/blood-connect.git](https://github.com/navafv/blood-connect.git)
+git clone https://github.com/navafv/blood-connect.git
 cd blood-connect
 
 ```

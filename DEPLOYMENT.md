@@ -43,7 +43,7 @@ Point your domain's DNS `A` records to your server's public IP address.
 Example:
 ```text
 yourdomain.com
-[www.yourdomain.com](https://www.yourdomain.com)
+www.yourdomain.com
 
 ```
 
@@ -68,7 +68,7 @@ DATABASE_URL=postgres://postgres:your_secure_password@db:5432/bloodconnect
 # Django Security
 DJANGO_SECRET_KEY=your_very_long_secret_key_here
 DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=yourdomain.com,[www.yourdomain.com](https://www.yourdomain.com)
+DJANGO_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 
 # Email SMTP (For OTP Verification)
 EMAIL_HOST=smtp.gmail.com
@@ -83,8 +83,8 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
 # Security & CORS
-CORS_ALLOWED_ORIGINS=[https://yourdomain.com](https://yourdomain.com)
-CSRF_TRUSTED_ORIGINS=[https://yourdomain.com](https://yourdomain.com)
+CORS_ALLOWED_ORIGINS=https://yourdomain.com
+CSRF_TRUSTED_ORIGINS=https://yourdomain.com
 SECURE_SSL_REDIRECT=True
 SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
@@ -162,7 +162,7 @@ To expose the Docker container to the public securely, configure Nginx to revers
 
 ```nginx
 server {
-    server_name yourdomain.com [www.yourdomain.com](https://www.yourdomain.com);
+    server_name yourdomain.com www.yourdomain.com;
 
     location / {
         proxy_pass http://localhost:8000;
@@ -180,7 +180,7 @@ server {
 ```bash
 sudo ln -s /etc/nginx/sites-available/bloodconnect /etc/nginx/sites-enabled/
 sudo systemctl restart nginx
-sudo certbot --nginx -d yourdomain.com -d [www.yourdomain.com](https://www.yourdomain.com)
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
 ```
 
