@@ -68,10 +68,14 @@ export default function OrganizationProfile() {
   if (orgError || !org) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 text-center">
+        <Helmet>
+          <title>Organization Not Found | BlooDonate</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
         <Building2 className="h-20 w-20 text-slate-800 mb-6" />
-        <h2 className="text-2xl font-bold text-white mb-2">
+        <h1 className="text-2xl font-bold text-white mb-2">
           Organization Unavailable
-        </h2>
+        </h1>
         <p className="text-slate-400 max-w-md mb-8">
           The facility you are looking for does not exist, or their directory
           has been temporarily suspended.
@@ -86,24 +90,52 @@ export default function OrganizationProfile() {
   }
 
   // --- SEO & Image Optimization Strategy ---
-  const pageTitle = `${org.name} | BlooDonate Emergency Directory`;
-  const pageDescription = `Contact ${org.name} located in ${org.district_name}, ${org.state_name} for emergency blood requests and donation queries.`;
+  const pageTitle = `${org.name} - Blood Donors in ${org.district_name} | BlooDonate`;
+  const pageDescription = `Contact ${org.name} located in ${org.district_name}, ${org.state_name} for emergency blood requests and verified donor queries.`;
 
   // Optimize images for Lighthouse performance
   const optimizedBanner = optimizeCloudinaryUrl(org.banner_image, 1920);
   const optimizedLogo = optimizeCloudinaryUrl(org.logo, 400);
 
+  // --- JSON-LD Structured Data for Google Rich Snippets ---
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "MedicalOrganization",
+    name: org.name,
+    description: org.description || pageDescription,
+    image: optimizedBanner || optimizedLogo,
+    logo: optimizedLogo,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: org.address_line,
+      addressLocality: org.district_name,
+      addressRegion: org.state_name,
+      addressCountry: "IN",
+    },
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: org.contact_phone,
+      email: org.contact_email,
+      contactType: "Emergency Blood Requests",
+      availableLanguage: ["English", "Hindi", "Malayalam"],
+    },
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
-      {/* --- Dynamic SEO and Social Media Graph Injection --- */}
+      {/* --- Dynamic SEO, Social Media Graph, and Structured Data --- */}
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
+
+        {/* Canonical URL to prevent duplicate content penalties */}
+        <link rel="canonical" href={window.location.href} />
 
         {/* Open Graph / Facebook / LinkedIn */}
         <meta property="og:type" content="profile" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={window.location.href} />
         {optimizedBanner && (
           <meta property="og:image" content={optimizedBanner} />
         )}
@@ -115,14 +147,19 @@ export default function OrganizationProfile() {
         {optimizedBanner && (
           <meta name="twitter:image" content={optimizedBanner} />
         )}
+
+        {/* Injecting Schema.org JSON-LD */}
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
       </Helmet>
 
-      {/* --- Dynamic Hero Banner (Isolated from the content below it) --- */}
+      {/* --- Dynamic Hero Banner --- */}
       <div className="relative h-75 md:h-100 w-full bg-slate-900 border-b border-slate-800 overflow-hidden animate-in fade-in duration-700">
         {optimizedBanner ? (
           <img
             src={optimizedBanner}
-            alt={org.name}
+            alt={`${org.name} hospital facility banner`}
             fetchpriority="high" // Crucial for LCP Lighthouse Score
             className="w-full h-full object-cover opacity-50 scale-105"
           />
@@ -133,11 +170,10 @@ export default function OrganizationProfile() {
         )}
 
         {/* Vignette Overlay */}
-        
         <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/40 to-transparent" />
       </div>
 
-      {/* --- Profile Header (Floats over the seam using negative top margin) --- */}
+      {/* --- Profile Header --- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
         <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-8 -mt-22 md:-mt-44 mb-8">
           {/* Institutional Logo Profile Picture */}
@@ -145,7 +181,7 @@ export default function OrganizationProfile() {
             {optimizedLogo ? (
               <img
                 src={optimizedLogo}
-                alt="Logo"
+                alt={`${org.name} official logo`}
                 className="w-20 h-20 md:w-40 md:h-40 rounded-2xl border-4 border-slate-950 bg-slate-900 object-cover shadow-2xl"
               />
             ) : (
@@ -177,11 +213,12 @@ export default function OrganizationProfile() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Left Column: Institutional Details */}
         <div className="lg:col-span-1 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-              <Phone className="h-5 w-5 text-blue-500" /> Contact Details
-            </h3>
-            <div className="space-y-6 text-sm text-slate-300">
+          <section className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
+            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <Phone className="h-5 w-5 text-blue-500" aria-hidden="true" />{" "}
+              Contact Details
+            </h2>
+            <address className="space-y-6 text-sm text-slate-300 not-italic">
               <div className="group">
                 <p className="text-xs text-slate-500 font-semibold uppercase mb-1">
                   Direct Line
@@ -189,6 +226,7 @@ export default function OrganizationProfile() {
                 <a
                   href={`tel:${org.contact_phone}`}
                   className="text-base text-slate-200 hover:text-blue-400 transition-colors font-medium"
+                  aria-label={`Call ${org.contact_phone}`}
                 >
                   {org.contact_phone}
                 </a>
@@ -200,6 +238,7 @@ export default function OrganizationProfile() {
                 <a
                   href={`mailto:${org.contact_email}`}
                   className="text-base text-slate-200 hover:text-blue-400 transition-colors font-medium"
+                  aria-label={`Email ${org.contact_email}`}
                 >
                   {org.contact_email}
                 </a>
@@ -216,25 +255,28 @@ export default function OrganizationProfile() {
                   {org.country_name}
                 </p>
               </div>
-            </div>
-          </div>
+            </address>
+          </section>
 
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-4">About Us</h3>
+          <section className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
+            <h2 className="text-lg font-bold text-white mb-4">About Us</h2>
             <p className="text-base text-slate-400 leading-relaxed whitespace-pre-wrap">
               {org.description ||
                 "Committed to saving lives through secure, community-driven blood donation management."}
             </p>
-          </div>
+          </section>
         </div>
 
         {/* Right Column: Embedded Donor Directory */}
-        <div className="lg:col-span-2 animate-in fade-in slide-in-from-right-8 duration-700 delay-300">
+        <section className="lg:col-span-2 animate-in fade-in slide-in-from-right-8 duration-700 delay-300">
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-800/50">
             <div>
               <h2 className="text-2xl font-extrabold text-white flex items-center gap-3">
-                <HeartPulse className="h-7 w-7 text-rose-500" /> Institutional
-                Directory
+                <HeartPulse
+                  className="h-7 w-7 text-rose-500"
+                  aria-hidden="true"
+                />{" "}
+                Institutional Directory
               </h2>
               <p className="text-slate-400 mt-2 text-sm">
                 Actively managed and medically vetted donors registered at this
@@ -245,7 +287,10 @@ export default function OrganizationProfile() {
 
           {donorsLoading ? (
             <div className="flex flex-col items-center justify-center h-64 gap-4 bg-slate-900/20 rounded-3xl border border-slate-800/30">
-              <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+              <Loader2
+                className="h-8 w-8 animate-spin text-rose-500"
+                aria-hidden="true"
+              />
               <p className="text-slate-500 font-medium">
                 Loading local registry...
               </p>
@@ -259,7 +304,10 @@ export default function OrganizationProfile() {
           ) : (
             <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-16 text-center backdrop-blur-sm shadow-inner">
               <div className="mx-auto h-20 w-20 bg-slate-800/50 rounded-2xl flex items-center justify-center mb-6">
-                <Droplet className="h-10 w-10 text-slate-600" />
+                <Droplet
+                  className="h-10 w-10 text-slate-600"
+                  aria-hidden="true"
+                />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
                 No Active Donors
@@ -270,7 +318,7 @@ export default function OrganizationProfile() {
               </p>
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

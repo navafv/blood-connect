@@ -250,7 +250,7 @@ export default function ManageDonors() {
     // 1. Apply Status Filter
     if (statusFilter === "AVAILABLE" && !donor.is_available_now) return false;
     if (
-      statusFilter === "RESTING" && 
+      statusFilter === "RESTING" &&
       (donor.is_available_now || donor.is_permanently_deferred)
     )
       return false;
@@ -617,7 +617,10 @@ export default function ManageDonors() {
                         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                           Contact
                         </span>
-                        <a href={`tel:${donor.phone_number}`} className="font-semibold text-slate-300 font-mono tracking-tight">
+                        <a
+                          href={`tel:${donor.phone_number}`}
+                          className="font-semibold text-slate-300 font-mono tracking-tight"
+                        >
                           {donor.phone_number}
                         </a>
                       </div>
