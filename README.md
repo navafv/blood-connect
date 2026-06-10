@@ -79,7 +79,7 @@ BlooDonate is architected as a cohesive application optimized for unified deploy
 # 📁 Project Structure
 
 ```text
-blood-connect/
+bloodonate/
 ├── backend/
 │   ├── api/                  # Main monolithic application handling all modules
 │   │   ├── management/       # Custom commands (e.g., populate_geo, seed_database)
@@ -117,8 +117,8 @@ blood-connect/
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/navafv/blood-connect.git
-cd blood-connect
+git clone https://github.com/navafv/bloodonate.git
+cd bloodonate
 
 ```
 
