@@ -13,6 +13,8 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Phone,
+  Upload,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -33,17 +35,20 @@ export default function RegisterOrg() {
   const [states, setStates] = useState([]);
   const [districts, setDistricts] = useState([]);
 
-  // Form Data
+  // Form Data with new Contact Phone, Address, and Logo
   const [formData, setFormData] = useState({
     orgName: "",
     orgType: "HOSPITAL",
     contactName: "",
     email: "",
+    contact_phone: "",
+    address_line: "",
     password: "",
     country_id: "",
     state_id: "",
     district_id: "",
     is_searchable: true,
+    logo: null,
   });
 
   // Organization Types
@@ -112,24 +117,50 @@ export default function RegisterOrg() {
     }
   };
 
-  // Input Change
+  // Input Change (Modified to handle Files)
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked, files } = e.target;
 
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    if (type === "file") {
+      setFormData({
+        ...formData,
+        [name]: files[0],
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: type === "checkbox" ? checked : value,
+      });
+    }
   };
 
-  // Submit
+  // Submit via FormData for Image Upload support
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     setStatus("loading");
 
+    const payload = new FormData();
+    payload.append("orgName", formData.orgName);
+    payload.append("orgType", formData.orgType);
+    payload.append("contactName", formData.contactName);
+    payload.append("email", formData.email);
+    payload.append("contact_phone", formData.contact_phone);
+    payload.append("address_line", formData.address_line);
+    payload.append("password", formData.password);
+    payload.append("country_id", formData.country_id);
+    payload.append("state_id", formData.state_id);
+    payload.append("district_id", formData.district_id);
+    payload.append("is_searchable", formData.is_searchable);
+
+    if (formData.logo) {
+      payload.append("logo", formData.logo);
+    }
+
     try {
-      await api.post("/auth/register/", formData);
+      await api.post("/auth/register/", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       setStatus("success");
 
@@ -268,6 +299,21 @@ export default function RegisterOrg() {
                     />
                   </div>
 
+                  {/* Contact Phone */}
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+
+                    <Input
+                      name="contact_phone"
+                      placeholder="Contact Phone Number"
+                      required
+                      value={formData.contact_phone}
+                      onChange={handleChange}
+                      disabled={status === "loading"}
+                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                    />
+                  </div>
+
                   {/* Email */}
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
@@ -285,7 +331,7 @@ export default function RegisterOrg() {
                   </div>
 
                   {/* Password */}
-                  <div className="md:col-span-2 relative group">
+                  <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
 
                     <Input
@@ -310,6 +356,35 @@ export default function RegisterOrg() {
                         <Eye className="h-5 w-5" />
                       )}
                     </button>
+                  </div>
+
+                  {/* Address Line */}
+                  <div className="md:col-span-2 relative group">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+
+                    <Input
+                      name="address_line"
+                      placeholder="Complete Address Details"
+                      required
+                      value={formData.address_line}
+                      onChange={handleChange}
+                      disabled={status === "loading"}
+                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                    />
+                  </div>
+
+                  {/* Logo Upload */}
+                  <div className="md:col-span-2 relative group">
+                    <Upload className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+
+                    <Input
+                      type="file"
+                      name="logo"
+                      accept="image/*"
+                      onChange={handleChange}
+                      disabled={status === "loading"}
+                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-500/10 file:text-rose-500 hover:file:bg-rose-500/20"
+                    />
                   </div>
                 </div>
               </div>

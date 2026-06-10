@@ -1,167 +1,42 @@
 import React, { useState } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Navigate } from "react-router-dom";
 import {
   Menu,
   Droplet,
-  LogOut,
-  LayoutDashboard,
-  Users,
-  UserPlus,
-  LifeBuoy,
-  Building2,
+  AlertTriangle,
   CreditCard,
-  X,
-  ChevronRight,
-  ShieldCheck,
+  AlertOctagon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
+import { Sidebar } from "./Sidebar";
+import { Button } from "../ui/Button";
 
-// --- SIDEBAR COMPONENT ---
-function Sidebar({ isOpen, setIsOpen, orgData }) {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const menuItems = [
-    { name: "Overview", path: "/admin", icon: LayoutDashboard },
-    { name: "Manage Donors", path: "/admin/donors", icon: Users },
-    { name: "Register Donor", path: "/admin/add-donor", icon: UserPlus },
-    { name: "Support", path: "/admin/support", icon: LifeBuoy },
-    { name: "Profile Settings", path: "/admin/settings", icon: Building2 },
-    {
-      name: "Account Security",
-      path: "/admin/settings/security",
-      icon: ShieldCheck,
-    },
-    {
-      name: "Billing & Subscription",
-      path: "/admin/settings/billing",
-      icon: CreditCard,
-    },
-  ];
-
-  const handleLogout = async () => {
-    const loading = toast.loading("Closing secure session...");
-    try {
-      await api.post("/auth/logout/");
-      toast.success("Logged out.", { id: loading });
-    } catch (error) {
-      toast.error("Session purged locally.", { id: loading });
-    } finally {
-      localStorage.removeItem("isAuthenticated");
-      localStorage.removeItem("userRole");
-      window.location.href = "/login"; // Hard wipe
-    }
-  };
-
-  return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-950/90 backdrop-blur-xl border-r border-slate-800/80 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:h-screen ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
-    >
-      {/* Dynamic Sidebar Header */}
-      <div className="p-6 flex items-center justify-between border-b border-slate-800/60">
-        <div className="flex items-center gap-3 text-rose-500 overflow-hidden">
-          {orgData?.logo ? (
-            <img
-              src={orgData.logo}
-              alt="Logo"
-              className="h-8 w-8 rounded-lg object-cover border border-slate-700 shrink-0"
-            />
-          ) : (
-            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 shrink-0">
-              <Droplet className="h-5 w-5 fill-rose-500/20" />
-            </div>
-          )}
-          <span className="text-lg font-black text-white tracking-tight truncate">
-            {orgData?.name || "BloodConnect"}
-          </span>
-        </div>
-
-        <button
-          onClick={() => setIsOpen(false)}
-          className="md:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* Navigation Menu */}
-      <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto custom-scrollbar">
-        <div className="space-y-1">
-          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-2">
-            Operations
-          </p>
-          {menuItems.slice(0, 4).map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setIsOpen && setIsOpen(false)}
-                className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg font-medium transition-all ${isActive ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-inner" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </div>
-                {isActive && <ChevronRight className="h-4 w-4" />}
-              </Link>
-            );
-          })}
-        </div>
-        <div className="space-y-1">
-          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-2">
-            Management
-          </p>
-          {menuItems.slice(4).map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setIsOpen && setIsOpen(false)}
-                className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg font-medium transition-all ${isActive ? "bg-slate-800 text-white border border-slate-700 shadow-inner" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </div>
-                {isActive && <ChevronRight className="h-4 w-4" />}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-
-      {/* Sidebar Footer */}
-      <div className="p-4 border-t border-slate-800/60 bg-slate-900/20">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-        >
-          <LogOut className="h-4 w-4" /> Logout Session
-        </button>
-      </div>
-    </aside>
-  );
-}
-
-// --- MAIN LAYOUT COMPONENT ---
 export function AdminLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Fetch Organization Data globally for the Sidebar and Header
-  const { data: orgData } = useQuery({
+  // Fetch User Data to check Email Verification
+  const { data: user, isLoading: isUserLoading } = useQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => {
+      const response = await api.get("/auth/me/");
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Fetch Organization Data globally for the Sidebar and Lockouts
+  const { data: orgData, isLoading: isOrgLoading } = useQuery({
     queryKey: ["tenant-org-profile"],
     queryFn: async () => {
       const response = await api.get("/tenant/organization/");
       return response.data;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes to prevent redundant fetches
+    staleTime: 1000 * 60 * 5,
   });
 
   const handleLogout = async () => {
@@ -179,13 +54,61 @@ export function AdminLayout() {
     }
   };
 
+  const handleVerifyEmail = async () => {
+    try {
+      await api.post("/auth/resend-otp/", { email: user?.email });
+      navigate("/verify-email", { state: { email: user?.email } });
+    } catch (err) {
+      toast.error("Could not send verification code.");
+    }
+  };
+
+  if (isUserLoading || isOrgLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500"></div>
+      </div>
+    );
+  }
+
+  // --- SUSPENSION LOCKDOWN LOGIC ---
+  if (orgData?.status === "SUSPENDED") {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-950 px-4">
+        <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-rose-500/20 p-8 rounded-3xl text-center space-y-6 shadow-2xl">
+          <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-full flex items-center justify-center mx-auto shadow-inner">
+            <AlertOctagon className="h-10 w-10 text-rose-500" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Account Suspended
+            </h2>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Your organization's access to the BloodConnect platform has been
+              suspended by the administrator, likely due to an expired
+              subscription. Please contact support to resolve this issue.
+            </p>
+          </div>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full border-slate-700 bg-slate-950/50 hover:bg-slate-800"
+          >
+            Sign Out
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate Subscription Status
+  const isPaid =
+    orgData?.is_paid && new Date(orgData?.subscription_expires_at) > new Date();
+
   return (
     <div className="flex h-screen w-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
-      <Sidebar
-        isOpen={isMobileMenuOpen}
-        setIsOpen={setIsMobileMenuOpen}
-        orgData={orgData}
-      />
+      {/* Sidebar without visual lockouts */}
+      <Sidebar isOpen={isMobileMenuOpen} setIsOpen={setIsMobileMenuOpen} />
 
       {isMobileMenuOpen && (
         <div
@@ -195,6 +118,44 @@ export function AdminLayout() {
       )}
 
       <main className="flex-1 flex flex-col h-full relative z-0 min-w-0">
+        {/* --- EMAIL VERIFICATION BANNER --- */}
+        {user && !user.is_email_verified && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-3 flex items-center justify-between z-50 shrink-0">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+              <p className="text-sm font-medium text-amber-500">
+                Your email address is not verified. Please verify it to secure
+                your account.
+              </p>
+            </div>
+            <button
+              onClick={handleVerifyEmail}
+              className="text-sm font-bold text-amber-400 hover:text-amber-300 underline underline-offset-4 shrink-0 ml-4"
+            >
+              Verify Now
+            </button>
+          </div>
+        )}
+
+        {/* --- EXPIRED SUBSCRIPTION BANNER --- */}
+        {!isPaid && (
+          <div className="bg-rose-500/10 border-b border-rose-500/20 px-4 py-3 flex items-center justify-between z-50 shrink-0">
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-5 w-5 text-rose-500 shrink-0" />
+              <p className="text-sm font-medium text-rose-500">
+                Your subscription is inactive or has expired. Please renew your
+                license to avoid account suspension.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/admin/settings/billing")}
+              className="text-sm font-bold text-rose-400 hover:text-rose-300 underline underline-offset-4 shrink-0 ml-4 whitespace-nowrap"
+            >
+              Renew Now
+            </button>
+          </div>
+        )}
+
         {/* Dynamic Mobile Header */}
         <header className="md:hidden flex items-center justify-between p-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-2.5 overflow-hidden">

@@ -24,6 +24,74 @@ from ..serializers import (
 from .public_views import StandardResultsSetPagination
 
 
+def send_subscription_activated_email(organization):
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    login_link = f"{frontend_url}/login"
+    
+    subject = "Subscription Activated - BloodConnect 🩸"
+    plain_message = f"Hello {organization.name},\n\nYour subscription has been successfully activated. You can now log in and access all premium features of the platform.\n\nYour subscription is valid until: {organization.subscription_expires_at.strftime('%B %d, %Y')}\n\nLog in at {login_link}"
+    
+    html_message = f"""
+    <!doctype html>
+    <html>
+    <body style="margin: 0; padding: 0; background: #f8fafc; font-family: Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px">
+            <tr>
+                <td align="center">
+                    <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+                        <tr>
+                            <td align="center" style="background: #0f172a; padding: 36px 24px; border-bottom: 4px solid #10b981;">
+                                <div style="font-size: 42px; margin-bottom: 12px">🩸</div>
+                                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800;">BloodConnect</h1>
+                                <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">Subscription Activated</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 40px 32px">
+                                <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">Hello, {organization.name}</h2>
+                                <p style="margin: 0 0 24px; color: #475569; font-size: 16px; line-height: 1.7;">
+                                    Your BloodConnect Premium License has been successfully activated by the Administrator.
+                                </p>
+                                <div style="background: #f8fafc; border-left: 4px solid #10b981; border-radius: 10px; padding: 22px; margin: 30px 0;">
+                                    <p style="margin: 0 0 14px; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #64748b;">License Valid Until</p>
+                                    <p style="margin:0; font-size:18px; font-weight:700; color:#10b981;">
+                                        {organization.subscription_expires_at.strftime('%B %d, %Y')}
+                                    </p>
+                                </div>
+                                <p style="margin: 0 0 30px; color: #475569; font-size: 16px; line-height: 1.7;">
+                                    You can now log in to the dashboard, manage your donors, and utilize all premium features of the platform.
+                                </p>
+                                <div style="text-align: center; margin: 40px 0">
+                                    <a href="{login_link}" style="display: inline-block; background: #10b981; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 10px; font-size: 16px; font-weight: 600;">
+                                        Access Dashboard
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" style="padding: 24px; color: #94a3b8; font-size: 12px; background: #f8fafc;">
+                                © {localtime().year} BloodConnect. All rights reserved.
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+    
+    try:
+        send_async_email(
+            subject=subject,
+            plain_message=plain_message,
+            recipient_list=[organization.contact_email],
+            html_message=html_message
+        )
+    except Exception as e:
+        print(f"Failed to send subscription activation email: {e}")
+
+
 class IsSuperAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return bool(
@@ -117,8 +185,6 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                             overflow: hidden;
                             border: 1px solid #e2e8f0;
                             ">
-                            <!-- Header -->
-
                             <tr>
                                 <td align="center" style="
                                 background: #0f172a;
@@ -141,8 +207,6 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                                     </p>
                                 </td>
                             </tr>
-
-                            <!-- Content -->
 
                             <tr>
                                 <td style="padding: 40px 32px">
@@ -173,8 +237,6 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                                         your region.
                                     </p>
 
-                                    <!-- CTA -->
-
                                     <div style="text-align: center; margin: 40px 0">
                                         <a href="{login_link}" style="
                                     display: inline-block;
@@ -189,8 +251,6 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                                             Access Dashboard
                                         </a>
                                     </div>
-
-                                    <!-- Info Box -->
 
                                     <div style="
                                     background: #f8fafc;
@@ -212,8 +272,6 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                                     </div>
                                 </td>
                             </tr>
-
-                            <!-- Footer -->
 
                             <tr>
                                 <td align="center" style="
@@ -387,8 +445,6 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
                             overflow: hidden;
                             border: 1px solid #e2e8f0;
                             ">
-                            <!-- Header -->
-
                             <tr>
                                 <td align="center" style="
                                 background: #0f172a;
@@ -412,8 +468,6 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
                                 </td>
                             </tr>
 
-                            <!-- Content -->
-
                             <tr>
                                 <td style="padding: 40px 32px">
                                     <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
@@ -429,8 +483,6 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
                                         Our support team has replied to your message regarding:
                                         <strong>{message.subject}</strong>
                                     </p>
-
-                                    <!-- Reply Box -->
 
                                     <div style="
                                     background: #f8fafc;
@@ -478,8 +530,6 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
                                     </p>
                                 </td>
                             </tr>
-
-                            <!-- Footer -->
 
                             <tr>
                                 <td align="center" style="
@@ -574,6 +624,10 @@ class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
                 
             org.save()
             payment.save()
+            
+            # Send Notification Email
+            send_subscription_activated_email(org)
+            
             return Response({"message": "Payment approved and subscription extended."}, status=status.HTTP_200_OK)
             
         elif action_type == 'REJECT':
@@ -601,6 +655,10 @@ class SuperAdminExtendSubscriptionView(APIView):
             org.subscription_expires_at = timezone.now() + timedelta(days=365 * years)
             
         org.save()
+        
+        # Send Notification Email
+        send_subscription_activated_email(org)
+        
         return Response({"message": f"Extended successfully by {years} year(s)."}, status=status.HTTP_200_OK)
 
 class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
@@ -653,8 +711,6 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
                                     overflow: hidden;
                                     border: 1px solid #e2e8f0;
                                     ">
-                                <!-- Header -->
-
                                 <tr>
                                     <td align="center" style="
                                                 background:#0f172a;
@@ -678,8 +734,6 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
                                     </td>
                                 </tr>
 
-                                <!-- Content -->
-
                                 <tr>
                                     <td style="padding: 40px 32px">
                                         <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
@@ -695,8 +749,6 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
                                             There has been an update to your support ticket:
                                             <strong>{ticket.subject}</strong>
                                         </p>
-
-                                        <!-- Status Box -->
 
                                         <div style="
                                                 background:#f8fafc;
@@ -765,8 +817,6 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
                                         </p>
                                     </td>
                                 </tr>
-
-                                <!-- Footer -->
 
                                 <tr>
                                     <td align="center" style="

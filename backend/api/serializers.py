@@ -50,6 +50,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
     state_name = serializers.CharField(source='state.name', read_only=True)
     district_name = serializers.CharField(source='district.name', read_only=True)
     has_active_subscription = serializers.ReadOnlyField()
+    is_email_verified = serializers.SerializerMethodField()
 
     class Meta:
         model = Organization
@@ -58,9 +59,14 @@ class OrganizationSerializer(serializers.ModelSerializer):
             'description', 'country', 'country_name', 'state', 'state_name', 
             'district', 'district_name', 'address_line', 'logo', 'banner_image',
             'is_paid', 'is_searchable', 'subscription_expires_at', 'has_active_subscription', 
-            'status', 'created_at'
+            'status', 'created_at', 'is_email_verified'
         ]
         read_only_fields = ['status', 'is_paid', 'subscription_expires_at', 'created_at']
+
+    def get_is_email_verified(self, obj):
+        # Fetch the ORG_ADMIN for this organization to check their email verification status
+        admin = CustomUser.objects.filter(organization=obj, role='ORG_ADMIN').first()
+        return admin.is_email_verified if admin else False
 
 
 # ==========================================
@@ -70,8 +76,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
 class DonorSerializer(serializers.ModelSerializer):
     is_available_now = serializers.ReadOnlyField()
     
-    # 1. We explicitly define this as a DateField so DRF accepts it from the frontend payload.
-    # It will still read from the @property when sending data back to React.
     last_donation_date = serializers.DateField(required=False, allow_null=True)
     
     masked_phone = serializers.SerializerMethodField()
@@ -103,21 +107,15 @@ class DonorSerializer(serializers.ModelSerializer):
         return value
 
     def validate_last_donation_date(self, value):
-        # We can safely validate it now because we explicitly declared it as a DateField!
         if value and value > timezone.now().date():
             raise serializers.ValidationError("Last donation date cannot be in the future.")
         return value
 
-    # 2. INTERCEPT CREATION
     @transaction.atomic
     def create(self, validated_data):
-        # Pop the date out of the dictionary BEFORE Django tries to save the Donor
         historical_donation = validated_data.pop('last_donation_date', None)
-        
-        # Save the Donor normally
         donor = super().create(validated_data)
         
-        # If the frontend provided a date, silently create the background record!
         if historical_donation:
             DonationRecord.objects.create(
                 donor=donor,
@@ -128,12 +126,10 @@ class DonorSerializer(serializers.ModelSerializer):
             
         return donor
 
-    # 3. INTERCEPT UPDATES
     @transaction.atomic
     def update(self, instance, validated_data):
         historical_donation = validated_data.pop('last_donation_date', None)
         
-        # If the admin changes the date in the edit form, log a new record
         if historical_donation and instance.last_donation_date != historical_donation:
             DonationRecord.objects.create(
                 donor=instance,
@@ -166,7 +162,6 @@ class PublicDonorSearchSerializer(serializers.ModelSerializer):
     def get_anonymous_label(self, obj):
         return f"{obj.blood_group} Donor (ID: #{obj.id})"
 
-# Added this so you can successfully log donations!
 class DonationRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = DonationRecord

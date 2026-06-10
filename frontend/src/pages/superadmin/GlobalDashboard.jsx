@@ -14,6 +14,8 @@ import {
   AlertCircle,
   RefreshCw,
   ServerCrash,
+  MailWarning,
+  MailCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -40,6 +42,17 @@ export default function GlobalDashboard() {
     refetchInterval: 30000, // Auto-refresh global stats every 30 seconds
   });
 
+  // --- Query Pipeline: Organizations for Email Checks (Safe Fallback) ---
+  // To ensure the email verified badge always works even if the dashboard API doesn't return it
+  const { data: fullOrgsList = [] } = useQuery({
+    queryKey: ["superadmin-organizations"],
+    queryFn: async () => {
+      const res = await api.get("/superadmin/organizations/");
+      return res.data.results || res.data;
+    },
+    staleTime: 60000,
+  });
+
   // --- Mutation Pipeline: Organization Moderation ---
   const updateOrgMutation = useMutation({
     mutationFn: async ({ id, status }) => {
@@ -51,6 +64,7 @@ export default function GlobalDashboard() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["superadmin-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin-organizations"] });
       const actionStr = variables.status === "ACTIVE" ? "approved" : "rejected";
       toast.success(`Organization securely ${actionStr}.`);
     },
@@ -90,6 +104,12 @@ export default function GlobalDashboard() {
       default:
         return <Clock className="h-4 w-4 text-slate-500" />;
     }
+  };
+
+  // Safe getter for email status using the full organization list fallback
+  const getEmailStatus = (orgId) => {
+    const org = fullOrgsList.find((o) => o.id === orgId);
+    return org ? org.is_email_verified : undefined;
   };
 
   // --- UI Transition States ---
@@ -271,76 +291,94 @@ export default function GlobalDashboard() {
           <CardContent className="pt-6 flex-1 flex flex-col">
             {pendingOrgs.length > 0 ? (
               <div className="space-y-4">
-                {pendingOrgs.map((org) => (
-                  <div
-                    key={org.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-800 bg-slate-950/50 shadow-inner hover:border-slate-700 transition-colors"
-                  >
-                    <div>
-                      <h4 className="font-bold text-white text-base flex items-center gap-3">
-                        {org.name}
-                        <Badge
-                          variant="default"
-                          className="text-[10px] py-0.5 px-2 bg-slate-800 text-slate-300 border-slate-700 uppercase tracking-widest font-semibold"
+                {pendingOrgs.map((org) => {
+                  const isVerified = getEmailStatus(org.id);
+
+                  return (
+                    <div
+                      key={org.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-800 bg-slate-950/50 shadow-inner hover:border-slate-700 transition-colors"
+                    >
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                          <h4 className="font-bold text-white text-base">
+                            {org.name}
+                          </h4>
+                          <Badge
+                            variant="default"
+                            className="text-[10px] py-0.5 px-2 bg-slate-800 text-slate-300 border-slate-700 uppercase tracking-widest font-semibold"
+                          >
+                            {org.type}
+                          </Badge>
+                          {/* Appended Email Verification Check directly inside the moderation queue */}
+                          {isVerified !== undefined &&
+                            (isVerified ? (
+                              <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] py-0.5 px-2 gap-1 uppercase tracking-widest">
+                                <MailCheck className="h-3 w-3" /> Verified
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-[10px] py-0.5 px-2 gap-1 uppercase tracking-widest">
+                                <MailWarning className="h-3 w-3" /> Unverified
+                              </Badge>
+                            ))}
+                        </div>
+                        <p className="text-xs font-medium text-slate-500 flex items-center gap-2">
+                          <span>
+                            <Globe2 className="h-3 w-3 inline mr-1" />
+                            {org.location}
+                          </span>
+                          <span>•</span>
+                          <span>Applied: {org.date}</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={
+                            updateOrgMutation.isPending &&
+                            updateOrgMutation.variables?.id === org.id
+                          }
+                          className="text-rose-400 border-rose-500/20 hover:bg-rose-500/10 font-semibold"
+                          onClick={() =>
+                            handleOrgStatusUpdate(org.id, "SUSPENDED", org.name)
+                          }
                         >
-                          {org.type}
-                        </Badge>
-                      </h4>
-                      <p className="text-xs font-medium text-slate-500 mt-1.5 flex items-center gap-2">
-                        <span>
-                          <Globe2 className="h-3 w-3 inline mr-1" />
-                          {org.location}
-                        </span>
-                        <span>•</span>
-                        <span>Applied: {org.date}</span>
-                      </p>
+                          {updateOrgMutation.isPending &&
+                          updateOrgMutation.variables?.id === org.id &&
+                          updateOrgMutation.variables?.status ===
+                            "SUSPENDED" ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <XCircle className="h-4 w-4 mr-1" />
+                          )}
+                          Reject
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          disabled={
+                            updateOrgMutation.isPending &&
+                            updateOrgMutation.variables?.id === org.id
+                          }
+                          className="bg-emerald-600 hover:bg-emerald-500 font-semibold shadow-lg"
+                          onClick={() =>
+                            handleOrgStatusUpdate(org.id, "ACTIVE", org.name)
+                          }
+                        >
+                          {updateOrgMutation.isPending &&
+                          updateOrgMutation.variables?.id === org.id &&
+                          updateOrgMutation.variables?.status === "ACTIVE" ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                          )}
+                          Approve
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={
-                          updateOrgMutation.isPending &&
-                          updateOrgMutation.variables?.id === org.id
-                        }
-                        className="text-rose-400 border-rose-500/20 hover:bg-rose-500/10 font-semibold"
-                        onClick={() =>
-                          handleOrgStatusUpdate(org.id, "SUSPENDED", org.name)
-                        }
-                      >
-                        {updateOrgMutation.isPending &&
-                        updateOrgMutation.variables?.id === org.id &&
-                        updateOrgMutation.variables?.status === "SUSPENDED" ? (
-                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                        ) : (
-                          <XCircle className="h-4 w-4 mr-1" />
-                        )}
-                        Reject
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        disabled={
-                          updateOrgMutation.isPending &&
-                          updateOrgMutation.variables?.id === org.id
-                        }
-                        className="bg-emerald-600 hover:bg-emerald-500 font-semibold shadow-lg"
-                        onClick={() =>
-                          handleOrgStatusUpdate(org.id, "ACTIVE", org.name)
-                        }
-                      >
-                        {updateOrgMutation.isPending &&
-                        updateOrgMutation.variables?.id === org.id &&
-                        updateOrgMutation.variables?.status === "ACTIVE" ? (
-                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                        )}
-                        Approve
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center flex-1 py-12 text-center animate-in fade-in duration-500">

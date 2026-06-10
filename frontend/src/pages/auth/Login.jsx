@@ -49,10 +49,7 @@ export default function Login() {
   const completeLogin = (role) => {
     localStorage.setItem("isAuthenticated", "true");
     localStorage.setItem("userRole", role);
-
-    queryClient.removeQueries({
-      queryKey: ["auth-session-verify"],
-    });
+    queryClient.clear();
 
     toast.success("Login successful");
 
@@ -143,7 +140,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10 relative overflow-hidden">
-      {/* Ambient Background */}{" "}
+      {/* Ambient Background */}
       <div
         className="absolute top-[-10%] right-[-5%] w-md h-112 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none"
         aria-hidden="true"

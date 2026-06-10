@@ -14,6 +14,8 @@ import {
   SearchX,
   ServerCrash,
   RefreshCw,
+  MailWarning,
+  MailCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -67,8 +69,8 @@ export default function ManageOrganizations() {
     mutationFn: async ({ paymentId, action }) =>
       api.post(`/superadmin/payments/${paymentId}/verify/`, { action }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(["superadmin-organizations"]);
-      queryClient.invalidateQueries(["superadmin-payments"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin-payments"] });
       setIsManageModalOpen(false);
 
       if (variables.action === "APPROVE") {
@@ -92,7 +94,7 @@ export default function ManageOrganizations() {
         { years: extendYears },
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-organizations"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-organizations"] });
       setIsManageModalOpen(false);
       toast.success("Subscription forcefully extended.");
     },
@@ -112,7 +114,7 @@ export default function ManageOrganizations() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["superadmin-organizations"]);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-organizations"] });
       toast.success("Organization access updated.");
     },
     onError: (err) => {
@@ -198,7 +200,7 @@ export default function ManageOrganizations() {
             <tbody className="divide-y divide-slate-800/50">
               {isOrgsLoading || isPaymentsLoading ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-24 text-center">
+                  <td colSpan="5" className="px-6 py-24 text-center">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-4" />
                     <p className="text-sm font-medium tracking-widest uppercase text-slate-400">
                       Loading Tenants...
@@ -208,7 +210,7 @@ export default function ManageOrganizations() {
               ) : isOrgsError || isPaymentsError ? (
                 <tr>
                   <td
-                    colSpan="4"
+                    colSpan="5"
                     className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
                     <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -236,7 +238,7 @@ export default function ManageOrganizations() {
               ) : organizations.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="4"
+                    colSpan="5"
                     className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
                     <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -254,7 +256,7 @@ export default function ManageOrganizations() {
               ) : filteredOrgs.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="4"
+                    colSpan="5"
                     className="px-6 py-24 text-center animate-in fade-in duration-300"
                   >
                     <SearchX className="h-12 w-12 text-slate-600 mb-4 mx-auto" />
@@ -278,16 +280,42 @@ export default function ManageOrganizations() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-11 w-11 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center font-bold text-slate-400 uppercase shadow-inner">
-                            {org.name.substring(0, 2)}
+                          <div className="h-11 w-11 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center font-bold text-slate-400 uppercase shadow-inner overflow-hidden shrink-0">
+                            {org.logo ? (
+                              <img
+                                src={org.logo}
+                                alt={org.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              org.name.substring(0, 2)
+                            )}
                           </div>
                           <div>
                             <p className="font-bold text-white text-sm">
                               {org.name}
                             </p>
-                            <p className="text-xs font-medium text-slate-500 mt-1 font-mono tracking-tight">
-                              {org.contact_email}
-                            </p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <p className="text-xs font-medium text-slate-500 font-mono tracking-tight">
+                                {org.contact_email}
+                              </p>
+                              {/* Email Verification Status Badge */}
+                              {org.is_email_verified ? (
+                                <Badge
+                                  variant="success"
+                                  className="text-[9px] py-0 px-1.5 bg-emerald-500/10 text-emerald-500 border-emerald-500/20 uppercase tracking-widest flex items-center gap-1"
+                                >
+                                  <MailCheck className="h-3 w-3" /> Verified
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="warning"
+                                  className="text-[9px] py-0 px-1.5 bg-amber-500/10 text-amber-500 border-amber-500/20 uppercase tracking-widest flex items-center gap-1"
+                                >
+                                  <MailWarning className="h-3 w-3" /> Unverified
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -437,12 +465,12 @@ export default function ManageOrganizations() {
                 <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
 
                 <div className="flex items-center gap-2 text-amber-500 font-bold uppercase tracking-wider text-xs pb-3 border-b border-amber-500/20">
-                  <Clock className="h-4 w-4" /> Pending UPI Verification
+                  <Clock className="h-4 w-4" /> Pending Verification
                 </div>
 
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Submitted Cryptographic Reference (UTR)
+                    Submitted Transaction Reference (UTR)
                   </p>
                   <p className="text-3xl font-black font-mono text-white tracking-widest my-2">
                     {getPendingPayment(selectedOrg.id).upi_reference}
@@ -464,7 +492,7 @@ export default function ManageOrganizations() {
                     }
                     disabled={verifyPaymentMutation.isPending}
                   >
-                    <XCircle className="h-4 w-4 mr-2" /> Reject (Invalid UTR)
+                    <XCircle className="h-4 w-4 mr-2" /> Reject (Invalid)
                   </Button>
                   <Button
                     variant="primary"
@@ -483,7 +511,7 @@ export default function ManageOrganizations() {
                     ) : (
                       <>
                         <CheckCircle2 className="h-5 w-5 mr-2" /> Approve (+1
-                        Year)
+                        Yr)
                       </>
                     )}
                   </Button>

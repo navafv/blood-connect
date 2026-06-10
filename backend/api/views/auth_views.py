@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
@@ -216,7 +217,8 @@ class CurrentUserView(APIView):
             "id": user.id,
             "email": user.email,
             "role": getattr(user, 'role', 'PUBLIC_USER'),
-            "organization": org_data
+            "organization": org_data,
+            "is_email_verified": user.is_email_verified # Exposing to the frontend context
         }, status=status.HTTP_200_OK)
     
 class LogoutView(APIView):
@@ -249,6 +251,8 @@ class LogoutView(APIView):
 
 class RegisterOrganizationView(APIView):
     permission_classes = [permissions.AllowAny]
+    # Explicitly define Parsers to allow processing of multipart/form-data containing files
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request):
         data = request.data
@@ -268,18 +272,30 @@ class RegisterOrganizationView(APIView):
             
         try:
             with transaction.atomic():
+                # Form data usually converts booleans to strings, let's parse it safely
+                is_searchable_val = data.get('is_searchable', 'true')
+                is_searchable = str(is_searchable_val).lower() == 'true'
+
+                # 1. Create Organization with new fields
                 organization = Organization.objects.create(
                     name=data.get('orgName'),
                     org_type=data.get('orgType', 'NGO'),
                     contact_email=email,
+                    contact_phone=data.get('contact_phone', ''),
                     country_id=data.get('country_id'),
                     state_id=data.get('state_id'),
                     district_id=data.get('district_id'),
-                    address_line="Pending Address...",
-                    is_searchable=data.get('is_searchable', True),
+                    address_line=data.get('address_line', ''),
+                    is_searchable=is_searchable,
                     status='PENDING'
                 )
 
+                # Handle Logo Upload explicitly
+                if 'logo' in request.FILES:
+                    organization.logo = request.FILES['logo']
+                    organization.save()
+
+                # 2. Create the Admin User
                 otp_code = str(secrets.randbelow(900000) + 100000)
 
                 admin_user = CustomUser.objects.create_user(
@@ -292,6 +308,7 @@ class RegisterOrganizationView(APIView):
                     email_otp_expires_at=timezone.now() + timedelta(minutes=10)
                 )
 
+            # 3. Fire Email Notification
             subject = "Verify your BloodConnect Workspace"
             plain_message = f"Hello {data.get('contactName', '')},\n\nYour BloodConnect verification code is: {otp_code}.\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email."
             
@@ -315,7 +332,6 @@ class RegisterOrganizationView(APIView):
                         overflow: hidden;
                         border: 1px solid #e2e8f0;
                         ">
-                                <!-- Header -->
                                 <tr>
                                     <td align="center" style="
                             background: #0f172a;
@@ -339,7 +355,6 @@ class RegisterOrganizationView(APIView):
                                     </td>
                                 </tr>
 
-                                <!-- Content -->
                                 <tr>
                                     <td style="padding: 40px 32px">
                                         <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
@@ -357,7 +372,6 @@ class RegisterOrganizationView(APIView):
                                             <strong>{data.get('orgName')}</strong>.
                                         </p>
 
-                                        <!-- OTP -->
                                         <div style="text-align: center; margin: 40px 0">
                                             <div style="
                                 display: inline-block;
@@ -407,7 +421,6 @@ class RegisterOrganizationView(APIView):
                                     </td>
                                 </tr>
 
-                                <!-- Footer -->
                                 <tr>
                                     <td align="center" style="
                             padding: 24px;
@@ -440,7 +453,7 @@ class RegisterOrganizationView(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"error": "An unexpected error occurred during registration. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"Registration failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class VerifyEmailOTPView(APIView):
     permission_classes = [permissions.AllowAny]

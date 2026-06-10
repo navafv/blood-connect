@@ -5,14 +5,12 @@ import {
   LayoutDashboard,
   Users,
   UserPlus,
-  Settings,
   LogOut,
   Droplet,
   X,
   LifeBuoy,
   CreditCard,
   Building2,
-  Lock,
   ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -91,6 +89,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
           {menuItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
+
             return (
               <Link
                 key={item.path}
@@ -120,6 +119,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
           {menuItems.slice(4).map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
+
             return (
               <Link
                 key={item.path}
