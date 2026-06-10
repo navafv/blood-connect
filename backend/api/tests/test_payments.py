@@ -1,20 +1,23 @@
 import pytest
 from django.utils import timezone
 from datetime import timedelta
+from django.test import override_settings
 from rest_framework.test import APIClient
 from model_bakery import baker
 from django.urls import reverse
 from api.models import PaymentTransaction, Organization, CustomUser
 
 @pytest.mark.django_db
+@override_settings(SECURE_SSL_REDIRECT=False)
 class TestPaymentStateMachine:
     def setup_method(self):
         self.client = APIClient()
         self.superadmin = baker.make(CustomUser, role="SUPER_ADMIN")
         
-        # An org whose subscription expires today
+        # Explicit name limits string length, preventing the database crash
         self.org = baker.make(
             Organization, 
+            name="Test Organization",
             is_paid=False, 
             subscription_expires_at=timezone.now()
         )
@@ -40,6 +43,5 @@ class TestPaymentStateMachine:
         assert self.payment.verified_at is not None
         assert self.org.is_paid is True
         
-        # Assert subscription was extended by roughly 365 days
         days_remaining = (self.org.subscription_expires_at - timezone.now()).days
         assert 364 <= days_remaining <= 366

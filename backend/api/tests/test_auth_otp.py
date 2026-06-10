@@ -1,16 +1,18 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
+from django.test import override_settings
 from rest_framework.test import APIClient
 from model_bakery import baker
 from django.urls import reverse
 from api.models import CustomUser
 
 @pytest.mark.django_db
+@override_settings(SECURE_SSL_REDIRECT=False)
 class TestOTPVerification:
     def setup_method(self):
         self.client = APIClient()
-        self.url = reverse('verify_email') # Ensure this matches your urls.py name
+        self.url = reverse('verify_email')
         self.user = baker.make(
             CustomUser, 
             email="test@hospital.com", 
@@ -25,10 +27,9 @@ class TestOTPVerification:
         assert response.status_code == 200
         self.user.refresh_from_db()
         assert self.user.is_email_verified is True
-        assert self.user.email_verification_otp is None # Ensure OTP is cleared after use
+        assert self.user.email_verification_otp is None 
 
     def test_expired_otp_is_rejected(self):
-        # Force expiration
         self.user.email_otp_expires_at = timezone.now() - timedelta(minutes=1)
         self.user.save()
 

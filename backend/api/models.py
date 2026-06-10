@@ -114,7 +114,7 @@ class Organization(models.Model):
     def save(self, *args, **kwargs):
         # Auto-generate a slug if the organization doesn't have one yet
         if not self.slug:
-            base_slug = slugify(self.name)
+            base_slug = slugify(self.name)[:140] 
             unique_id = str(uuid.uuid4())[:6]
             self.slug = f"{base_slug}-{unique_id}"
             
