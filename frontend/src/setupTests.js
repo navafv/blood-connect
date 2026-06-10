@@ -1,6 +1,6 @@
 // frontend/src/setupTests.js
 import "@testing-library/jest-dom";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 
 // Automatically unmount and cleanup DOM nodes after each test

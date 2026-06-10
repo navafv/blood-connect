@@ -35,6 +35,27 @@ import {
 import { Button } from "../../components/ui/Button";
 import api from "../../lib/axios";
 
+// Extracted out of Dashboard to prevent Recharts/React cascading render errors
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700 p-4 rounded-xl shadow-2xl">
+        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">
+          Blood Group{" "}
+          <span className="text-white ml-1 text-sm font-black">
+            {payload[0].payload.group}
+          </span>
+        </p>
+        <p className="text-rose-400 font-black flex items-center gap-2 text-lg tracking-tight">
+          <Droplet className="h-5 w-5 fill-rose-500/20" /> {payload[0].value}{" "}
+          Available
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
@@ -126,26 +147,6 @@ export default function Dashboard() {
 
   const { overview, bloodGroupDistribution, recentActivity } = stats;
 
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700 p-4 rounded-xl shadow-2xl">
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">
-            Blood Group{" "}
-            <span className="text-white ml-1 text-sm font-black">
-              {payload[0].payload.group}
-            </span>
-          </p>
-          <p className="text-rose-400 font-black flex items-center gap-2 text-lg tracking-tight">
-            <Droplet className="h-5 w-5 fill-rose-500/20" /> {payload[0].value}{" "}
-            Available
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* --- Workspace Header --- */}
@@ -198,7 +199,6 @@ export default function Dashboard() {
 
       {/* --- Key Performance Indicators (KPI) Matrix --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Metric 1 */}
         <Card className="group bg-slate-900/40 border-slate-800/60 hover:bg-slate-900/60 transition-all duration-300 hover:-translate-y-1 overflow-hidden relative shadow-lg">
           <div
             className="absolute top-0 right-0 p-12 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors"
@@ -219,7 +219,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Metric 2 */}
         <Card className="group bg-slate-900/40 border-slate-800/60 hover:bg-slate-900/60 transition-all duration-300 hover:-translate-y-1 overflow-hidden relative shadow-lg">
           <div
             className="absolute top-0 right-0 p-12 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors"
@@ -240,7 +239,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Metric 3 */}
         <Card className="group bg-slate-900/40 border-slate-800/60 hover:bg-slate-900/60 transition-all duration-300 hover:-translate-y-1 overflow-hidden relative shadow-lg">
           <div
             className="absolute top-0 right-0 p-12 bg-rose-500/5 rounded-full blur-2xl group-hover:bg-rose-500/10 transition-colors"
@@ -261,7 +259,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Metric 4 */}
         <Card className="group bg-slate-900/40 border-slate-800/60 hover:bg-slate-900/60 transition-all duration-300 hover:-translate-y-1 overflow-hidden relative shadow-lg">
           <div
             className="absolute top-0 right-0 p-12 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors"
@@ -285,7 +282,6 @@ export default function Dashboard() {
 
       {/* --- Visualization & Telemetry --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Hematological Distribution Chart */}
         <Card className="lg:col-span-2 bg-slate-900/40 border-slate-800/60 backdrop-blur-xl shadow-xl flex flex-col">
           <CardHeader className="border-b border-slate-800/60 pb-5">
             <CardTitle className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
@@ -354,7 +350,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Audit Log / Event Feed */}
         <Card className="bg-slate-900/40 border-slate-800/60 backdrop-blur-xl shadow-xl flex flex-col">
           <CardHeader className="border-b border-slate-800/60 pb-5">
             <CardTitle className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
@@ -379,7 +374,6 @@ export default function Dashboard() {
                       key={activity.id}
                       className="relative flex gap-5 group"
                     >
-                      {/* Connection Timeline Node */}
                       {index !== recentActivity.length - 1 && (
                         <div
                           className="absolute left-5 top-10 -bottom-8 w-px bg-slate-800 group-hover:bg-slate-700 transition-colors"

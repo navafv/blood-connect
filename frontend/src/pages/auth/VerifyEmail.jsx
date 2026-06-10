@@ -37,11 +37,6 @@ export default function VerifyEmail() {
   const [countdown, setCountdown] = useState(30);
   const [isResending, setIsResending] = useState(false);
 
-  // Redirect if email missing
-  if (!email) {
-    return <Navigate to="/register-org" replace />;
-  }
-
   // Countdown Timer
   useEffect(() => {
     if (countdown > 0) {
@@ -53,10 +48,14 @@ export default function VerifyEmail() {
     }
   }, [countdown]);
 
+  // Redirect if email missing
+  if (!email) {
+    return <Navigate to="/register-org" replace />;
+  }
+
   // OTP Input
   const handleChange = (e) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-
     setOtp(value);
   };
 
@@ -78,7 +77,6 @@ export default function VerifyEmail() {
       });
 
       setStatus("success");
-
       toast.success("Email verified successfully");
 
       setTimeout(() => {
@@ -91,9 +89,7 @@ export default function VerifyEmail() {
       }, 3500);
     } catch (err) {
       console.error("Verification Error:", err);
-
       setStatus("idle");
-
       toast.error(
         err.response?.data?.error ||
           err.response?.data?.detail ||
@@ -113,11 +109,9 @@ export default function VerifyEmail() {
 
       setCountdown(60);
       setOtp("");
-
       toast.success("A new verification code has been sent");
     } catch (err) {
       console.error("Resend Error:", err);
-
       toast.error(
         err.response?.data?.error || "Unable to resend verification code",
       );
@@ -128,7 +122,6 @@ export default function VerifyEmail() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10 relative overflow-hidden">
-      {/* Ambient Background */}{" "}
       <div
         className="absolute top-[-10%] right-[-5%] w-md h-112 bg-emerald-600/15 rounded-full blur-[120px] pointer-events-none"
         aria-hidden="true"
@@ -137,9 +130,7 @@ export default function VerifyEmail() {
         className="absolute bottom-[-10%] left-[-5%] w-md h-112 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"
         aria-hidden="true"
       />
-      {/* Main Container */}
       <div className="w-full max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        {/* Header */}
         <div className="flex flex-col items-center mb-8">
           <Link
             to="/"
@@ -157,32 +148,25 @@ export default function VerifyEmail() {
           </p>
         </div>
 
-        {/* Card */}
         <Card className="border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden">
           {status === "success" ? (
             <CardContent className="pt-12 pb-12 flex flex-col items-center text-center animate-in fade-in zoom-in duration-500">
-              {/* Success Icon */}
               <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6 relative">
                 <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md animate-pulse" />
-
                 <CheckCircle2 className="h-12 w-12 text-emerald-500 relative z-10" />
               </div>
 
-              {/* Title */}
               <h2 className="text-3xl font-bold text-white mb-3">
                 Email Verified
               </h2>
 
-              {/* Description */}
               <p className="text-slate-400 text-base leading-relaxed max-w-sm mx-auto mb-8">
                 Your email address has been verified successfully. Redirecting
                 you to login...
               </p>
 
-              {/* Loading State */}
               <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-slate-950/50 border border-slate-800">
                 <Loader2 className="h-4 w-4 text-emerald-500 animate-spin" />
-
                 <span className="text-sm text-slate-300 font-medium">
                   Redirecting...
                 </span>
@@ -190,16 +174,13 @@ export default function VerifyEmail() {
             </CardContent>
           ) : (
             <>
-              {/* Card Header */}
               <CardHeader className="text-center border-b border-slate-800/50 pt-10 pb-6">
                 <div className="mx-auto h-16 w-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
                   <MailCheck className="h-8 w-8 text-emerald-500" />
                 </div>
-
                 <CardTitle className="text-2xl font-extrabold tracking-tight text-white">
                   Email Verification
                 </CardTitle>
-
                 <p className="mt-3 text-sm text-slate-400 leading-relaxed px-2">
                   We sent a verification code to
                   <br />
@@ -209,18 +190,14 @@ export default function VerifyEmail() {
                 </p>
               </CardHeader>
 
-              {/* Form */}
               <CardContent className="pt-8 px-8 pb-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* OTP */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Verification Code
                     </label>
-
                     <div className="relative group">
                       <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-500 transition-colors group-focus-within:text-emerald-500" />
-
                       <Input
                         type="text"
                         autoComplete="one-time-code"
@@ -235,7 +212,6 @@ export default function VerifyEmail() {
                     </div>
                   </div>
 
-                  {/* Submit */}
                   <div className="pt-2">
                     <Button
                       type="submit"
@@ -262,13 +238,11 @@ export default function VerifyEmail() {
           )}
         </Card>
 
-        {/* Resend Section */}
         {status !== "success" && (
           <div className="mt-6 bg-slate-900/40 backdrop-blur-md border border-slate-800/60 rounded-2xl p-5 text-center">
             <p className="text-sm text-slate-400 mb-3">
               Didn’t receive the verification code?
             </p>
-
             <button
               onClick={handleResend}
               disabled={countdown > 0 || isResending}
