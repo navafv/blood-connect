@@ -1,14 +1,12 @@
 import pytest
 from django.utils import timezone
 from datetime import timedelta
-from django.test import override_settings
 from rest_framework.test import APIClient
 from model_bakery import baker
 from django.urls import reverse
 from api.models import PaymentTransaction, Organization, CustomUser
 
 @pytest.mark.django_db
-@override_settings(SECURE_SSL_REDIRECT=False)
 class TestPaymentStateMachine:
     def setup_method(self):
         self.client = APIClient()
@@ -32,7 +30,8 @@ class TestPaymentStateMachine:
         self.client.force_authenticate(user=self.superadmin)
         url = reverse('superadmin-payments-verify', kwargs={'pk': self.payment.id})
         
-        response = self.client.post(url, {"action": "APPROVE"})
+        # Added secure=True
+        response = self.client.post(url, {"action": "APPROVE"}, secure=True)
         
         assert response.status_code == 200
         

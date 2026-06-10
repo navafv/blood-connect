@@ -1,14 +1,12 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
-from django.test import override_settings
 from rest_framework.test import APIClient
 from model_bakery import baker
 from django.urls import reverse
 from api.models import CustomUser
 
 @pytest.mark.django_db
-@override_settings(SECURE_SSL_REDIRECT=False)
 class TestOTPVerification:
     def setup_method(self):
         self.client = APIClient()
@@ -22,7 +20,8 @@ class TestOTPVerification:
         )
 
     def test_successful_otp_verification(self):
-        response = self.client.post(self.url, {"email": self.user.email, "otp": "123456"})
+        # Added secure=True to bypass SSL redirects without decorators
+        response = self.client.post(self.url, {"email": self.user.email, "otp": "123456"}, secure=True)
         
         assert response.status_code == 200
         self.user.refresh_from_db()
@@ -33,7 +32,8 @@ class TestOTPVerification:
         self.user.email_otp_expires_at = timezone.now() - timedelta(minutes=1)
         self.user.save()
 
-        response = self.client.post(self.url, {"email": self.user.email, "otp": "123456"})
+        # Added secure=True
+        response = self.client.post(self.url, {"email": self.user.email, "otp": "123456"}, secure=True)
         
         assert response.status_code == 400
         assert "expired" in response.data['error'].lower()

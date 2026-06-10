@@ -1,5 +1,4 @@
 import pytest
-from django.test import override_settings
 from rest_framework.test import APIClient
 from model_bakery import baker
 from django.urls import reverse
@@ -10,7 +9,6 @@ def api_client():
     return APIClient()
 
 @pytest.mark.django_db
-@override_settings(SECURE_SSL_REDIRECT=False)
 class TestTenantIsolation:
     def setup_method(self):
         self.org_a = baker.make(Organization, name="Hospital A", status="ACTIVE")
@@ -25,7 +23,8 @@ class TestTenantIsolation:
         api_client.force_authenticate(user=self.admin_a)
         
         url = reverse('tenant-donor-list')
-        response = api_client.get(url)
+        # Added secure=True
+        response = api_client.get(url, secure=True)
         
         assert response.status_code == 200
         data = response.json()
@@ -37,6 +36,7 @@ class TestTenantIsolation:
         api_client.force_authenticate(user=self.admin_a)
         
         url = reverse('tenant-donor-detail', kwargs={'pk': self.donor_b.id})
-        response = api_client.delete(url)
+        # Added secure=True
+        response = api_client.delete(url, secure=True)
         
         assert response.status_code == 404
