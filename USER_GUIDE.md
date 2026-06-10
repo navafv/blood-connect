@@ -2,7 +2,7 @@
 
 Welcome to Blood Connect 🩸
 
-Blood Connect is a secure blood donor management and coordination platform designed for hospitals, blood banks, NGOs, and the general public.
+Blood Connect is a secure multi-tenant SaaS blood donor management and coordination platform designed for hospitals, blood banks, NGOs, and the general public.
 
 This guide explains how each user role interacts with the platform and how to use its core features effectively.
 
@@ -11,396 +11,186 @@ This guide explains how each user role interacts with the platform and how to us
 # 🌍 Platform Overview
 
 Blood Connect connects:
+* Public Users & Blood Donors
+* Medical Organizations (Hospitals, Blood Banks, Private Clinics)
+* NGOs / Volunteer Groups
+* Super Administrators
 
-* Blood Donors
-* Medical Organizations
-* NGOs
-* Hospitals
-* Blood Banks
-* Public Users
-
-The platform uses geographically localized donor matching to help organizations manage blood donation workflows more efficiently and securely.
+The platform uses geographic master data constraints (Country → State → District) to perform localized donor matching, helping organizations manage blood donation workflows more efficiently and securely.
 
 ---
 
 # 👥 User Roles
 
-The platform contains three primary user roles:
+The platform enforces three primary user roles:
 
-| Role                | Access Level                                      |
-| ------------------- | ------------------------------------------------- |
-| Public User / Donor | Public donor search and organization discovery    |
-| Organization Admin  | Tenant-specific donor and organization management |
-| Super Admin         | Global platform administration and oversight      |
+| Role | Access Level & Scope |
+| :--- | :--- |
+| **Public User / Donor** | Public local donor search, organization public profiles, and contact discovery. |
+| **Organization Admin** | Tenant-specific dashboard, donor management, donation logs, and billing/support within an isolated workspace. |
+| **Super Admin** | Platform-wide administrative oversight, organization verification, geographic control, audit logs, and global analytics. |
 
 ---
 
 # 🙋‍♂️ 1. Public Users & Donors
 
-Public users can access several platform features without creating an account.
+Public users can access several platform features without requiring registration or authentication.
 
 ---
 
 # 🔎 Search for Blood Donors
 
-Use the **Search Donors** feature on the homepage.
+Use the **Search Donors** feature on the platform's homepage or search portal.
 
 ### Search Filters
+* **Blood Group** (Required) - Supports multi-type classification (e.g., A+, O-, Bombay Blood Group, INRA, etc.)
+* **State** (Optional) - Narrows down results to a specific region
+* **District** (Optional) - Localizes results to a specific district
 
-* Blood Group
-* State
-* District
-
-The system returns:
-
-* Active donors
-* Eligible donors
-* Verified organization-managed donors
-* Location-filtered results
+The system filters out unavailable, deferred, or unconsented profiles, returning a real-time list of active, eligible, and organization-managed local donors.
 
 ---
 
 # 🏥 Browse Verified Organizations
 
-Users can explore approved:
-
-* Hospitals
-* Blood Banks
-* NGOs
-* Donation Organizations
-
-Organization profiles may include:
-
-* Contact details
-* Address
-* Operating information
-* Public descriptions
+Users can explore the public directories of approved medical entities. Clicking on an organization profile displays:
+* Organization type and description
+* Direct contact details (verified email and phone number)
+* Complete geographical address
 
 ---
 
 # 📩 Contact Platform Administrators
 
-Use the **Contact Us** form for:
-
-* General inquiries
-* Support requests
-* Partnership discussions
-* Reporting issues
+For issues, partnerships, or general platform inquiries, public users can use the global **Contact Us** form. Submitting a message transmits it straight to the Super Admin panel for review.
 
 ---
 
 # 🔒 Public Privacy & Security
 
-Blood Connect protects donor privacy using:
-
-* Controlled public visibility
-* Organization verification
-* Role-based access restrictions
-* Geographic filtering
-* Rate-limited public endpoints
-
-Sensitive donor information is never publicly exposed beyond permitted visibility settings.
+Blood Connect implements rigorous privacy checks on public pathways:
+* Sensitive donor information (such as exact date of birth or direct contact history) is never exposed globally.
+* Public donor search routes are explicitly rate-limited to avoid scraping and bot spam.
+* Only donors whose managing organizations are set to `is_searchable=True` are indexed in public searches.
 
 ---
 
 # 🏥 2. Organization Admins (Tenants)
 
-Organization Admins operate inside isolated SaaS workspaces called tenants.
-
-Each organization manages:
-
-* Its own donors
-* Staff members
-* Analytics
-* Donation history
-* Operational records
-
-Organizations cannot access data belonging to other tenants.
+Organization Administrators operate inside strictly isolated SaaS tenant workspaces. An organization can only interact with its own records, staff, and analytics dashboards.
 
 ---
 
 # 🚀 Getting Started
 
-## Step 1 — Register Your Organization
+### Step 1 — Register Your Organization
+Click on **Register Organization**. You will be prompted to enter:
+* Organization Name & Type (Hospital, Blood Bank, NGO, Clinic)
+* Core Contact Information (Email & Phone Number)
+* Geographic Workspace Lock (Country, State, District, and physical address line)
 
-Click:
+### Step 2 — Verification Process
+Upon registration, your workspace enters a `PENDING` state. Super Administrators review submissions to ensure operational legitimacy and regional authenticity before granting activation.
 
-```text id="3x6mxn"
-Register Organization
-```
-
-Provide:
-
-* Organization name
-* Organization type
-* Contact information
-* Geographic location
-* Verification details
+### Step 3 — Login & Setup
+Once activated to `ACTIVE` status:
+* Authenticate using your credentials (secure JWT tokens are issued via HTTP-only cookies).
+* Navigate to your **Security Settings** to optionally set up Time-based One-Time Password (TOTP) 2FA for enhanced protection.
 
 ---
 
-## Step 2 — Verification Process
+# 📊 Dashboard & Analytics
 
-New organizations enter a:
-
-```text id="i7pr6t"
-PENDING
-```
-
-state until reviewed by a Super Admin.
-
-Verification may include:
-
-* Hospital/NGO validation
-* Contact confirmation
-* Regional verification
-* Operational legitimacy checks
+The tenant dashboard generates live analytics tailored to your organization's operations:
+* Total versus medically active donor breakdowns
+* Blood group composition charts
+* Historical donation graphs and regional trend tracking
 
 ---
 
-## Step 3 — Login
+# 👥 Tenant Donor Management
 
-After approval:
+### Add Donors Manually
+Create individual donor profiles inside your workspace by filling out full name, blood group classification, gender, date of birth, contact number, and geographical identifiers. Donors must explicitly provide consent for record-keeping and communications.
 
-* Login using your credentials
-* Complete optional 2FA setup
-* Access your tenant dashboard
+### Bulk Upload Donors
+If importing existing records, use the **Bulk Upload** tool to upload clean CSV files or Excel spreadsheets. The backend validates records automatically prior to committing them to the database.
 
----
-
-# 📊 Dashboard
-
-The tenant dashboard provides real-time operational insights.
-
-### Dashboard Features
-
-* Total donors
-* Active donors
-* Recent donations
-* Blood group analytics
-* Donation trends
-* Geographic statistics
-
----
-
-# 👥 Donor Management
-
-Organization Admins can manage donor records securely.
-
----
-
-## Add Donors
-
-Create donor profiles manually by entering:
-
-* Name
-* Blood Group
-* Contact details
-* Geographic location
-* Medical eligibility
-
----
-
-## Bulk Upload Donors
-
-Import donor databases using:
-
-* CSV files
-* Excel spreadsheets
-
-The system validates uploaded records before processing.
-
----
-
-## Donor Availability Tracking
-
-Blood Connect automatically calculates:
-
-* Cooldown periods
-* Donation eligibility
-* Availability status
-
-Supported donation types:
-
-* Whole Blood
-* Plasma
-* Platelets
+### Donor Availability & Cooldowns
+The platform evaluates donor eligibility dynamically every time a record is viewed based on gender and donation types:
+* **Whole Blood:** 90 days cooldown for Male donors; 120 days for Female donors.
+* **Platelets:** 14 days cooldown.
+* **Plasma:** 28 days cooldown.
+* **Deferrals:** Donors marked as permanently deferred with a specific reason are automatically blocked from eligibility checks.
 
 ---
 
 # 🩸 Logging Donations
 
-To log a donation:
+When a blood donation workflow finishes successfully:
+1. Locate the donor profile inside your workspace.
+2. Click **Log Donation**.
+3. Select the donation category (Whole Blood, Platelets, or Plasma) and add structural clinical notes if necessary.
+4. Save the form. The system will automatically log the historical event and push the donor's next eligibility milestone outward.
 
-1. Open donor profile
-2. Click:
+---
 
-```text id="a5ewm9"
-Log Donation
-```
+# 💳 Subscription & UPI Payments
 
-3. Select donation type
-4. Submit donation record
-
-The donor's eligibility timeline updates automatically.
+To keep workspace capabilities active, organizations manage subscriptions through payment submission logs:
+* Submit transaction logs by providing the exact UTR / Reference Number from your UPI application.
+* Payments enter a `PENDING` validation step until cross-referenced and approved by a Super Admin.
 
 ---
 
 # 🎫 Support Tickets
 
-Need assistance?
-
-Use the **Support Tickets** section to:
-
-* Contact Super Admins
-* Report issues
-* Request technical support
-* Ask billing questions
-
-Support ticket history is stored for future reference.
-
----
-
-# 💳 Subscription & Billing
-
-Organizations can manage:
-
-* Subscription plans
-* Billing references
-* UPI payment tracking
-* Payment verification
-
-Billing access is restricted to authorized administrators.
-
----
-
-# 🔐 Tenant Security
-
-Organization workspaces are protected using:
-
-* JWT authentication
-* HTTP-only secure cookies
-* Optional TOTP 2FA
-* Role-based permissions
-* Audit logging
-* Tenant-isolated access control
+If you encounter technical performance anomalies, billing questions, or structural errors, open a support ticket under the **Support Tickets** dashboard portal. You can exchange interactive replies with Super Admins directly through the workspace application.
 
 ---
 
 # 🛡️ 3. Super Admins
 
-Super Admins manage the entire Blood Connect ecosystem.
-
-They have global oversight across:
-
-* Organizations
-* Geographic data
-* Security logs
-* Advertisements
-* Support operations
-* Platform analytics
+Super Administrators hold global platform credentials and orchestrate system-wide governance across all tenant structures.
 
 ---
 
-# ✅ Organization Approval
+# ✅ Organization Management & Approvals
 
-Super Admins review all organization registrations.
+Super Admins handle organization onboarding and tracking. They view all profiles and update tenant system access flags through the following structural states:
+* `PENDING`: Newly registered organizations awaiting validation.
+* `ACTIVE`: Fully approved workspaces authorized to use the platform.
+* `SUSPENDED`: Temporarily or permanently restricted organizations blocked from logging into the tenant space or displaying donors publicly.
 
-Approval considerations include:
-
-* Legitimacy verification
-* Contact validation
-* Regional authenticity
-* Operational trustworthiness
-
-Organizations may be:
-
-* Approved
-* Suspended
-* Rejected
+Super Admins also have the capability to manually extend an organization's subscription timeline after verifying UPI payment UTR logs.
 
 ---
 
-# 🌍 Geographic Master Data Management
+# 🌍 Geographic Master Data Controls
 
-Super Admins manage:
-
-* Countries
-* States
-* Districts
-
-This ensures:
-
-* Accurate donor filtering
-* Clean regional matching
-* Geographic consistency
+Super Admins maintain the regional baseline hierarchical datasets (`Country` → `State` → `District`). This administrative locking ensures clean drop-down dependencies on frontend views and prevents geographic fragmentation or spelling mismatches across tenant records.
 
 ---
 
 # 📜 System Logs & Audit Trails
 
-The platform tracks critical operational activity.
-
-Examples include:
-
-* Login activity
-* Failed authentication attempts
-* Organization changes
-* Donor modifications
-* Administrative actions
-
-This improves:
-
-* Accountability
-* Security monitoring
-* Operational transparency
+To guarantee maximum transparency and platform accountability, Super Admins have visibility into:
+* **System Logs:** Centralized operational telemetry catching informational notices, warnings, and critical system anomalies.
+* **Historical Audit Trails:** Comprehensive record timelines managed via `django-simple-history`, keeping track of modifications, donor edits, and soft-deletion activities.
 
 ---
 
 # 📢 Advertisement Management
 
-Super Admins can manage sponsored advertisements displayed publicly.
-
-Features include:
-
-* Banner uploads
-* Expiration scheduling
-* Click tracking
-* Visibility control
+Super Admins supervise public-facing banner spaces:
+* Upload visual banner files and set destination redirection URLs.
+* Set calendar expiration rules.
+* Monitor interaction volume using real-time automated click-count tracking.
 
 ---
 
-# 🧾 Support & Public Messages
+# 🔒 Security Best Practices for All Roles
 
-Super Admins can:
-
-* Respond to support tickets
-* Review public contact submissions
-* Monitor platform communications
-
----
-
-# 🔒 Security Best Practices
-
-All users are encouraged to:
-
-* Use strong passwords
-* Enable 2FA
-* Keep login credentials private
-* Log out from shared devices
-* Report suspicious activity immediately
-
----
-
-# ⚠️ Important Notes
-
-* Organizations only access their own tenant data
-* Public donor visibility is controlled
-* Some features may require organization approval
-* Geographic filtering affects donor search accuracy
-
----
-
-# ❤️ Mission
-
-Blood Connect aims to improve regional blood donation coordination through secure technology, localized matching, and scalable healthcare-focused infrastructure.
+1. **Enable Multi-Factor Authentication:** All administrators should enable TOTP 2FA via their security preferences.
+2. **Handle Data with Care:** Tenant data isolation is strictly guarded, but workspace staff must ensure accurate contact logging and explicit donor consent.
+3. **Session Awareness:** Log out when using shared workstations to clear local state and HTTP-only session footprints.

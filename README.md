@@ -9,7 +9,6 @@ The platform enables verified medical organizations to manage isolated donor dat
 # 🌍 Problem Statement
 
 Traditional blood donation management systems are often fragmented, manually maintained, and geographically inefficient. Blood Connect solves this by providing:
-
 - Localized donor discovery
 - Secure organization-specific donor management
 - Real-time donation tracking
@@ -21,151 +20,59 @@ Traditional blood donation management systems are often fragmented, manually mai
 # ✨ Core Features
 
 ## 🏢 Multi-Tenant SaaS Architecture
-
 Each organization operates inside its own isolated tenant workspace while sharing a unified infrastructure.
-
-Features include:
-
 - Tenant-specific donor databases
 - Isolated analytics and records
 - Role-based workspace permissions
 - Organization approval workflows
 
----
-
 ## 🌎 Geographic Data Locking
-
-The platform uses a hierarchical location structure:
-
-Country → State → District
-
-This enables:
-
+The platform uses a hierarchical location structure: Country → State → District.
 - Highly localized donor matching
 - Region-specific organization management
 - Accurate public donor searches
 - Administrative geographic control
 
----
-
 ## 🔐 Advanced Security
-
-Blood Connect is designed with security-first principles.
-
-### Security Features
-
-- HTTP-only JWT authentication
-- Refresh token rotation
-- CSRF protection
-- Email OTP verification
-- Phone OTP verification
-- TOTP 2FA support
-- Role-based authorization
-- Rate limiting
-- Secure password hashing
-- Audit logging
-- Soft deletion recovery
-- Permission-based API boundaries
+- HTTP-only JWT authentication & refresh token rotation
+- CSRF protection & secure cookie configurations
+- Email OTP verification & TOTP 2FA support
+- Role-Based Access Control (RBAC)
+- Global platform tracking powered by `django-simple-history`
+- Soft deletion recovery & strict tenant-isolated query boundaries
 
 ---
 
-## 👥 Role-Based Access Control (RBAC)
+# 👥 Role-Based Access Control (RBAC)
 
-### 🛡 Super Admin
-
+### 🛡️ Super Admin
 Global platform management and oversight.
-
-Capabilities:
-
-- Approve or suspend organizations
+- Approve or suspend organizations (`PENDING`, `ACTIVE`, `SUSPENDED` statuses)
 - Manage geographic master data
-- View system logs
-- Manage advertisements
-- Monitor analytics
-- Respond to support tickets
-
----
+- View system audit logs & respond to support tickets
+- Manage public advertisements & review incoming contact forms
 
 ### 🏥 Organization Admin
-
-Tenant-level management for hospitals, NGOs, and blood banks.
-
-Capabilities:
-
-- Manage donor records
-- Upload donors in bulk
-- Log blood donations
-- View analytics dashboards
-- Manage staff access
-- Create support tickets
-
----
+Tenant-level management for approved hospitals, NGOs, and blood banks.
+- Manage isolated donor records & log donations (Whole Blood, Plasma, Platelets)
+- Perform bulk donor uploads via CSV/Excel sheets
+- Track real-time donor operational analytics & manage payment configurations
+- Open technical support tickets directly to Super Admins
 
 ### 🙋 Public Users & Donors
-
-Accessible public-facing features without requiring authentication.
-
-Capabilities:
-
-- Search eligible donors
-- View verified organizations
-- Contact administrators
-- Access public awareness information
+Unauthenticated, rate-limited public access.
+- Search eligible local donors using Blood Group, State, and District filters
+- View public profiles of verified medical organizations
+- Submit public contact forms
 
 ---
 
-# 📊 Platform Benefits
+# 🏗️ System Architecture
 
-- Faster donor discovery
-- Improved regional blood availability coordination
-- Better operational efficiency for organizations
-- Secure medical record tracking
-- Transparent audit history
-- Scalable SaaS infrastructure
-- Reduced manual administrative overhead
-
----
-
-# 🏗 System Architecture
-
-## Backend
-
-- Python
-- Django
-- Django REST Framework
-- PostgreSQL
-- django-simple-history
-
-## Frontend
-
-- React 19
-- Vite
-- TailwindCSS v4
-- React Router v7
-- React Query
-- Recharts
-
-## Infrastructure
-
-- Docker
-- Docker Compose
-- Gunicorn
-- Nginx Reverse Proxy
-
----
-
-# 📈 Scalability Considerations
-
-The platform is designed with long-term scalability in mind.
-
-Current architectural considerations include:
-
-- Tenant-isolated query patterns
-- Indexed geographic filtering
-- Optimized donor search operations
-- Stateless containerized deployment
-- Horizontal deployment readiness
-- API-first backend structure
+Blood Connect is architected as a cohesive application optimized for unified deployments:
+- **Backend:** Python 3.12, Django 5.2, and Django REST Framework packaged as a unified monolithic application (`api/`).
+- **Frontend:** React 19, Vite, and TailwindCSS v4 compiled into an optimized Single Page Application (SPA).
+- **Production Integration:** Built via a multi-stage Docker environment. The frontend is compiled via Node.js and injected directly into the Django backend container. Production routing uses WhiteNoise along with a custom Django URL regex catch-all to gracefully handle React SPA routing text fallbacks without requiring a separate frontend server instance.
 
 ---
 
@@ -174,181 +81,118 @@ Current architectural considerations include:
 ```text
 blood-connect/
 ├── backend/
-│   ├── apps/
-│   ├── authentication/
-│   ├── organizations/
-│   ├── donors/
-│   ├── analytics/
-│   ├── locations/
-│   ├── support/
-│   ├── config/
-│   ├── requirements/
-│   ├── Dockerfile
-│   └── manage.py
+│   ├── api/                  # Main monolithic application handling all modules
+│   │   ├── management/       # Custom commands (e.g., populate_geo, seed_database)
+│   │   ├── migrations/       # Database evolution histories
+│   │   ├── tests/            # Automated test matrices
+│   │   ├── views/            # Functional endpoints divided by domain boundaries
+│   │   ├── models.py         # Central database layout & business logic
+│   │   ├── serializers.py    # DRF request/response transforms
+│   │   └── urls.py           # Dedicated core route maps
+│   │
+│   ├── config/               # Project-wide settings, WSGI/ASGI configurations
+│   │   ├── settings.py       # Security, cookie setups, database connections
+│   │   └── urls.py           # Global root router with OpenAPI & React SPA catch-all
+│   │
+│   ├── requirements.txt      # Main Python dependencies
+│   └── manage.py             # Django entry point
 │
 ├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── components/
-│   ├── pages/
-│   ├── hooks/
-│   ├── services/
-│   ├── layouts/
-│   ├── assets/
-│   └── vite.config.js
+│   ├── src/                  # Core React source code
+│   │   ├── components/       # Visual components (Layouts, UI, Auth wrappers)
+│   │   └── pages/            # View routing targets (Public, Admin, Superadmin dashboards)
+│   ├── public/               # Public assets
+│   ├── package.json          # UI dependencies and configuration
+│   └── vite.config.js        # Vite compilation pipeline
 │
-├── docs/
-│   ├── screenshots/
-│   └── architecture/
-│
-├── docker-compose.yml
-├── README.md
-├── API_DOCUMENTATION.md
-├── DEPLOYMENT.md
-└── USER_GUIDE.md
+├── docker-compose.yml        # Multi-container orchestration (db, web)
+└── Dockerfile                # Production multi-stage build schema
+
 ```
 
 ---
 
-# 🚀 Quick Start
+# 🚀 Quick Start (Dockerized Production Deployment)
 
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/navafv/blood-connect.git
+git clone [https://github.com/navafv/blood-connect.git](https://github.com/navafv/blood-connect.git)
 cd blood-connect
-```
 
----
+```
 
 ## 2. Configure Environment Variables
 
-Create a `.env` file in the root directory using:
+Create a `.env` file in the root directory following the definitions specified inside `DEPLOYMENT.md`.
 
-```bash
-backend/.env.example
-```
-
----
-
-## 3. Start the Application
+## 3. Build & Run the Combined Containers
 
 ```bash
 docker-compose up -d --build
+
 ```
 
----
+## 4. Execute Initial Core Setup
 
-## 4. Run Database Migrations
+Run the migrations, load static geographic baseline hierarchies, and instantiate the root administrator:
 
 ```bash
 docker-compose exec web python manage.py migrate
-```
-
----
-
-## 5. Populate Geographic Master Data
-
-```bash
 docker-compose exec web python manage.py populate_geo
-```
-
----
-
-## 6. Create Initial Super Admin
-
-```bash
 docker-compose exec web python manage.py createsuperuser
+
 ```
 
 ---
 
-# 🌐 Access URLs
+# 🌐 Access Routing Map
 
-| Service    | URL                       |
-| ---------- | ------------------------- |
-| Frontend   | http://localhost:8000     |
-| API        | http://localhost:8000/api |
-| PostgreSQL | localhost:5432            |
+Because the platform utilizes an integrated deployment pipeline, a single active port manages both server requirements and interactive user actions:
+
+| Layer | URL Pattern / Endpoint | Handled By |
+| --- | --- | --- |
+| **Combined Frontend SPA** | `http://localhost:8000/` | WhiteNoise / Django SPA Fallback Engine |
+| **Core Core REST API** | `http://localhost:8000/api/` | Django REST Framework (`api.urls`) |
+| **OpenAPI / Swagger Specs** | `http://localhost:8000/api/schema/swagger-ui/` | drf-spectacular |
+| **Django Administration** | `http://localhost:8000/admin/` | Core Django Admin Panel |
+| **PostgreSQL Database** | `localhost:5432` | Isolated Database Instance |
 
 ---
 
-# 🧪 Development Workflow
+# 🧪 Independent Development Workflow
 
-## Backend
+For active platform modifications, you can spin up the individual layers isolated from each other:
+
+### Running the Backend Engine Independently
 
 ```bash
 cd backend
 python manage.py runserver
+
 ```
 
-## Frontend
+### Running the Interactive UI Development Server
 
 ```bash
 cd frontend
 npm install
 npm run dev
+
 ```
 
 ---
 
-# 🔌 API Design Principles
+# 📄 Accompanying Project References
 
-- RESTful architecture
-- JWT cookie authentication
-- Permission-based endpoint protection
-- Standardized JSON responses
-- Pagination support
-- Secure tenant isolation
-- Rate-limited public endpoints
-
----
-
-# 📦 Deployment
-
-The application supports production deployment using:
-
-- Docker
-- Docker Compose
-- Gunicorn
-- Nginx
-- PostgreSQL
-
-See:
-
-```text
-DEPLOYMENT.md
-```
-
-for complete deployment instructions.
-
----
-
-# 📄 Documentation
-
-| File                 | Description             |
-| -------------------- | ----------------------- |
-| README.md            | Project overview        |
-| API_DOCUMENTATION.md | API reference           |
-| DEPLOYMENT.md        | Deployment guide        |
-| USER_GUIDE.md        | End-user platform guide |
+| File Reference | Scope & Intended Target audience |
+| --- | --- |
+| [API_DOCUMENTATION.md](API_DOCUMENTATION.md) | Core routing definitions, schemas, and API validation maps. |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Server metrics, environment layouts, SSL adjustments, and production security rules. |
+| [USER_GUIDE.md](USER_GUIDE.md) | Workflow walkthroughs tailored specifically for Donors, Tenant Admins, and Super Admins. |
 
 ---
 
 # 📜 License
 
 This project is licensed under the MIT License.
-
----
-
-# 🤝 Contributing
-
-Contributions, feature suggestions, and issue reports are welcome.
-
-Please open an issue or submit a pull request.
-
----
-
-# ❤️ Mission
-
-Blood Connect aims to improve regional blood accessibility by providing secure, scalable, and efficient donor management infrastructure for medical organizations and communities.

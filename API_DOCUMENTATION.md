@@ -1,14 +1,13 @@
 # Blood Connect - API Documentation
 
-The Blood Connect REST API is built using Django REST Framework (DRF) and follows RESTful design principles with secure multi-tenant access boundaries.
+The Blood Connect REST API is built using Django REST Framework (DRF) and follows RESTful design principles with secure multi-tenant access boundaries. 
 
-The API provides endpoints for:
-
-* Authentication
-* Public donor discovery
-* Geographic master data
-* Tenant workspace operations
-* Global administrative management
+The API is centralized within a single backend application and provides endpoints for:
+* Authentication & Identity
+* Public Directory & Discovery
+* Geographic Master Data
+* Tenant Workspace Operations
+* Global Administrative Management
 
 ---
 
@@ -17,17 +16,13 @@ The API provides endpoints for:
 The platform uses JWT authentication stored in secure HTTP-only cookies.
 
 ## Authentication Flow
-
-1. User logs in with email/password
-2. JWT access and refresh tokens are issued
-3. Tokens are stored in HTTP-only cookies
-4. Browser automatically attaches cookies to future requests
-5. Optional TOTP 2FA verification completes authentication
-
----
+1. User logs in with email/password.
+2. JWT access and refresh tokens are issued.
+3. Tokens are stored in HTTP-only cookies.
+4. Browser automatically attaches cookies to future requests.
+5. Optional TOTP 2FA verification completes authentication if enabled.
 
 ## Security Features
-
 * HTTP-only JWT cookies
 * CSRF protection
 * Refresh token rotation
@@ -36,23 +31,20 @@ The platform uses JWT authentication stored in secure HTTP-only cookies.
 * Role-based endpoint permissions
 * Tenant-level access isolation
 * Audit logging
-* Rate limiting on public endpoints
 
 ---
 
 # 📦 Response Format
 
 ## Success Response
-
 ```json
 {
   "success": true,
   "message": "Operation completed successfully.",
   "data": {}
 }
-```
 
----
+```
 
 ## Error Response
 
@@ -62,6 +54,7 @@ The platform uses JWT authentication stored in secure HTTP-only cookies.
   "message": "Validation failed.",
   "errors": {}
 }
+
 ```
 
 ---
@@ -72,88 +65,46 @@ Base API URL:
 
 ```text
 /api/
+
 ```
 
 ---
 
-# 1️⃣ Authentication Endpoints
+# 1️⃣ Authentication & Identity Endpoints
 
 Base Path:
 
 ```text
 /api/auth/
+
 ```
 
-Handles authentication, registration, verification, and session management.
+Handles authentication, registration, credential recovery, and session management.
 
----
+## Authentication & Tokens
 
-## Login
+* `POST /api/auth/login/` - Authenticates the user and issues JWT cookies.
+* `POST /api/auth/login/2fa/` - Verifies TOTP code for accounts with 2FA enabled.
+* `POST /api/auth/logout/` - Clears authentication cookies and invalidates session tokens.
+* `POST /api/auth/refresh/` - Refreshes the JWT access token using the HTTP-only refresh cookie.
 
-```http
-POST /api/auth/login/
-```
+## Registration & Verification
 
-Authenticates the user and issues JWT cookies.
+* `POST /api/auth/register/` - Registers a new tenant organization.
+* `POST /api/auth/verify-email/` - Verifies user email using OTP.
+* `POST /api/auth/resend-otp/` - Resends the email verification OTP.
 
-### Request Body
+## User Profile & Security
 
-```json
-{
-  "email": "admin@example.com",
-  "password": "securepassword"
-}
-```
+* `GET /api/auth/me/` - Returns the currently authenticated user's profile and permissions.
+* `GET /api/auth/security/` - Retrieves user security settings.
+* `POST /api/auth/2fa/setup/` - Generates a TOTP secret and QR code for 2FA setup.
+* `POST /api/auth/2fa/toggle/` - Enables or disables TOTP 2FA.
 
----
+## Password Management
 
-## Verify 2FA
-
-```http
-POST /api/auth/login/2fa/
-```
-
-Verifies TOTP code for accounts with 2FA enabled.
-
----
-
-## Register Organization
-
-```http
-POST /api/auth/register/
-```
-
-Registers a new tenant organization.
-
----
-
-## Logout
-
-```http
-POST /api/auth/logout/
-```
-
-Clears authentication cookies and invalidates session tokens.
-
----
-
-## Current User
-
-```http
-GET /api/auth/me/
-```
-
-Returns the currently authenticated user's profile and permissions.
-
----
-
-## Verify Email
-
-```http
-POST /api/auth/verify-email/
-```
-
-Verifies user email using OTP.
+* `POST /api/auth/password-reset-request/` - Requests a password reset link/OTP.
+* `POST /api/auth/password-reset-confirm/` - Confirms the new password.
 
 ---
 
@@ -163,57 +114,16 @@ Base Path:
 
 ```text
 /api/public/
+
 ```
 
 Public endpoints are accessible without authentication and protected using rate limiting.
 
----
-
-## Search Donors
-
-```http
-GET /api/public/donors/search/
-```
-
-Search active and publicly searchable donors.
-
-### Query Parameters
-
-| Parameter   | Type   | Required |
-| ----------- | ------ | -------- |
-| blood_group | string | Yes      |
-| state       | string | No       |
-| district    | string | No       |
-
----
-
-## Organization Public Profile
-
-```http
-GET /api/public/organizations/{slug}/
-```
-
-Returns the public profile of an approved organization.
-
----
-
-## Advertisements
-
-```http
-GET /api/public/advertisements/
-```
-
-Fetches active public advertisements.
-
----
-
-## Public Contact Form
-
-```http
-POST /api/public/contact/
-```
-
-Submits a public contact message.
+* `GET /api/public/donors/search/` - Search active and publicly searchable donors. (Filters: `blood_group`, `state`, `district`)
+* `GET /api/public/organizations/{slug}/` - Returns the public profile of an approved organization.
+* `GET /api/public/advertisements/` - Fetches active public advertisements.
+* `POST /api/public/ads/{id}/click/` - Tracks an ad click and redirects to the target link.
+* `POST /api/public/contact/` - Submits a public contact message.
 
 ---
 
@@ -223,33 +133,14 @@ Base Path:
 
 ```text
 /api/locations/
+
 ```
 
-Read-only endpoints used for geographic selection and filtering.
+Read-only endpoints used for geographic selection and filtering. Accessible without authentication.
 
----
-
-## Countries
-
-```http
-GET /api/locations/countries/
-```
-
----
-
-## States
-
-```http
-GET /api/locations/states/
-```
-
----
-
-## Districts
-
-```http
-GET /api/locations/districts/
-```
+* `GET /api/locations/countries/`
+* `GET /api/locations/states/`
+* `GET /api/locations/districts/`
 
 ---
 
@@ -259,73 +150,27 @@ Base Path:
 
 ```text
 /api/tenant/
+
 ```
 
-Requires:
-
-```text
-ORG_ADMIN
-```
-
+Requires: `ORG_ADMIN`
 All tenant endpoints are automatically scoped to the authenticated organization.
 
----
+## Dashboard & Organization
 
-## Dashboard Statistics
-
-```http
-GET /api/tenant/dashboard-stats/
-```
-
-Returns organization-specific analytics and donor metrics.
-
----
+* `GET /api/tenant/dashboard-stats/` - Returns organization-specific analytics and donor metrics.
+* `GET /api/tenant/organization/` - Retrieves tenant organization details.
 
 ## Donor Management
 
-```http
-GET /api/tenant/donors/
-POST /api/tenant/donors/
-```
+* `GET|POST /api/tenant/donors/` - Manage tenant donor records.
+* `POST /api/tenant/donors/bulk-upload/` - Bulk import donors (Supports CSV and Excel).
+* `POST /api/tenant/donors/{id}/log-donation/` - Logs a blood donation event (Whole Blood, Plasma, Platelets).
 
-Manage tenant donor records.
+## Billing & Support
 
----
-
-## Bulk Donor Upload
-
-```http
-POST /api/tenant/donors/bulk-upload/
-```
-
-Supports CSV and Excel uploads.
-
----
-
-## Log Donation
-
-```http
-POST /api/tenant/donors/{id}/log-donation/
-```
-
-Logs a blood donation event.
-
-### Supported Donation Types
-
-* Whole Blood
-* Plasma
-* Platelets
-
----
-
-## Support Tickets
-
-```http
-GET /api/tenant/support-tickets/
-POST /api/tenant/support-tickets/
-```
-
-Allows tenants to communicate with Super Admins.
+* `GET /api/tenant/billing/payments/` - Retrieve organization payment history.
+* `GET|POST /api/tenant/support-tickets/` - Allows tenants to communicate with Super Admins.
 
 ---
 
@@ -335,126 +180,84 @@ Base Path:
 
 ```text
 /api/superadmin/
+
 ```
 
-Requires:
-
-```text
-SUPER_ADMIN
-```
-
+Requires: `SUPER_ADMIN`
 Provides global platform management capabilities.
 
----
+## Global Oversight
 
-## Global Dashboard Statistics
+* `GET /api/superadmin/dashboard-stats/` - Returns platform-wide metrics.
+* `GET /api/superadmin/logs/` - Returns system audit and activity logs.
+* `POST /api/superadmin/system/cron-webhook/` - Webhook for triggering background/scheduled tasks.
 
-```http
-GET /api/superadmin/dashboard-stats/
-```
+## Organization & Financial Management
 
-Returns platform-wide metrics.
+* `GET /api/superadmin/organizations/` - Lists all tenant organizations.
+* `PATCH /api/superadmin/organizations/{id}/status/` - Changes organization status (`PENDING`, `ACTIVE`, `SUSPENDED`).
+* `POST /api/superadmin/organizations/{id}/extend-subscription/` - Manually extends a tenant's subscription.
+* `GET /api/superadmin/payments/` - Manages platform payments.
 
----
+## Platform Operations
 
-## Organizations
+* `GET|POST /api/superadmin/ads/` - Manages public advertisements.
+* `GET /api/superadmin/messages/` - Reviews public contact messages.
+* `GET /api/superadmin/archived-donors/` - Access globally archived/deleted donor records.
+* `GET /api/superadmin/support-tickets/` - Manages and responds to tenant support tickets.
 
-```http
-GET /api/superadmin/organizations/
-```
+## Master Data Management
 
-Lists all tenant organizations.
-
----
-
-## Approve or Suspend Organizations
-
-```http
-PATCH /api/superadmin/organizations/{id}/status/
-```
-
-Changes organization status.
-
-### Supported Status Values
-
-* PENDING
-* ACTIVE
-* SUSPENDED
-* REJECTED
+* `GET|POST /api/superadmin/locations/countries/`
+* `GET|POST /api/superadmin/locations/states/`
+* `GET|POST /api/superadmin/locations/districts/`
 
 ---
 
-## System Logs
+# 6️⃣ OpenAPI / Swagger Specifications
 
-```http
-GET /api/superadmin/logs/
-```
+The API provides auto-generated OpenAPI documentation.
 
-Returns audit and activity logs.
-
----
-
-## Advertisement Management
-
-```http
-GET /api/superadmin/ads/
-POST /api/superadmin/ads/
-```
-
-Manages public advertisements.
+* `GET /api/schema/` - Raw OpenAPI YAML/JSON schema.
+* `GET /api/schema/swagger-ui/` - Interactive Swagger UI documentation.
+* `GET /api/schema/redoc/` - ReDoc interactive API documentation.
 
 ---
 
 # ⚡ Rate Limiting
 
-Public endpoints are rate-limited to reduce abuse and spam attacks.
-
-Examples:
+Public endpoints are rate-limited to reduce abuse and spam attacks. Examples include:
 
 * Public donor search
 * Contact forms
-* Authentication endpoints
+* Authentication and OTP endpoints
 
 ---
 
 # 🧾 Audit & History Tracking
 
-Critical actions are tracked for security and accountability.
-
+Critical actions are tracked for security and accountability using `django-simple-history`.
 Tracked events include:
 
 * Authentication activity
 * Organization approval changes
-* Donor modifications
+* Donor modifications & Soft deletions
 * Donation records
 * Administrative actions
-
-Historical record tracking is implemented using:
-
-```text
-django-simple-history
-```
 
 ---
 
 # 🔒 Multi-Tenant Isolation
 
 The API enforces strict tenant-level isolation.
-
 Organization administrators:
 
-* Cannot access data from other organizations
-* Are automatically scoped using organization-aware query filtering
-* Operate inside isolated permission boundaries
+* Cannot access data from other organizations.
+* Are automatically scoped using organization-aware query filtering (`get_for_tenant`).
+* Operate inside isolated permission boundaries.
 
 ---
 
 # 📄 API Versioning
 
-Current API Version:
-
-```text
-v1
-```
-
-Future versions will maintain backward compatibility where possible.
+Routing is integrated directly into the core project under the `/api/` base path. Future iteration schemas will implement explicit path versioning (e.g., `/api/v2/`) if structural deprecations occur.
