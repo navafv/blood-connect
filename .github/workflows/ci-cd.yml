@@ -1,4 +1,4 @@
-name: BloodConnect CI/CD Pipeline
+name: BlooDonate CI/CD Pipeline
 
 on:
   push:

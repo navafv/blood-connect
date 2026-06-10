@@ -86,7 +86,7 @@ export default function OrganizationProfile() {
   }
 
   // --- SEO & Image Optimization Strategy ---
-  const pageTitle = `${org.name} | BloodConnect Emergency Directory`;
+  const pageTitle = `${org.name} | BlooDonate Emergency Directory`;
   const pageDescription = `Contact ${org.name} located in ${org.district_name}, ${org.state_name} for emergency blood requests and donation queries.`;
 
   // Optimize images for Lighthouse performance

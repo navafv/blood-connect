@@ -21,7 +21,7 @@ export function Footer() {
               <Droplet className="h-5 w-5 text-rose-500 fill-rose-500/20" />
             </div>
             <span className="text-xl font-black tracking-tight text-white">
-              BloodConnect
+              BlooDonate
             </span>
           </div>
 
@@ -57,7 +57,7 @@ export function Footer() {
         {/* Bottom Metadata Bar */}
         <div className="mt-8 pt-8 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-400 font-medium text-center md:text-left tracking-wide">
-            &copy; {currentYear} BloodConnect SaaS Platform. All rights
+            &copy; {currentYear} BlooDonate SaaS Platform. All rights
             reserved.
           </p>
           <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 tracking-wide">

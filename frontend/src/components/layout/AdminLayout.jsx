@@ -84,7 +84,7 @@ export function AdminLayout() {
               Account Suspended
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Your organization's access to the BloodConnect platform has been
+              Your organization's access to the BlooDonate platform has been
               suspended by the administrator, likely due to an expired
               subscription. Please contact support to resolve this issue.
             </p>
@@ -171,7 +171,7 @@ export function AdminLayout() {
               </div>
             )}
             <span className="text-xl font-black tracking-tight text-white truncate">
-              {orgData?.name || "BloodConnect"}
+              {orgData?.name || "BlooDonate"}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">

@@ -240,7 +240,7 @@ export default function ManageDonors() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "bloodconnect_donor_import_template.csv";
+    a.download = "bloodonate_donor_import_template.csv";
     a.click();
     toast("Template downloaded.", { icon: "📥" });
   };

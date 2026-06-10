@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
         <div className="space-y-4">
           <p>
             Protecting donor privacy is a core architectural principle of the
-            BloodConnect system:
+            BlooDonate system:
           </p>
           <ul className="list-disc pl-5 space-y-3 text-slate-400">
             <li>
@@ -120,7 +120,7 @@ export default function PrivacyPolicy() {
       content: (
         <div className="space-y-4">
           <p>
-            As BloodConnect operates as a Data Processor for our subscribing
+            As BlooDonate operates as a Data Processor for our subscribing
             healthcare organizations (the Data Controllers), individual donors
             seeking to exercise their rights to access, correct, or delete their
             records must submit requests directly to the specific hospital or
@@ -169,7 +169,7 @@ export default function PrivacyPolicy() {
         {/* Preamble */}
         <div className="prose prose-invert max-w-none text-slate-400 leading-relaxed text-lg">
           <p>
-            Welcome to BloodConnect. This Privacy Policy governs your
+            Welcome to BlooDonate. This Privacy Policy governs your
             utilization of our SaaS infrastructure, public directory APIs, and
             affiliated services. By accessing our platform as an organizational
             tenant or querying our directory as a public user, you explicitly
@@ -218,10 +218,10 @@ export default function PrivacyPolicy() {
             Protection Officer.
           </p>
           <a
-            href="mailto:privacy@bloodconnect.example.com"
+            href="mailto:privacy@bloodonate.org"
             className="relative z-10 inline-flex items-center font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
           >
-            privacy@bloodconnect.com
+            privacy@bloodonate.org
           </a>
         </div>
       </div>

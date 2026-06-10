@@ -29,7 +29,7 @@ export function Navbar() {
               <Droplet className="h-5 w-5 text-rose-500 fill-rose-500/20" />
             </div>
             <span className="text-xl font-black tracking-tight text-white">
-              BloodConnect
+              BlooDonate
             </span>
           </Link>
 

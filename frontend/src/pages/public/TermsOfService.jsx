@@ -23,7 +23,7 @@ export default function TermsOfService() {
       content: (
         <div className="space-y-4">
           <p>
-            By accessing the BloodConnect public directory or provisioning an
+            By accessing the BlooDonate public directory or provisioning an
             Organization tenant on our Software-as-a-Service (SaaS) platform,
             you agree to be bound by these Terms of Service. If you disagree
             with any stipulation herein, you must immediately cease utilization
@@ -38,7 +38,7 @@ export default function TermsOfService() {
       content: (
         <div className="space-y-5">
           <p className="text-rose-400 font-semibold text-lg">
-            BloodConnect is exclusively a technology platform and data
+            BlooDonate is exclusively a technology platform and data
             directory; it is NOT a healthcare provider, medical facility, or
             blood bank.
           </p>
@@ -134,7 +134,7 @@ export default function TermsOfService() {
         <div className="space-y-4">
           <p>
             To the maximum extent permitted by applicable jurisprudence,
-            BloodConnect and its engineering entities shall not be liable for
+            BlooDonate and its engineering entities shall not be liable for
             any indirect, incidental, special, consequential, or punitive
             damages, whether incurred directly or indirectly, resulting from:
           </p>
@@ -276,10 +276,10 @@ export default function TermsOfService() {
             Service, please address our legal compliance team directly.
           </p>
           <a
-            href="mailto:legal@bloodconnect.example.com"
+            href="mailto:legal@bloodonate.org"
             className="relative z-10 inline-flex items-center font-semibold text-blue-400 hover:text-blue-300 transition-colors"
           >
-            legal@bloodconnect.com
+            legal@bloodonate.org
           </a>
         </div>
       </div>

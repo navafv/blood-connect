@@ -38,7 +38,7 @@ class Command(BaseCommand):
         # 2. Super Admin Setup
         self.stdout.write("Creating Super Admin...")
         CustomUser.objects.create_superuser(
-            email="admin@bloodconnect.com",
+            email="admin@bloodonate.org",
             password="adminpassword123",
             role="SUPER_ADMIN",
             is_email_verified=True
@@ -158,6 +158,6 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("-" * 50))
         self.stdout.write(self.style.SUCCESS(f"✅ Database seeded successfully with {len(saved_donors)} Donors and {len(donation_records_to_create)} Clinical Records!"))
-        self.stdout.write(self.style.SUCCESS("SuperAdmin Login : admin@bloodconnect.com / adminpassword123"))
+        self.stdout.write(self.style.SUCCESS("SuperAdmin Login : admin@bloodonate.org / adminpassword123"))
         self.stdout.write(self.style.SUCCESS("Hospital Login   : staff@citygeneral.com / staffpassword123"))
         self.stdout.write(self.style.SUCCESS("-" * 50))

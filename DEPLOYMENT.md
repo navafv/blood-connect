@@ -1,8 +1,8 @@
-# Blood Connect - Deployment Guide
+# BlooDonate - Deployment Guide
 
-This guide explains how to deploy Blood Connect using Docker and Docker Compose in a production Linux environment. 
+This guide explains how to deploy BlooDonate using Docker and Docker Compose in a production Linux environment. 
 
-Blood Connect uses a **unified containerized deployment architecture**. The React frontend is built dynamically in a multi-stage Docker process and served directly by the Django backend using WhiteNoise, meaning you only need to manage a single application container alongside your database.
+BlooDonate uses a **unified containerized deployment architecture**. The React frontend is built dynamically in a multi-stage Docker process and served directly by the Django backend using WhiteNoise, meaning you only need to manage a single application container alongside your database.
 
 Recommended environments:
 * Ubuntu Server (22.04+)
@@ -61,9 +61,9 @@ Example `.env`:
 # Database Credentials
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your_secure_password
-POSTGRES_DB=bloodconnect
+POSTGRES_DB=bloodonate
 # Leave this as 'db' to match the docker-compose internal network
-DATABASE_URL=postgres://postgres:your_secure_password@db:5432/bloodconnect
+DATABASE_URL=postgres://postgres:your_secure_password@db:5432/bloodonate
 
 # Django Security
 DJANGO_SECRET_KEY=your_very_long_secret_key_here
@@ -158,7 +158,7 @@ PostgreSQL ('db' container)
 
 To expose the Docker container to the public securely, configure Nginx to reverse proxy port `8000`.
 
-### 1. Nginx Configuration Example (`/etc/nginx/sites-available/bloodconnect`)
+### 1. Nginx Configuration Example (`/etc/nginx/sites-available/bloodonate`)
 
 ```nginx
 server {
@@ -178,7 +178,7 @@ server {
 ### 2. Enable Site and Issue SSL
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/bloodconnect /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/bloodonate /etc/nginx/sites-enabled/
 sudo systemctl restart nginx
 sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
@@ -212,7 +212,7 @@ docker-compose down
 ### Backup PostgreSQL Database
 
 ```bash
-docker exec -t bloodconnect_db pg_dump -U postgres -d bloodconnect -F c > bloodconnect_backup_$(date +%Y%m%d).dump
+docker exec -t bloodonate_db pg_dump -U postgres -d bloodonate -F c > bloodonate_backup_$(date +%Y%m%d).dump
 
 ```
 

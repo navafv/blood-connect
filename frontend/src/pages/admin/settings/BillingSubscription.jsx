@@ -59,9 +59,9 @@ export default function BillingSubscription() {
   const adminPhone = "+919876543210";
   const whatsappMessage = orgData
     ? encodeURIComponent(
-        `Hello, I need to activate my BloodConnect subscription for my organization: ${orgData.name}.`,
+        `Hello, I need to activate my BlooDonate subscription for my organization: ${orgData.name}.`,
       )
-    : "Hello, I need to activate my BloodConnect subscription.";
+    : "Hello, I need to activate my BlooDonate subscription.";
 
   if (isOrgLoading || isPaymentsLoading) {
     return (

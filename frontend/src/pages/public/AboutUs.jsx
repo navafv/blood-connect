@@ -63,7 +63,7 @@ export default function AboutUs() {
           </h1>
 
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            BloodConnect was founded on a simple premise: no one should ever
+            BlooDonate was founded on a simple premise: no one should ever
             lose a loved one simply because they couldn't find a matching blood
             donor in time.
           </p>

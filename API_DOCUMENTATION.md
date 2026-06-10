@@ -1,6 +1,6 @@
-# Blood Connect - API Documentation
+# BlooDonate - API Documentation
 
-The Blood Connect REST API is built using Django REST Framework (DRF) and follows RESTful design principles with secure multi-tenant access boundaries. 
+The BlooDonate REST API is built using Django REST Framework (DRF) and follows RESTful design principles with secure multi-tenant access boundaries. 
 
 The API is centralized within a single backend application and provides endpoints for:
 * Authentication & Identity

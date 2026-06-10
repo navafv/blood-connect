@@ -288,7 +288,7 @@ export default function AddDonor() {
                   <Input
                     name="phone_number"
                     type="tel"
-                    placeholder="+91 98765 43210"
+                    placeholder="+919876543210"
                     className={`font-mono h-11 ${fieldErrors.phone_number ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
                     value={formData.phone_number}
                     onChange={handleChange}

@@ -155,7 +155,7 @@ export default function SystemLogs() {
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
             </div>
             <span className="text-xs text-slate-400 ml-3 font-mono tracking-tight uppercase">
-              root@bloodconnect:~# tail -f audit.log
+              root@bloodonate:~# tail -f audit.log
             </span>
           </div>
           <Button

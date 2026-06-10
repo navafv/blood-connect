@@ -3,12 +3,12 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: bloodconnect_db
+    container_name: bloodonate_db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: bloodconnect
+      POSTGRES_DB: bloodonate
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -18,7 +18,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: bloodconnect_web
+    container_name: bloodonate_web
     restart: unless-stopped
     command: >
       sh -c "python manage.py migrate && 
@@ -37,7 +37,7 @@ services:
       
     environment:
       # Override the DATABASE_URL to use the internal Docker network connection
-      - DATABASE_URL=postgres://postgres:postgrespassword@db:5432/bloodconnect
+      - DATABASE_URL=postgres://postgres:postgrespassword@db:5432/bloodonate
 
 volumes:
   postgres_data:

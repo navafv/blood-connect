@@ -56,7 +56,7 @@ export function DonorCard({ donor }) {
   // --- WhatsApp URL formatting ---
   const cleanPhone = donor.organization_contact?.replace(/[^0-9]/g, "");
   const waMessage = encodeURIComponent(
-    `Urgent query regarding the ${donor.blood_group} donor listed on BloodConnect.`,
+    `Urgent query regarding the ${donor.blood_group} donor listed on BlooDonate.`,
   );
 
   return (

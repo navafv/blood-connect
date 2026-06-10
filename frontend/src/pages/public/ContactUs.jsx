@@ -106,10 +106,10 @@ export default function ContactUs() {
                       For general inquiries and support:
                     </p>
                     <a
-                      href="mailto:support@bloodconnect.example.com"
+                      href="mailto:support@bloodonate.org"
                       className="text-rose-400 hover:text-rose-300 font-medium transition-colors"
                     >
-                      support@bloodconnect.com
+                      support@bloodonate.org
                     </a>
                   </div>
                 </div>
@@ -145,7 +145,7 @@ export default function ContactUs() {
                       Headquarters
                     </h3>
                     <p className="text-sm text-slate-400 leading-relaxed">
-                      BloodConnect SaaS Technologies
+                      BlooDonate SaaS Technologies
                       <br />
                       Munderi, Kannur
                       <br />
@@ -166,7 +166,7 @@ export default function ContactUs() {
                 Medical Emergency?
               </h3>
               <p className="text-sm text-amber-200/70 leading-relaxed">
-                BloodConnect is a directory and software provider, not a medical
+                BlooDonate is a directory and software provider, not a medical
                 facility. We do not stock blood. In case of a severe medical
                 emergency, please dial emergency services immediately or head to
                 your nearest hospital.

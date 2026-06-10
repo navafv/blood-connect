@@ -164,7 +164,7 @@ export function SuperAdminLayout() {
                 System Administrator
               </p>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">
-                admin@bloodconnect.com
+                admin@bloodonate.org
               </p>
             </div>
           </div>

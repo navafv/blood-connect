@@ -156,7 +156,7 @@ export default function Home() {
           <div className="mb-16 md:flex md:items-end md:justify-between">
             <div className="max-w-2xl">
               <h2 className="text-3xl font-bold text-white mb-4">
-                Why Use BloodConnect?
+                Why Use BlooDonate?
               </h2>
               <p className="text-slate-400 text-lg">
                 Our platform is designed to be the fastest, most reliable bridge

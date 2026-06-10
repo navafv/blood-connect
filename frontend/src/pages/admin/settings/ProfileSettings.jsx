@@ -208,7 +208,7 @@ export default function ProfileSettings() {
                     </label>
                     <div className="flex rounded-lg shadow-sm">
                       <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-slate-700 bg-slate-800/50 text-slate-400 text-sm">
-                        bloodconnect.com/
+                        bloodonate.org/
                       </span>
                       <Input
                         name="slug"
@@ -393,7 +393,7 @@ export default function ProfileSettings() {
                     </h2>
                     <div className="flex items-center gap-1.5 mt-2 text-rose-400 font-medium">
                       <LinkIcon className="h-4 w-4" />
-                      bloodconnect.com/{orgData.slug}
+                      bloodonate.org/{orgData.slug}
                     </div>
                   </div>
                 </div>
