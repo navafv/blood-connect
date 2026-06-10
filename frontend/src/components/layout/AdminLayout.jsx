@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { Outlet, useNavigate, useLocation, Navigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   Menu,
   Droplet,
@@ -75,9 +76,15 @@ export function AdminLayout() {
   if (orgData?.status === "SUSPENDED") {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-slate-950 px-4">
+        <Helmet>
+          <title>Account Suspended | BlooDonate</title>
+        </Helmet>
         <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-rose-500/20 p-8 rounded-3xl text-center space-y-6 shadow-2xl">
           <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-full flex items-center justify-center mx-auto shadow-inner">
-            <AlertOctagon className="h-10 w-10 text-rose-500" />
+            <AlertOctagon
+              className="h-10 w-10 text-rose-500"
+              aria-hidden="true"
+            />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white mb-2">
@@ -107,6 +114,14 @@ export function AdminLayout() {
 
   return (
     <div className="flex h-screen w-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
+      <Helmet>
+        <title>
+          {orgData?.name
+            ? `${orgData.name} Admin | BlooDonate`
+            : "Facility Admin | BlooDonate"}
+        </title>
+      </Helmet>
+
       {/* Sidebar without visual lockouts */}
       <Sidebar isOpen={isMobileMenuOpen} setIsOpen={setIsMobileMenuOpen} />
 
@@ -114,6 +129,7 @@ export function AdminLayout() {
         <div
           className="fixed inset-0 bg-slate-950/80 z-40 md:hidden backdrop-blur-sm transition-opacity"
           onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
         />
       )}
 
@@ -122,7 +138,10 @@ export function AdminLayout() {
         {user && !user.is_email_verified && (
           <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-3 flex items-center justify-between z-50 shrink-0">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+              <AlertTriangle
+                className="h-5 w-5 text-amber-500 shrink-0"
+                aria-hidden="true"
+              />
               <p className="text-sm font-medium text-amber-500">
                 Your email address is not verified. Please verify it to secure
                 your account.
@@ -141,7 +160,10 @@ export function AdminLayout() {
         {!isPaid && (
           <div className="bg-rose-500/10 border-b border-rose-500/20 px-4 py-3 flex items-center justify-between z-50 shrink-0">
             <div className="flex items-center gap-3">
-              <CreditCard className="h-5 w-5 text-rose-500 shrink-0" />
+              <CreditCard
+                className="h-5 w-5 text-rose-500 shrink-0"
+                aria-hidden="true"
+              />
               <p className="text-sm font-medium text-rose-500">
                 Your subscription is inactive or has expired. Please renew your
                 license to avoid account suspension.
@@ -162,12 +184,15 @@ export function AdminLayout() {
             {orgData?.logo ? (
               <img
                 src={orgData.logo}
-                alt="Logo"
+                alt={`${orgData.name} Logo`}
                 className="h-8 w-8 rounded-lg object-cover border border-slate-700 shrink-0"
               />
             ) : (
               <div className="h-8 w-8 rounded-lg bg-rose-500/10 flex items-center justify-center border border-rose-500/20 shrink-0">
-                <Droplet className="h-5 w-5 text-rose-500 fill-rose-500/20" />
+                <Droplet
+                  className="h-5 w-5 text-rose-500 fill-rose-500/20"
+                  aria-hidden="true"
+                />
               </div>
             )}
             <span className="text-xl font-black tracking-tight text-white truncate">
@@ -178,14 +203,19 @@ export function AdminLayout() {
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="text-slate-300 hover:text-white p-2 rounded-lg hover:bg-slate-800 border border-transparent"
+              aria-label="Open mobile menu"
+              aria-expanded={isMobileMenuOpen}
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
         </header>
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar bg-slate-950 relative">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-125 bg-rose-500/5 blur-[120px] rounded-full pointer-events-none" />
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-125 bg-rose-500/5 blur-[120px] rounded-full pointer-events-none"
+            aria-hidden="true"
+          />
           <div className="relative z-10 w-full min-h-full">
             <Outlet />
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -88,6 +89,12 @@ export function SuperAdminLayout() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row font-sans selection:bg-indigo-500/30 selection:text-indigo-200 relative">
+      {/* Global Helmet for SuperAdmin Area */}
+      <Helmet>
+        <title>SuperAdmin Console | BlooDonate</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+
       {/* Mobile Menu Backdrop */}
       {isMobileMenuOpen && (
         <div
@@ -105,7 +112,10 @@ export function SuperAdminLayout() {
         <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 shadow-inner">
-              <ShieldCheck className="h-6 w-6 text-indigo-500" />
+              <ShieldCheck
+                className="h-6 w-6 text-indigo-500"
+                aria-hidden="true"
+              />
             </div>
             <div>
               <h2 className="text-sm font-black text-white tracking-widest uppercase">
@@ -121,12 +131,15 @@ export function SuperAdminLayout() {
             className="md:hidden text-slate-400 p-2 hover:bg-slate-800 rounded-lg"
             aria-label="Close menu"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Links */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <nav
+          aria-label="SuperAdmin Navigation"
+          className="flex-1 px-4 py-6 space-y-1 overflow-y-auto"
+        >
           {navLinks.map((link) => {
             const Icon = link.icon;
             const active = isActive(link.path);
@@ -135,6 +148,7 @@ export function SuperAdminLayout() {
                 key={link.name}
                 to={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
+                aria-current={active ? "page" : undefined}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                   active
                     ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold"
@@ -144,10 +158,13 @@ export function SuperAdminLayout() {
                 <div className="flex items-center gap-3">
                   <Icon
                     className={`h-4 w-4 ${active ? "text-indigo-400" : "text-slate-500"}`}
+                    aria-hidden="true"
                   />
                   <span className="text-sm">{link.name}</span>
                 </div>
-                {active && <ChevronRight className="h-4 w-4" />}
+                {active && (
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                )}
               </Link>
             );
           })}
@@ -172,8 +189,9 @@ export function SuperAdminLayout() {
             variant="ghost"
             className="w-full justify-start text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 gap-3"
             onClick={handleLogout}
+            aria-label="Securely log out of SuperAdmin"
           >
-            <LogOut className="h-4 w-4" /> Secure Logout
+            <LogOut className="h-4 w-4" aria-hidden="true" /> Secure Logout
           </Button>
         </div>
       </aside>
@@ -187,16 +205,22 @@ export function SuperAdminLayout() {
             className="md:hidden text-slate-300"
             aria-label="Open menu"
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
 
           <div className="flex-1 md:flex items-center justify-end gap-6 hidden sm:flex">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
-              <Activity className="h-3 w-3 text-emerald-500" /> System
-              Operational
+              <Activity
+                className="h-3 w-3 text-emerald-500"
+                aria-hidden="true"
+              />{" "}
+              System Operational
             </div>
-            <button className="relative p-2 text-slate-400 hover:text-white transition-colors">
-              <Bell className="h-5 w-5" />
+            <button
+              className="relative p-2 text-slate-400 hover:text-white transition-colors"
+              aria-label="View notifications"
+            >
+              <Bell className="h-5 w-5" aria-hidden="true" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-slate-950" />
             </button>
           </div>
@@ -204,7 +228,10 @@ export function SuperAdminLayout() {
 
         {/* Content Viewport */}
         <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-[150px] pointer-events-none" />
+          <div
+            className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/5 rounded-full blur-[150px] pointer-events-none"
+            aria-hidden="true"
+          />
           <Outlet />
         </div>
       </main>

@@ -16,17 +16,27 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-6 py-8 md:py-12 relative z-10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Brand Identity */}
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 shadow-inner">
-              <Droplet className="h-5 w-5 text-rose-500 fill-rose-500/20" />
+          <Link
+            to="/"
+            className="flex items-center gap-3 group transition-opacity hover:opacity-90"
+            aria-label="Return to BlooDonate Homepage"
+          >
+            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 shadow-inner group-hover:bg-rose-500/20 transition-colors">
+              <Droplet
+                className="h-5 w-5 text-rose-500 fill-rose-500/20"
+                aria-hidden="true"
+              />
             </div>
             <span className="text-xl font-black tracking-tight text-white">
               BlooDonate
             </span>
-          </div>
+          </Link>
 
           {/* Navigation Matrix */}
-          <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium text-slate-400">
+          <nav
+            aria-label="Footer Navigation"
+            className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium text-slate-400"
+          >
             <Link to="/about" className="hover:text-rose-400 transition-colors">
               About Us
             </Link>
@@ -57,12 +67,14 @@ export function Footer() {
         {/* Bottom Metadata Bar */}
         <div className="mt-8 pt-8 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-400 font-medium text-center md:text-left tracking-wide">
-            &copy; {currentYear} BlooDonate SaaS Platform. All rights
-            reserved.
+            &copy; {currentYear} BlooDonate SaaS Platform. All rights reserved.
           </p>
           <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 tracking-wide">
             Built with{" "}
-            <Heart className="h-3.5 w-3.5 text-rose-500/70 fill-rose-500/20" />{" "}
+            <Heart
+              className="h-3.5 w-3.5 text-rose-500/70 fill-rose-500/20"
+              aria-hidden="true"
+            />{" "}
             for global health.
           </p>
         </div>

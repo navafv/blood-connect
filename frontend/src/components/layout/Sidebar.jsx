@@ -58,12 +58,13 @@ export function Sidebar({ isOpen, setIsOpen }) {
       className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-950/90 backdrop-blur-xl border-r border-slate-800/80 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:h-screen ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
+      aria-label="Sidebar Navigation"
     >
       {/* Sidebar Header */}
       <div className="p-6 flex items-center justify-between border-b border-slate-800/60">
         <div className="flex items-center gap-3 text-rose-500">
           <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
-            <Droplet className="h-5 w-5 fill-rose-500/20" />
+            <Droplet className="h-5 w-5 fill-rose-500/20" aria-hidden="true" />
           </div>
           <span className="text-lg font-black text-white tracking-tight">
             BlooDonate
@@ -75,7 +76,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
           className="md:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
           aria-label="Close menu"
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
 
@@ -95,6 +96,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
                 key={item.path}
                 to={item.path}
                 onClick={handleLinkClick}
+                aria-current={isActive ? "page" : undefined}
                 className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg font-medium transition-all ${
                   isActive
                     ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-inner"
@@ -102,10 +104,12 @@ export function Sidebar({ isOpen, setIsOpen }) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-4 w-4" aria-hidden="true" />
                   {item.name}
                 </div>
-                {isActive && <ChevronRight className="h-4 w-4" />}
+                {isActive && (
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                )}
               </Link>
             );
           })}
@@ -125,6 +129,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
                 key={item.path}
                 to={item.path}
                 onClick={handleLinkClick}
+                aria-current={isActive ? "page" : undefined}
                 className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg font-medium transition-all ${
                   isActive
                     ? "bg-slate-800 text-white border border-slate-700 shadow-inner"
@@ -132,10 +137,12 @@ export function Sidebar({ isOpen, setIsOpen }) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-4 w-4" aria-hidden="true" />
                   {item.name}
                 </div>
-                {isActive && <ChevronRight className="h-4 w-4" />}
+                {isActive && (
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                )}
               </Link>
             );
           })}
@@ -146,7 +153,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
       <div className="p-4 border-t border-slate-800/60 bg-slate-900/20">
         <div className="mb-4 px-3 flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-            <Users className="h-4 w-4 text-slate-500" />
+            <Users className="h-4 w-4 text-slate-500" aria-hidden="true" />
           </div>
           <div>
             <p className="text-sm font-semibold text-white">Facility Admin</p>
@@ -158,8 +165,9 @@ export function Sidebar({ isOpen, setIsOpen }) {
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+          aria-label="Logout of session"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4" aria-hidden="true" />
           Logout Session
         </button>
       </div>

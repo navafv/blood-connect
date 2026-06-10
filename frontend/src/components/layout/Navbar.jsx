@@ -16,7 +16,10 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-xl shadow-sm transition-all duration-300">
+    <nav
+      aria-label="Main Navigation"
+      className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-xl shadow-sm transition-all duration-300"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 sm:h-20 items-center justify-between">
           {/* Brand Identity */}
@@ -24,9 +27,13 @@ export function Navbar() {
             to="/"
             className="flex items-center gap-2.5 group transition-opacity hover:opacity-90 active:scale-95"
             onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="BlooDonate Homepage"
           >
             <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 shadow-inner group-hover:bg-rose-500/20 transition-colors">
-              <Droplet className="h-5 w-5 text-rose-500 fill-rose-500/20" />
+              <Droplet
+                className="h-5 w-5 text-rose-500 fill-rose-500/20"
+                aria-hidden="true"
+              />
             </div>
             <span className="text-xl font-black tracking-tight text-white">
               BlooDonate
@@ -42,6 +49,7 @@ export function Navbar() {
                   <Link
                     key={link.path}
                     to={link.path}
+                    aria-current={isActive ? "page" : undefined}
                     className={`text-sm font-semibold transition-all hover:-translate-y-0.5 ${
                       isActive
                         ? "text-rose-400 drop-shadow-[0_0_8px_rgba(225,29,72,0.5)]"
@@ -78,12 +86,17 @@ export function Navbar() {
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-slate-300 hover:text-white p-3 rounded-xl hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-700 active:scale-95 flex items-center justify-center min-h-11 min-w-11"
               aria-expanded={isMobileMenuOpen}
-              aria-label="Toggle Navigation Menu"
+              aria-controls="mobile-menu"
+              aria-label={
+                isMobileMenuOpen
+                  ? "Close Navigation Menu"
+                  : "Open Navigation Menu"
+              }
             >
               {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
+                <X className="h-6 w-6" aria-hidden="true" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-6 w-6" aria-hidden="true" />
               )}
             </button>
           </div>
@@ -92,7 +105,10 @@ export function Navbar() {
 
       {/* Mobile Navigation Dropdown */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full border-b border-slate-800 bg-slate-900/95 backdrop-blur-3xl shadow-2xl animate-in slide-in-from-top-2 duration-200">
+        <div
+          id="mobile-menu"
+          className="lg:hidden absolute top-full left-0 w-full border-b border-slate-800 bg-slate-900/95 backdrop-blur-3xl shadow-2xl animate-in slide-in-from-top-2 duration-200"
+        >
           <div className="px-4 py-6 space-y-2 max-w-7xl mx-auto">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
@@ -101,6 +117,7 @@ export function Navbar() {
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsMobileMenuOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
                   className={`block px-4 py-3 rounded-xl text-base font-bold transition-colors ${
                     isActive
                       ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"

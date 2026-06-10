@@ -1,11 +1,26 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 
 export function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100 font-sans selection:bg-rose-500/30 selection:text-rose-200 overflow-x-hidden relative">
+      <Helmet
+        titleTemplate="%s | BlooDonate"
+        defaultTitle="BlooDonate - Multi-Tenant Blood Bank System"
+      >
+        <html lang="en" />
+        <meta
+          name="description"
+          content="BlooDonate is a secure, multi-tenant emergency blood donation directory connecting hospitals with verified donors instantly."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="BlooDonate" />
+        <meta name="twitter:card" content="summary" />
+      </Helmet>
+
       <a
         href="#main-content"
         className="absolute top-4 left-4 z-9999 translate-y-[-150%] rounded-md bg-rose-600 px-4 py-2 font-bold text-white transition focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-white"
