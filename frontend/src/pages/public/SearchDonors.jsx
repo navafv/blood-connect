@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Search,
   Globe2,
@@ -231,239 +232,302 @@ export default function SearchDonors() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col pb-24">
-      {/* --- Search Console Header --- */}
-      <section className="pt-12 pb-16 px-4 relative overflow-hidden bg-slate-900/40 border-b border-slate-800/80">
-        <div
-          className="absolute top-0 right-1/4 w-125 h-125 bg-rose-600/10 rounded-full blur-[120px] pointer-events-none"
-          aria-hidden="true"
+    <>
+      {/* SEO Configuration */}
+      <Helmet>
+        <title>Search Blood Donors | BlooDonate Directory</title>
+        <meta
+          name="description"
+          content="Search our real-time blood donor directory to find eligible blood donors in your city or district. Filter by country, state, district, and blood group."
+        />
+        <meta
+          name="keywords"
+          content="search blood donors, find blood donor, blood donation directory, local blood search, blood group search, emergency blood"
         />
 
-        <div className="container mx-auto max-w-4xl text-center relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
-            Directory Search
-          </h1>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Our infrastructure connects you securely with eligible donors in
-            your locality. Define your geographical parameters to initiate the
-            query.
-          </p>
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Search Blood Donors | BlooDonate" />
+        <meta
+          property="og:description"
+          content="Search our real-time blood donor directory to find eligible blood donors in your city or district."
+        />
+        {/* Replace with your actual deployed URL */}
+        <meta property="og:url" content="https://www.bloodonate.org/search" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Search Blood Donors | BlooDonate" />
+        <meta
+          name="twitter:description"
+          content="Search our real-time blood donor directory to find eligible blood donors in your city or district."
+        />
+
+        {/* Canonical Link */}
+        <link rel="canonical" href="https://www.bloodonate.org/search" />
+      </Helmet>
+
+      <div className="min-h-screen bg-slate-950 flex flex-col pb-24">
+        {/* --- Search Console Header --- */}
+        <section className="pt-12 pb-16 px-4 relative overflow-hidden bg-slate-900/40 border-b border-slate-800/80">
+          <div
+            className="absolute top-0 right-1/4 w-125 h-125 bg-rose-600/10 rounded-full blur-[120px] pointer-events-none"
+            aria-hidden="true"
+          />
+
+          <div className="container mx-auto max-w-4xl text-center relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+              Directory Search
+            </h1>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              Our infrastructure connects you securely with eligible donors in
+              your locality. Define your geographical parameters to initiate the
+              query.
+            </p>
+          </div>
+        </section>
+
+        {/* --- Input Filter Matrix --- */}
+        <div className="container mx-auto max-w-5xl px-4 -mt-10 relative z-20">
+          <Card className="bg-slate-900/70 backdrop-blur-xl border-slate-700/80 shadow-2xl overflow-visible">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-white font-semibold flex items-center gap-2">
+                  <Search
+                    className="h-5 w-5 text-rose-500"
+                    aria-hidden="true"
+                  />{" "}
+                  Query Parameters
+                </h2>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLocateMe}
+                  disabled={isLocating}
+                  className="bg-slate-950/50 border-slate-700 text-rose-400 hover:text-rose-300 hover:bg-slate-800 transition-all shadow-inner"
+                >
+                  {isLocating ? (
+                    <Loader2
+                      className="h-4 w-4 mr-2 animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Navigation className="h-4 w-4 mr-2" aria-hidden="true" />
+                  )}
+                  {isLocating ? "Resolving..." : "Auto-Detect Location"}
+                </Button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  fetchDonors();
+                }}
+                className="grid grid-cols-1 md:grid-cols-5 gap-5 items-end"
+              >
+                <div className="space-y-2 relative z-50">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Country
+                  </label>
+                  <SearchableSelect
+                    options={countries.map((c) => ({
+                      label: c.name,
+                      value: c.id.toString(),
+                    }))}
+                    value={selectedCountry?.id?.toString() || ""}
+                    onChange={handleCountryChange}
+                    placeholder="Select Country"
+                  />
+                </div>
+
+                <div className="space-y-2 relative z-40">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    State / Province
+                  </label>
+                  <SearchableSelect
+                    options={states.map((s) => ({
+                      label: s.name,
+                      value: s.id.toString(),
+                    }))}
+                    value={selectedState?.id?.toString() || ""}
+                    onChange={handleStateChange}
+                    placeholder="Select State"
+                    disabled={!selectedCountry}
+                  />
+                </div>
+
+                <div className="space-y-2 relative z-30">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    District / City
+                  </label>
+                  <SearchableSelect
+                    options={districts.map((d) => ({
+                      label: d.name,
+                      value: d.id.toString(),
+                    }))}
+                    value={selectedDistrict?.id?.toString() || ""}
+                    onChange={handleDistrictChange}
+                    placeholder="Select District"
+                    disabled={!selectedState}
+                  />
+                </div>
+
+                <div className="space-y-2 relative z-20">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Blood Group
+                  </label>
+                  <SearchableSelect
+                    options={bloodGroups.map((bg) => ({
+                      label: bg,
+                      value: bg,
+                    }))}
+                    value={selectedBloodGroup}
+                    onChange={setSelectedBloodGroup}
+                    placeholder="Any Group"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="h-10 w-full gap-2 text-sm font-semibold shadow-lg hover:shadow-rose-500/20 transition-all"
+                  disabled={isSearching}
+                >
+                  {isSearching ? (
+                    <Loader2
+                      className="h-4 w-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {isSearching ? "Querying..." : "Execute Search"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
-      </section>
 
-      {/* --- Input Filter Matrix --- */}
-      <div className="container mx-auto max-w-5xl px-4 -mt-10 relative z-20">
-        <Card className="bg-slate-900/70 backdrop-blur-xl border-slate-700/80 shadow-2xl overflow-visible">
-          <CardContent className="p-6 md:p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-white font-semibold flex items-center gap-2">
-                <Search className="h-5 w-5 text-rose-500" /> Query Parameters
-              </h2>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleLocateMe}
-                disabled={isLocating}
-                className="bg-slate-950/50 border-slate-700 text-rose-400 hover:text-rose-300 hover:bg-slate-800 transition-all shadow-inner"
-              >
-                {isLocating ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Navigation className="h-4 w-4 mr-2" />
-                )}
-                {isLocating ? "Resolving..." : "Auto-Detect Location"}
-              </Button>
+        {/* --- Ad Network Boundary --- */}
+        <div className="container mx-auto max-w-5xl px-4 mt-8">
+          <AdBanner />
+        </div>
+
+        {/* --- Data Visualization Render Surface --- */}
+        <div className="container mx-auto max-w-5xl px-4 mt-12 min-h-100">
+          {!hasSearched ? (
+            /* Pre-Query State */
+            <div className="flex flex-col items-center justify-center text-center py-24 text-slate-500 animate-in fade-in duration-700">
+              <Globe2
+                className="h-20 w-20 mb-6 text-slate-800"
+                aria-hidden="true"
+              />
+              <h3 className="text-xl font-semibold text-slate-400 mb-2">
+                Awaiting Parameters
+              </h3>
+              <p className="text-base max-w-md">
+                Define your geographic constraints above to securely query the
+                nearest available donors.
+              </p>
             </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                fetchDonors();
-              }}
-              className="grid grid-cols-1 md:grid-cols-5 gap-5 items-end"
-            >
-              <div className="space-y-2 relative z-50">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Country
-                </label>
-                <SearchableSelect
-                  options={countries.map((c) => ({
-                    label: c.name,
-                    value: c.id.toString(),
-                  }))}
-                  value={selectedCountry?.id?.toString() || ""}
-                  onChange={handleCountryChange}
-                  placeholder="Select Country"
+          ) : isSearching ? (
+            /* Flight State */
+            <div className="flex flex-col items-center justify-center text-center py-24 text-slate-500">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-xl animate-pulse" />
+                <Loader2
+                  className="h-16 w-16 animate-spin text-rose-500 relative z-10"
+                  aria-hidden="true"
                 />
               </div>
-
-              <div className="space-y-2 relative z-40">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  State / Province
-                </label>
-                <SearchableSelect
-                  options={states.map((s) => ({
-                    label: s.name,
-                    value: s.id.toString(),
-                  }))}
-                  value={selectedState?.id?.toString() || ""}
-                  onChange={handleStateChange}
-                  placeholder="Select State"
-                  disabled={!selectedCountry}
+              <p className="text-lg font-medium text-slate-300">
+                Scanning regional registries...
+              </p>
+            </div>
+          ) : results.length === 0 ? (
+            /* Empty Set Resolution */
+            <div className="flex flex-col items-center justify-center text-center py-24 bg-slate-900/40 backdrop-blur-sm rounded-3xl border border-slate-800/60 shadow-inner animate-in fade-in zoom-in-95 duration-300">
+              <div className="h-20 w-20 rounded-2xl bg-slate-800/50 flex items-center justify-center border border-slate-700 mb-6">
+                <AlertCircle
+                  className="h-10 w-10 text-slate-500"
+                  aria-hidden="true"
                 />
               </div>
-
-              <div className="space-y-2 relative z-30">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  District / City
-                </label>
-                <SearchableSelect
-                  options={districts.map((d) => ({
-                    label: d.name,
-                    value: d.id.toString(),
-                  }))}
-                  value={selectedDistrict?.id?.toString() || ""}
-                  onChange={handleDistrictChange}
-                  placeholder="Select District"
-                  disabled={!selectedState}
-                />
-              </div>
-
-              <div className="space-y-2 relative z-20">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Blood Group
-                </label>
-                <SearchableSelect
-                  options={bloodGroups.map((bg) => ({ label: bg, value: bg }))}
-                  value={selectedBloodGroup}
-                  onChange={setSelectedBloodGroup}
-                  placeholder="Any Group"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                className="h-10 w-full gap-2 text-sm font-semibold shadow-lg hover:shadow-rose-500/20 transition-all"
-                disabled={isSearching}
-              >
-                {isSearching ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="h-4 w-4" />
-                )}
-                {isSearching ? "Querying..." : "Execute Search"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* --- Ad Network Boundary --- */}
-      <div className="container mx-auto max-w-5xl px-4 mt-8">
-        <AdBanner />
-      </div>
-
-      {/* --- Data Visualization Render Surface --- */}
-      <div className="container mx-auto max-w-5xl px-4 mt-12 min-h-100">
-        {!hasSearched ? (
-          /* Pre-Query State */
-          <div className="flex flex-col items-center justify-center text-center py-24 text-slate-500 animate-in fade-in duration-700">
-            <Globe2 className="h-20 w-20 mb-6 text-slate-800" />
-            <h3 className="text-xl font-semibold text-slate-400 mb-2">
-              Awaiting Parameters
-            </h3>
-            <p className="text-base max-w-md">
-              Define your geographic constraints above to securely query the
-              nearest available donors.
-            </p>
-          </div>
-        ) : isSearching ? (
-          /* Flight State */
-          <div className="flex flex-col items-center justify-center text-center py-24 text-slate-500">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-xl animate-pulse" />
-              <Loader2 className="h-16 w-16 animate-spin text-rose-500 relative z-10" />
+              <h3 className="text-2xl font-bold text-white mb-3">
+                Zero Active Matches
+              </h3>
+              <p className="text-slate-400 max-w-md text-base leading-relaxed">
+                We could not identify any eligible donors matching{" "}
+                <strong className="text-slate-300">
+                  {selectedBloodGroup || "any group"}
+                </strong>{" "}
+                in{" "}
+                <strong className="text-slate-300">
+                  {selectedDistrict?.name || "your selected region"}
+                </strong>{" "}
+                at this time.
+              </p>
             </div>
-            <p className="text-lg font-medium text-slate-300">
-              Scanning regional registries...
-            </p>
-          </div>
-        ) : results.length === 0 ? (
-          /* Empty Set Resolution */
-          <div className="flex flex-col items-center justify-center text-center py-24 bg-slate-900/40 backdrop-blur-sm rounded-3xl border border-slate-800/60 shadow-inner animate-in fade-in zoom-in-95 duration-300">
-            <div className="h-20 w-20 rounded-2xl bg-slate-800/50 flex items-center justify-center border border-slate-700 mb-6">
-              <AlertCircle className="h-10 w-10 text-slate-500" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-3">
-              Zero Active Matches
-            </h3>
-            <p className="text-slate-400 max-w-md text-base leading-relaxed">
-              We could not identify any eligible donors matching{" "}
-              <strong className="text-slate-300">
-                {selectedBloodGroup || "any group"}
-              </strong>{" "}
-              in{" "}
-              <strong className="text-slate-300">
-                {selectedDistrict?.name || "your selected region"}
-              </strong>{" "}
-              at this time.
-            </p>
-          </div>
-        ) : (
-          /* Positive Resolution State */
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-end border-b border-slate-800/80 pb-4">
-              <div>
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-rose-500" />
-                  Regional Matches
-                </h3>
-                <p className="text-sm text-slate-400 mt-1">
-                  Surfacing {totalCount} verified records in{" "}
-                  {selectedDistrict?.name || "the selected region"}.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {results.map((donor) => (
-                <DonorCard key={donor.id} donor={donor} />
-              ))}
-            </div>
-
-            {/* Pagination Controls */}
-            {totalCount > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between mt-10 border-t border-slate-800/80 pt-6 gap-4">
-                <span className="text-sm font-medium text-slate-400">
-                  Displaying batch of {results.length} records.
-                </span>
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-4 transition-colors"
-                    disabled={!prevPageUrl || isSearching}
-                    onClick={() => fetchDonors(prevPageUrl)}
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-4 transition-colors"
-                    disabled={!nextPageUrl || isSearching}
-                    onClick={() => fetchDonors(nextPageUrl)}
-                  >
-                    Next <ChevronRight className="h-4 w-4" />
-                  </Button>
+          ) : (
+            /* Positive Resolution State */
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-end border-b border-slate-800/80 pb-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <MapPin
+                      className="h-5 w-5 text-rose-500"
+                      aria-hidden="true"
+                    />
+                    Regional Matches
+                  </h3>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Surfacing {totalCount} verified records in{" "}
+                    {selectedDistrict?.name || "the selected region"}.
+                  </p>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {results.map((donor) => (
+                  <DonorCard key={donor.id} donor={donor} />
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalCount > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-10 border-t border-slate-800/80 pt-6 gap-4">
+                  <span className="text-sm font-medium text-slate-400">
+                    Displaying batch of {results.length} records.
+                  </span>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-4 transition-colors"
+                      disabled={!prevPageUrl || isSearching}
+                      onClick={() => fetchDonors(prevPageUrl)}
+                    >
+                      <ChevronLeft className="h-4 w-4" aria-hidden="true" />{" "}
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-4 transition-colors"
+                      disabled={!nextPageUrl || isSearching}
+                      onClick={() => fetchDonors(nextPageUrl)}
+                    >
+                      Next{" "}
+                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
