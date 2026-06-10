@@ -31,9 +31,7 @@ export function AdBanner({ className = "" }) {
   // --- Fallback States ---
   if (isLoading || ads.length === 0) return null;
 
-  const baseURL =
-    import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
-    "http://localhost:8000";
+  const baseURL = import.meta.env.PROD ? "/" : "http://localhost:8000";
 
   return (
     <div
