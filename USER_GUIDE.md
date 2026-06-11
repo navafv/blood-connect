@@ -1,8 +1,8 @@
-# BlooDonate - User Guide
+# Bloodonate - User Guide
 
-Welcome to BlooDonate 🩸
+Welcome to Bloodonate 🩸
 
-BlooDonate is a secure multi-tenant SaaS blood donor management and coordination platform designed for hospitals, blood banks, NGOs, and the general public.
+Bloodonate is a secure multi-tenant SaaS blood donor management and coordination platform designed for hospitals, blood banks, NGOs, and the general public.
 
 This guide explains how each user role interacts with the platform and how to use its core features effectively.
 
@@ -10,7 +10,7 @@ This guide explains how each user role interacts with the platform and how to us
 
 # 🌍 Platform Overview
 
-BlooDonate connects:
+Bloodonate connects:
 * Public Users & Blood Donors
 * Medical Organizations (Hospitals, Blood Banks, Private Clinics)
 * NGOs / Volunteer Groups
@@ -68,7 +68,7 @@ For issues, partnerships, or general platform inquiries, public users can use th
 
 # 🔒 Public Privacy & Security
 
-BlooDonate implements rigorous privacy checks on public pathways:
+Bloodonate implements rigorous privacy checks on public pathways:
 * Sensitive donor information (such as exact date of birth or direct contact history) is never exposed globally.
 * Public donor search routes are explicitly rate-limited to avoid scraping and bot spam.
 * Only donors whose managing organizations are set to `is_searchable=True` are indexed in public searches.

@@ -72,7 +72,7 @@ export default function OrganizationProfile() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4 text-center">
         <Helmet>
-          <title>Organization Not Found | BlooDonate</title>
+          <title>Organization Not Found | Bloodonate</title>
           <meta name="robots" content="noindex, nofollow" />
         </Helmet>
         <Building2
@@ -97,7 +97,7 @@ export default function OrganizationProfile() {
   }
 
   // --- SEO & Image Optimization Strategy ---
-  const pageTitle = `${org.name} - Blood Donors in ${org.district_name} | BlooDonate`;
+  const pageTitle = `${org.name} - Blood Donors in ${org.district_name} | Bloodonate`;
   const pageDescription = `Contact ${org.name} located in ${org.district_name}, ${org.state_name} for emergency blood requests and verified donor queries.`;
 
   // Optimize images for Lighthouse performance

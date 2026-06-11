@@ -156,7 +156,7 @@ export default function Support() {
             Help & Support
           </h1>
           <p className="text-sm text-slate-400 mt-2">
-            Contact the BlooDonate administration team for platform
+            Contact the Bloodonate administration team for platform
             assistance.
           </p>
         </div>

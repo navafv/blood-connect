@@ -1,8 +1,8 @@
-# BlooDonate - Deployment Guide
+# Bloodonate - Deployment Guide
 
-This guide explains how to deploy BlooDonate using Docker and Docker Compose in a production Linux environment. 
+This guide explains how to deploy Bloodonate using Docker and Docker Compose in a production Linux environment. 
 
-BlooDonate uses a **unified containerized deployment architecture**. The React frontend is built dynamically in a multi-stage Docker process and served directly by the Django backend using WhiteNoise, meaning you only need to manage a single application container alongside your database.
+Bloodonate uses a **unified containerized deployment architecture**. The React frontend is built dynamically in a multi-stage Docker process and served directly by the Django backend using WhiteNoise, meaning you only need to manage a single application container alongside your database.
 
 Recommended environments:
 * Ubuntu Server (22.04+)

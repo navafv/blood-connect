@@ -77,7 +77,7 @@ export function AdminLayout() {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-slate-950 px-4">
         <Helmet>
-          <title>Account Suspended | BlooDonate</title>
+          <title>Account Suspended | Bloodonate</title>
         </Helmet>
         <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-rose-500/20 p-8 rounded-3xl text-center space-y-6 shadow-2xl">
           <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-full flex items-center justify-center mx-auto shadow-inner">
@@ -91,7 +91,7 @@ export function AdminLayout() {
               Account Suspended
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Your organization's access to the BlooDonate platform has been
+              Your organization's access to the Bloodonate platform has been
               suspended by the administrator, likely due to an expired
               subscription. Please contact support to resolve this issue.
             </p>
@@ -117,8 +117,8 @@ export function AdminLayout() {
       <Helmet>
         <title>
           {orgData?.name
-            ? `${orgData.name} Admin | BlooDonate`
-            : "Facility Admin | BlooDonate"}
+            ? `${orgData.name} Admin | Bloodonate`
+            : "Facility Admin | Bloodonate"}
         </title>
       </Helmet>
 
@@ -196,7 +196,7 @@ export function AdminLayout() {
               </div>
             )}
             <span className="text-xl font-black tracking-tight text-white truncate">
-              {orgData?.name || "BlooDonate"}
+              {orgData?.name || "Bloodonate"}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">

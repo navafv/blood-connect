@@ -49,7 +49,7 @@ export default function PrivacyPolicy() {
         <div className="space-y-4">
           <p>
             Protecting donor privacy is a core architectural principle of the
-            BlooDonate system:
+            Bloodonate system:
           </p>
           <ul className="list-disc pl-5 space-y-3 text-slate-400">
             <li>
@@ -121,7 +121,7 @@ export default function PrivacyPolicy() {
       content: (
         <div className="space-y-4">
           <p>
-            As BlooDonate operates as a Data Processor for our subscribing
+            As Bloodonate operates as a Data Processor for our subscribing
             healthcare organizations (the Data Controllers), individual donors
             seeking to exercise their rights to access, correct, or delete their
             records must submit requests directly to the specific hospital or
@@ -138,22 +138,22 @@ export default function PrivacyPolicy() {
     <>
       {/* SEO Configuration */}
       <Helmet>
-        <title>Privacy Policy | BlooDonate</title>
+        <title>Privacy Policy | Bloodonate</title>
         <meta
           name="description"
-          content="Review the BlooDonate Privacy Policy to understand our data collection, tenant isolation, and cryptographic standards for protecting organization and donor data."
+          content="Review the Bloodonate Privacy Policy to understand our data collection, tenant isolation, and cryptographic standards for protecting organization and donor data."
         />
         <meta
           name="keywords"
-          content="privacy policy, data protection, blood donation privacy, SaaS security, multi-tenant security, BlooDonate privacy"
+          content="privacy policy, data protection, blood donation privacy, SaaS security, multi-tenant security, Bloodonate privacy"
         />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Privacy Policy | BlooDonate" />
+        <meta property="og:title" content="Privacy Policy | Bloodonate" />
         <meta
           property="og:description"
-          content="Understand how BlooDonate protects and manages organizational and donor data."
+          content="Understand how Bloodonate protects and manages organizational and donor data."
         />
         <meta
           property="og:url"
@@ -162,10 +162,10 @@ export default function PrivacyPolicy() {
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="Privacy Policy | BlooDonate" />
+        <meta name="twitter:title" content="Privacy Policy | Bloodonate" />
         <meta
           name="twitter:description"
-          content="Understand how BlooDonate protects and manages organizational and donor data."
+          content="Understand how Bloodonate protects and manages organizational and donor data."
         />
 
         {/* Canonical Link */}
@@ -213,7 +213,7 @@ export default function PrivacyPolicy() {
           {/* Preamble */}
           <div className="prose prose-invert max-w-none text-slate-400 leading-relaxed text-lg">
             <p>
-              Welcome to BlooDonate. This Privacy Policy governs your
+              Welcome to Bloodonate. This Privacy Policy governs your
               utilization of our SaaS infrastructure, public directory APIs, and
               affiliated services. By accessing our platform as an
               organizational tenant or querying our directory as a public user,

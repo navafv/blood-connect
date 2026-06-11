@@ -178,7 +178,7 @@ export default function ResetPassword() {
           </h1>
 
           <p className="mt-3 text-sm text-slate-400 text-center leading-relaxed max-w-sm">
-            Choose a strong password to secure your BlooDonate account.
+            Choose a strong password to secure your Bloodonate account.
           </p>
         </div>
 

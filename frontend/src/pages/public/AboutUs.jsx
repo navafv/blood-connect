@@ -44,31 +44,31 @@ export default function AboutUs() {
     <>
       {/* SEO Configuration */}
       <Helmet>
-        <title>About Us | BlooDonate - Our Mission to Save Lives</title>
+        <title>About Us | Bloodonate - Our Mission to Save Lives</title>
         <meta
           name="description"
-          content="Learn about BlooDonate's mission to bridge the gap between compassion and urgency. We provide a real-time, highly secure platform connecting blood donors with those in need."
+          content="Learn about Bloodonate's mission to bridge the gap between compassion and urgency. We provide a real-time, highly secure platform connecting blood donors with those in need."
         />
         <meta
           name="keywords"
-          content="about BlooDonate, blood donation platform, blood registry mission, healthcare SaaS, blood bank software, NGO blood donation, save lives"
+          content="about Bloodonate, blood donation platform, blood registry mission, healthcare SaaS, blood bank software, NGO blood donation, save lives"
         />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="About Us | BlooDonate" />
+        <meta property="og:title" content="About Us | Bloodonate" />
         <meta
           property="og:description"
-          content="Discover how BlooDonate is centralizing blood donor data to ensure no one loses a loved one due to blood shortage."
+          content="Discover how Bloodonate is centralizing blood donor data to ensure no one loses a loved one due to blood shortage."
         />
         <meta property="og:url" content="https://www.bloodonate.org/about" />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="About Us | BlooDonate" />
+        <meta name="twitter:title" content="About Us | Bloodonate" />
         <meta
           name="twitter:description"
-          content="Discover how BlooDonate is centralizing blood donor data to ensure no one loses a loved one due to blood shortage."
+          content="Discover how Bloodonate is centralizing blood donor data to ensure no one loses a loved one due to blood shortage."
         />
 
         <link rel="canonical" href="https://www.bloodonate.org/about" />
@@ -100,7 +100,7 @@ export default function AboutUs() {
             </h1>
 
             <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              BlooDonate was founded on a simple premise: no one should ever
+              Bloodonate was founded on a simple premise: no one should ever
               lose a loved one simply because they couldn't find a matching
               blood donor in time.
             </p>

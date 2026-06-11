@@ -64,32 +64,32 @@ export default function ContactUs() {
     <>
       {/* SEO Configuration */}
       <Helmet>
-        <title>Contact Us | BlooDonate - Get in Touch</title>
+        <title>Contact Us | Bloodonate - Get in Touch</title>
         <meta
           name="description"
-          content="Have questions about BlooDonate, registering your organization, or need technical support? Contact our administrative team via email, phone, or our online form."
+          content="Have questions about Bloodonate, registering your organization, or need technical support? Contact our administrative team via email, phone, or our online form."
         />
         <meta
           name="keywords"
-          content="contact BlooDonate, blood donation support, technical support, BlooDonate email, BlooDonate phone number, NGO partnership, blood bank directory help"
+          content="contact Bloodonate, blood donation support, technical support, Bloodonate email, Bloodonate phone number, NGO partnership, blood bank directory help"
         />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Contact Us | BlooDonate" />
+        <meta property="og:title" content="Contact Us | Bloodonate" />
         <meta
           property="og:description"
-          content="Reach out to the BlooDonate team for support, organization registration, or partnership inquiries."
+          content="Reach out to the Bloodonate team for support, organization registration, or partnership inquiries."
         />
         {/* Replace with your actual deployed URL */}
         <meta property="og:url" content="https://www.bloodonate.org/contact" />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Contact Us | BlooDonate" />
+        <meta name="twitter:title" content="Contact Us | Bloodonate" />
         <meta
           name="twitter:description"
-          content="Reach out to the BlooDonate team for support, organization registration, or partnership inquiries."
+          content="Reach out to the Bloodonate team for support, organization registration, or partnership inquiries."
         />
 
         {/* Canonical Link */}
@@ -173,10 +173,10 @@ export default function ContactUs() {
                         Mon-Fri from 9am to 6pm IST.
                       </p>
                       <a
-                        href="tel:+919876543210"
+                        href="tel:+918606240600"
                         className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
                       >
-                        +91 98765 43210
+                        +91 86062 40600
                       </a>
                     </div>
                   </div>
@@ -194,11 +194,11 @@ export default function ContactUs() {
                         Headquarters
                       </h3>
                       <p className="text-sm text-slate-400 leading-relaxed">
-                        BlooDonate SaaS Technologies
+                        Bloodonate SaaS Technologies
                         <br />
-                        Munderi, Kannur
+                        Airport Road, Varam, Kannur
                         <br />
-                        Kerala, India 670591
+                        Kerala, India 670594
                       </p>
                     </div>
                   </div>
@@ -215,7 +215,7 @@ export default function ContactUs() {
                   Medical Emergency?
                 </h3>
                 <p className="text-sm text-amber-200/70 leading-relaxed">
-                  BlooDonate is a directory and software provider, not a medical
+                  Bloodonate is a directory and software provider, not a medical
                   facility. We do not stock blood. In case of a severe medical
                   emergency, please dial emergency services immediately or head
                   to your nearest hospital.

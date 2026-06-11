@@ -91,7 +91,7 @@ export function SuperAdminLayout() {
     <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row font-sans selection:bg-indigo-500/30 selection:text-indigo-200 relative">
       {/* Global Helmet for SuperAdmin Area */}
       <Helmet>
-        <title>SuperAdmin Console | BlooDonate</title>
+        <title>SuperAdmin Console | Bloodonate</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 

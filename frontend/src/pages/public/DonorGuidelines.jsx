@@ -58,10 +58,10 @@ export default function DonorGuidelines() {
     <>
       {/* SEO Configuration */}
       <Helmet>
-        <title>Donor Eligibility & Guidelines | BlooDonate</title>
+        <title>Donor Eligibility & Guidelines | Bloodonate</title>
         <meta
           name="description"
-          content="Review essential medical guidelines, age, weight, and health requirements to determine if you are eligible to safely donate blood with BlooDonate."
+          content="Review essential medical guidelines, age, weight, and health requirements to determine if you are eligible to safely donate blood with Bloodonate."
         />
         <meta
           name="keywords"
@@ -72,7 +72,7 @@ export default function DonorGuidelines() {
         <meta property="og:type" content="website" />
         <meta
           property="og:title"
-          content="Donor Eligibility & Guidelines | BlooDonate"
+          content="Donor Eligibility & Guidelines | Bloodonate"
         />
         <meta
           property="og:description"
@@ -88,7 +88,7 @@ export default function DonorGuidelines() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
-          content="Donor Eligibility & Guidelines | BlooDonate"
+          content="Donor Eligibility & Guidelines | Bloodonate"
         />
         <meta
           name="twitter:description"

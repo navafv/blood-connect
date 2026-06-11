@@ -67,7 +67,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
             <Droplet className="h-5 w-5 fill-rose-500/20" aria-hidden="true" />
           </div>
           <span className="text-lg font-black text-white tracking-tight">
-            BlooDonate
+            Bloodonate
           </span>
         </div>
 

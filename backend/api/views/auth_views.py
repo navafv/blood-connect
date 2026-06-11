@@ -309,8 +309,8 @@ class RegisterOrganizationView(APIView):
                 )
 
             # 3. Fire Email Notification
-            subject = "Verify your BlooDonate Workspace"
-            plain_message = f"Hello {data.get('contactName', '')},\n\nYour BlooDonate verification code is: {otp_code}.\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email."
+            subject = "Verify your Bloodonate Workspace"
+            plain_message = f"Hello {data.get('contactName', '')},\n\nYour Bloodonate verification code is: {otp_code}.\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email."
             
             html_message = f"""
             <!doctype html>
@@ -346,7 +346,7 @@ class RegisterOrganizationView(APIView):
                                 font-size: 28px;
                                 font-weight: 800;
                             ">
-                                            BlooDonate
+                                            Bloodonate
                                         </h1>
 
                                         <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
@@ -367,7 +367,7 @@ class RegisterOrganizationView(APIView):
                                 font-size: 16px;
                                 line-height: 1.7;
                             ">
-                                            Verify your email address to activate the BlooDonate
+                                            Verify your email address to activate the Bloodonate
                                             workspace for
                                             <strong>{data.get('orgName')}</strong>.
                                         </p>
@@ -428,7 +428,7 @@ class RegisterOrganizationView(APIView):
                             font-size: 12px;
                             background: #f8fafc;
                             ">
-                                        © {timezone.now().year} BlooDonate. All rights reserved.
+                                        © {timezone.now().year} Bloodonate. All rights reserved.
                                     </td>
                                 </tr>
                             </table>
@@ -513,8 +513,8 @@ class ResendEmailOTPView(APIView):
         user.email_otp_expires_at = timezone.now() + timedelta(minutes=10)
         user.save()
 
-        subject = "New Verification Code for BlooDonate"
-        plain_message = f"Hello {user.first_name or 'Administrator'},\n\nYour new BlooDonate verification code is: {new_otp}.\nThis code expires in 10 minutes."
+        subject = "New Verification Code for Bloodonate"
+        plain_message = f"Hello {user.first_name or 'Administrator'},\n\nYour new Bloodonate verification code is: {new_otp}.\nThis code expires in 10 minutes."
         
         html_message = f"""
         <!doctype html>
@@ -550,7 +550,7 @@ class ResendEmailOTPView(APIView):
                                     font-size: 28px;
                                     font-weight: 800;
                                 ">
-                                        BlooDonate
+                                        Bloodonate
                                     </h1>
 
                                     <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
@@ -571,7 +571,7 @@ class ResendEmailOTPView(APIView):
                                     font-size: 16px;
                                     line-height: 1.7;
                                 ">
-                                        You requested a new verification code for your BlooDonate
+                                        You requested a new verification code for your Bloodonate
                                         account.
                                     </p>
 
@@ -609,7 +609,7 @@ class ResendEmailOTPView(APIView):
                                 font-size: 12px;
                                 background: #f8fafc;
                                 ">
-                                    © {timezone.now().year} BlooDonate. All rights reserved.
+                                    © {timezone.now().year} Bloodonate. All rights reserved.
                                 </td>
                             </tr>
                         </table>
@@ -647,8 +647,8 @@ class PasswordResetRequestView(APIView):
             token = default_token_generator.make_token(user)
             reset_link = f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
 
-            subject = "BlooDonate Security: Password Reset Request"
-            plain_message = f"Hello {user.first_name or 'Administrator'},\n\nWe received a request to reset your BlooDonate password. Click the link below to proceed:\n{reset_link}\n\nThis link will expire shortly. If you did not request this, please ignore this email."
+            subject = "Bloodonate Security: Password Reset Request"
+            plain_message = f"Hello {user.first_name or 'Administrator'},\n\nWe received a request to reset your Bloodonate password. Click the link below to proceed:\n{reset_link}\n\nThis link will expire shortly. If you did not request this, please ignore this email."
             
             html_message = f"""
             <!doctype html>
@@ -684,7 +684,7 @@ class PasswordResetRequestView(APIView):
                                             font-size: 28px;
                                             font-weight: 800;
                                         ">
-                                            BlooDonate
+                                            Bloodonate
                                         </h1>
 
                                         <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
@@ -706,7 +706,7 @@ class PasswordResetRequestView(APIView):
                                             line-height: 1.7;
                                         ">
                                             We received a request to reset the password for your
-                                            BlooDonate account.
+                                            Bloodonate account.
                                         </p>
 
                                         <div style="text-align: center; margin: 40px 0">
@@ -765,7 +765,7 @@ class PasswordResetRequestView(APIView):
                                         font-size: 12px;
                                         background: #f8fafc;
                                         ">
-                                        © {timezone.now().year} BlooDonate. All rights reserved.
+                                        © {timezone.now().year} Bloodonate. All rights reserved.
                                     </td>
                                 </tr>
                             </table>
@@ -867,7 +867,7 @@ class Setup2FAView(APIView):
         user.save()
 
         totp = pyotp.TOTP(user.totp_secret)
-        uri = totp.provisioning_uri(name=user.email, issuer_name="BlooDonate")
+        uri = totp.provisioning_uri(name=user.email, issuer_name="Bloodonate")
         return Response({"qr_uri": uri})
 
 class Toggle2FAView(APIView):

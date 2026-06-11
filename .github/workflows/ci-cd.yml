@@ -1,4 +1,4 @@
-name: BlooDonate CI/CD Pipeline
+name: Bloodonate CI/CD Pipeline
 
 on:
   push:

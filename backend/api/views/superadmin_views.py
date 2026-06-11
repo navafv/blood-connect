@@ -28,7 +28,7 @@ def send_subscription_activated_email(organization):
     frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
     login_link = f"{frontend_url}/login"
     
-    subject = "Subscription Activated - BlooDonate 🩸"
+    subject = "Subscription Activated - Bloodonate 🩸"
     plain_message = f"Hello {organization.name},\n\nYour subscription has been successfully activated. You can now log in and access all premium features of the platform.\n\nYour subscription is valid until: {organization.subscription_expires_at.strftime('%B %d, %Y')}\n\nLog in at {login_link}"
     
     html_message = f"""
@@ -42,7 +42,7 @@ def send_subscription_activated_email(organization):
                         <tr>
                             <td align="center" style="background: #0f172a; padding: 36px 24px; border-bottom: 4px solid #10b981;">
                                 <div style="font-size: 42px; margin-bottom: 12px">🩸</div>
-                                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800;">BlooDonate</h1>
+                                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800;">Bloodonate</h1>
                                 <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">Subscription Activated</p>
                             </td>
                         </tr>
@@ -50,7 +50,7 @@ def send_subscription_activated_email(organization):
                             <td style="padding: 40px 32px">
                                 <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">Hello, {organization.name}</h2>
                                 <p style="margin: 0 0 24px; color: #475569; font-size: 16px; line-height: 1.7;">
-                                    Your BlooDonate Premium License has been successfully activated by the Administrator.
+                                    Your Bloodonate Premium License has been successfully activated by the Administrator.
                                 </p>
                                 <div style="background: #f8fafc; border-left: 4px solid #10b981; border-radius: 10px; padding: 22px; margin: 30px 0;">
                                     <p style="margin: 0 0 14px; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #64748b;">License Valid Until</p>
@@ -70,7 +70,7 @@ def send_subscription_activated_email(organization):
                         </tr>
                         <tr>
                             <td align="center" style="padding: 24px; color: #94a3b8; font-size: 12px; background: #f8fafc;">
-                                © {localtime().year} BlooDonate. All rights reserved.
+                                © {localtime().year} Bloodonate. All rights reserved.
                             </td>
                         </tr>
                     </table>
@@ -162,8 +162,8 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
         login_link = f"{frontend_url}/login"
         
-        subject = "Welcome to BlooDonate! Your Dashboard is Ready 🩸"
-        plain_message = f"Welcome to BlooDonate, {organization.name}! Your account has been approved. Log in at {login_link}"
+        subject = "Welcome to Bloodonate! Your Dashboard is Ready 🩸"
+        plain_message = f"Welcome to Bloodonate, {organization.name}! Your account has been approved. Log in at {login_link}"
         
         html_message = f"""
         <!doctype html>
@@ -199,7 +199,7 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                                     font-size: 28px;
                                     font-weight: 800;
                                 ">
-                                        BlooDonate
+                                        Bloodonate
                                     </h1>
 
                                     <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
@@ -211,7 +211,7 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                             <tr>
                                 <td style="padding: 40px 32px">
                                     <h2 style="margin: 0 0 20px; color: #0f172a; font-size: 24px">
-                                        Welcome to BlooDonate!
+                                        Welcome to Bloodonate!
                                     </h2>
 
                                     <p style="
@@ -222,7 +222,7 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                                 ">
                                         Great news — your organization
                                         <strong style="color: #0f172a">{organization.name}</strong>
-                                        has been successfully approved by the BlooDonate
+                                        has been successfully approved by the Bloodonate
                                         administration team.
                                     </p>
 
@@ -280,7 +280,7 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
                                 font-size: 12px;
                                 background: #f8fafc;
                                 ">
-                                    © {localtime().year} BlooDonate. All rights reserved.
+                                    © {localtime().year} Bloodonate. All rights reserved.
                                 </td>
                             </tr>
                         </table>
@@ -422,8 +422,8 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
         if not reply_text:
             return Response({"error": "Reply text is required."}, status=status.HTTP_400_BAD_REQUEST)
         
-        subject = f"Re: {message.subject} - BlooDonate Support"
-        plain_message = f"Hello {message.name},\n\n{reply_text}\n\nBest regards,\nThe BlooDonate Team"
+        subject = f"Re: {message.subject} - Bloodonate Support"
+        plain_message = f"Hello {message.name},\n\n{reply_text}\n\nBest regards,\nThe Bloodonate Team"
         
         html_message = f"""
         <!doctype html>
@@ -459,7 +459,7 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
                                     font-size: 28px;
                                     font-weight: 800;
                                 ">
-                                        BlooDonate
+                                        Bloodonate
                                     </h1>
 
                                     <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
@@ -509,7 +509,7 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
                                     line-height: 1.7;
                                 ">
                                         Best regards,<br />
-                                        <strong>BlooDonate Support Team</strong>
+                                        <strong>Bloodonate Support Team</strong>
                                     </p>
 
                                     <hr style="
@@ -538,7 +538,7 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
                                 font-size: 12px;
                                 background: #f8fafc;
                                 ">
-                                    © {timezone.now().year} BlooDonate. All rights reserved.
+                                    © {timezone.now().year} Bloodonate. All rights reserved.
                                 </td>
                             </tr>
                         </table>
@@ -725,7 +725,7 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
                                             font-size: 28px;
                                             font-weight: 800;
                                         ">
-                                            BlooDonate
+                                            Bloodonate
                                         </h1>
 
                                         <p style="margin: 8px 0 0; color: #94a3b8; font-size: 14px">
@@ -813,7 +813,7 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
                                             line-height: 1.7;
                                         ">
                                             You can continue this conversation directly from your
-                                            BlooDonate dashboard.
+                                            Bloodonate dashboard.
                                         </p>
                                     </td>
                                 </tr>
@@ -825,7 +825,7 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
                                         font-size: 12px;
                                         background: #f8fafc;
                                         ">
-                                        © {timezone.now().year} BlooDonate. All rights reserved.
+                                        © {timezone.now().year} Bloodonate. All rights reserved.
                                     </td>
                                 </tr>
                             </table>

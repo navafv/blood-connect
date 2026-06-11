@@ -24,7 +24,7 @@ export default function TermsOfService() {
       content: (
         <div className="space-y-4">
           <p>
-            By accessing the BlooDonate public directory or provisioning an
+            By accessing the Bloodonate public directory or provisioning an
             Organization tenant on our Software-as-a-Service (SaaS) platform,
             you agree to be bound by these Terms of Service. If you disagree
             with any stipulation herein, you must immediately cease utilization
@@ -39,7 +39,7 @@ export default function TermsOfService() {
       content: (
         <div className="space-y-5">
           <p className="text-rose-400 font-semibold text-lg">
-            BlooDonate is exclusively a technology platform and data directory;
+            Bloodonate is exclusively a technology platform and data directory;
             it is NOT a healthcare provider, medical facility, or blood bank.
           </p>
           <ul className="list-disc pl-5 space-y-3 text-slate-300">
@@ -134,7 +134,7 @@ export default function TermsOfService() {
         <div className="space-y-4">
           <p>
             To the maximum extent permitted by applicable jurisprudence,
-            BlooDonate and its engineering entities shall not be liable for any
+            Bloodonate and its engineering entities shall not be liable for any
             indirect, incidental, special, consequential, or punitive damages,
             whether incurred directly or indirectly, resulting from:
           </p>
@@ -178,22 +178,22 @@ export default function TermsOfService() {
     <>
       {/* SEO Configuration */}
       <Helmet>
-        <title>Terms of Service | BlooDonate</title>
+        <title>Terms of Service | Bloodonate</title>
         <meta
           name="description"
-          content="Review the BlooDonate Terms of Service, including our medical and emergency disclaimers, user code of conduct, and organizational responsibilities."
+          content="Review the Bloodonate Terms of Service, including our medical and emergency disclaimers, user code of conduct, and organizational responsibilities."
         />
         <meta
           name="keywords"
-          content="terms of service, BlooDonate terms, medical disclaimer, SaaS terms, user agreement, blood directory rules"
+          content="terms of service, Bloodonate terms, medical disclaimer, SaaS terms, user agreement, blood directory rules"
         />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Terms of Service | BlooDonate" />
+        <meta property="og:title" content="Terms of Service | Bloodonate" />
         <meta
           property="og:description"
-          content="Review the BlooDonate Terms of Service, including our medical and emergency disclaimers."
+          content="Review the Bloodonate Terms of Service, including our medical and emergency disclaimers."
         />
         <meta
           property="og:url"
@@ -202,10 +202,10 @@ export default function TermsOfService() {
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="Terms of Service | BlooDonate" />
+        <meta name="twitter:title" content="Terms of Service | Bloodonate" />
         <meta
           name="twitter:description"
-          content="Review the BlooDonate Terms of Service, including our medical and emergency disclaimers."
+          content="Review the Bloodonate Terms of Service, including our medical and emergency disclaimers."
         />
 
         {/* Canonical Link */}

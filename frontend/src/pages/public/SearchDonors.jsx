@@ -235,7 +235,7 @@ export default function SearchDonors() {
     <>
       {/* SEO Configuration */}
       <Helmet>
-        <title>Search Blood Donors | BlooDonate Directory</title>
+        <title>Search Blood Donors | Bloodonate Directory</title>
         <meta
           name="description"
           content="Search our real-time blood donor directory to find eligible blood donors in your city or district. Filter by country, state, district, and blood group."
@@ -247,7 +247,7 @@ export default function SearchDonors() {
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Search Blood Donors | BlooDonate" />
+        <meta property="og:title" content="Search Blood Donors | Bloodonate" />
         <meta
           property="og:description"
           content="Search our real-time blood donor directory to find eligible blood donors in your city or district."
@@ -257,7 +257,7 @@ export default function SearchDonors() {
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Search Blood Donors | BlooDonate" />
+        <meta name="twitter:title" content="Search Blood Donors | Bloodonate" />
         <meta
           name="twitter:description"
           content="Search our real-time blood donor directory to find eligible blood donors in your city or district."

@@ -1,6 +1,6 @@
-# BlooDonate 🩸
+# Bloodonate 🩸
 
-BlooDonate is a secure multi-tenant SaaS platform designed to connect blood donors, hospitals, blood banks, NGOs, and the general public through a geographically aware donor management ecosystem.
+Bloodonate is a secure multi-tenant SaaS platform designed to connect blood donors, hospitals, blood banks, NGOs, and the general public through a geographically aware donor management ecosystem.
 
 The platform enables verified medical organizations to manage isolated donor databases, track donation history, monitor analytics, and securely coordinate blood donation workflows while maintaining strong privacy and access control standards.
 
@@ -8,7 +8,7 @@ The platform enables verified medical organizations to manage isolated donor dat
 
 # 🌍 Problem Statement
 
-Traditional blood donation management systems are often fragmented, manually maintained, and geographically inefficient. BlooDonate solves this by providing:
+Traditional blood donation management systems are often fragmented, manually maintained, and geographically inefficient. Bloodonate solves this by providing:
 - Localized donor discovery
 - Secure organization-specific donor management
 - Real-time donation tracking
@@ -69,7 +69,7 @@ Unauthenticated, rate-limited public access.
 
 # 🏗️ System Architecture
 
-BlooDonate is architected as a cohesive application optimized for unified deployments:
+Bloodonate is architected as a cohesive application optimized for unified deployments:
 - **Backend:** Python 3.12, Django 5.2, and Django REST Framework packaged as a unified monolithic application (`api/`).
 - **Frontend:** React 19, Vite, and TailwindCSS v4 compiled into an optimized Single Page Application (SPA).
 - **Production Integration:** Built via a multi-stage Docker environment. The frontend is compiled via Node.js and injected directly into the Django backend container. Production routing uses WhiteNoise along with a custom Django URL regex catch-all to gracefully handle React SPA routing text fallbacks without requiring a separate frontend server instance.

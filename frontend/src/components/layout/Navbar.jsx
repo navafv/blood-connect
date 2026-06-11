@@ -27,7 +27,7 @@ export function Navbar() {
             to="/"
             className="flex items-center gap-2.5 group transition-opacity hover:opacity-90 active:scale-95"
             onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="BlooDonate Homepage"
+            aria-label="Bloodonate Homepage"
           >
             <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 shadow-inner group-hover:bg-rose-500/20 transition-colors">
               <Droplet
@@ -36,7 +36,7 @@ export function Navbar() {
               />
             </div>
             <span className="text-xl font-black tracking-tight text-white">
-              BlooDonate
+              Bloodonate
             </span>
           </Link>
 

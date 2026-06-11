@@ -19,7 +19,7 @@ export function Footer() {
           <Link
             to="/"
             className="flex items-center gap-3 group transition-opacity hover:opacity-90"
-            aria-label="Return to BlooDonate Homepage"
+            aria-label="Return to Bloodonate Homepage"
           >
             <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 shadow-inner group-hover:bg-rose-500/20 transition-colors">
               <Droplet
@@ -28,7 +28,7 @@ export function Footer() {
               />
             </div>
             <span className="text-xl font-black tracking-tight text-white">
-              BlooDonate
+              Bloodonate
             </span>
           </Link>
 
@@ -67,15 +67,10 @@ export function Footer() {
         {/* Bottom Metadata Bar */}
         <div className="mt-8 pt-8 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-400 font-medium text-center md:text-left tracking-wide">
-            &copy; {currentYear} BlooDonate SaaS Platform. All rights reserved.
+            &copy; {currentYear} Bloodonate SaaS Platform. All rights reserved.
           </p>
           <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 tracking-wide">
-            Built with{" "}
-            <Heart
-              className="h-3.5 w-3.5 text-rose-500/70 fill-rose-500/20"
-              aria-hidden="true"
-            />{" "}
-            for global health.
+            Designed & Developed by <a href="https://navaf.vercel.app" target="_blank" rel="noopener noreferrer nofollow">Navaf V</a>
           </p>
         </div>
       </div>

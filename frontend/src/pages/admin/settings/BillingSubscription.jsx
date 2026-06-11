@@ -57,12 +57,12 @@ export default function BillingSubscription() {
     });
   };
 
-  const adminPhone = "+919876543210";
+  const adminPhone = "+918606240600";
   const whatsappMessage = orgData
     ? encodeURIComponent(
-        `Hello, I need to activate my BlooDonate subscription for my organization: ${orgData.name}.`,
+        `Hello, I need to activate my Bloodonate subscription for my organization: ${orgData.name}.`,
       )
-    : "Hello, I need to activate my BlooDonate subscription.";
+    : "Hello, I need to activate my Bloodonate subscription.";
 
   if (isOrgLoading || isPaymentsLoading) {
     return (

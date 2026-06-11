@@ -207,7 +207,7 @@ export default function RegisterOrg() {
           </h1>
 
           <p className="mt-3 text-sm text-slate-400 text-center leading-relaxed max-w-2xl">
-            Create a secure BlooDonate workspace to manage blood donors,
+            Create a secure Bloodonate workspace to manage blood donors,
             emergency requests, and organization operations.
           </p>
         </div>

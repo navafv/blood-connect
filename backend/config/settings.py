@@ -222,8 +222,8 @@ AUTH_USER_MODEL = 'api.CustomUser'
 # DRF SPECTACULAR (OPENAPI SETTINGS)
 # ==========================================
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'BlooDonate API',
-    'DESCRIPTION': 'API endpoints and schema for the BlooDonate project.',
+    'TITLE': 'Bloodonate API',
+    'DESCRIPTION': 'API endpoints and schema for the Bloodonate project.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SWAGGER_UI_DIST': 'SIDECAR',
@@ -272,7 +272,7 @@ EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'your-brevo-login-email@example.com')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'support@bloodonate.org')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'your-brevo-smtp-key')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'support@bloodonate.org')
 

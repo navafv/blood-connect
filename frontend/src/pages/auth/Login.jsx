@@ -171,7 +171,7 @@ export default function Login() {
           <p className="mt-3 text-sm text-slate-400 text-center leading-relaxed max-w-sm">
             {requires2FA
               ? "Enter the 6-digit verification code from your authenticator app."
-              : "Sign in to access your BlooDonate organization dashboard."}
+              : "Sign in to access your Bloodonate organization dashboard."}
           </p>
         </div>
 

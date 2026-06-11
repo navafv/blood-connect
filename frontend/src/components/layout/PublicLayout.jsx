@@ -8,16 +8,16 @@ export function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100 font-sans selection:bg-rose-500/30 selection:text-rose-200 overflow-x-hidden relative">
       <Helmet
-        titleTemplate="%s | BlooDonate"
-        defaultTitle="BlooDonate - Multi-Tenant Blood Bank System"
+        titleTemplate="%s | Bloodonate"
+        defaultTitle="Bloodonate - Multi-Tenant Blood Bank System"
       >
         <html lang="en" />
         <meta
           name="description"
-          content="BlooDonate is a secure, multi-tenant emergency blood donation directory connecting hospitals with verified donors instantly."
+          content="Bloodonate is a secure, multi-tenant emergency blood donation directory connecting hospitals with verified donors instantly."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="BlooDonate" />
+        <meta property="og:site_name" content="Bloodonate" />
         <meta name="twitter:card" content="summary" />
       </Helmet>
 

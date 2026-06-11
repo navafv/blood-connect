@@ -45,7 +45,7 @@ export default function Home() {
     <>
       {/* SEO Configuration */}
       <Helmet>
-        <title>BlooDonate | Find Blood Donors Instantly & Save Lives</title>
+        <title>Bloodonate | Find Blood Donors Instantly & Save Lives</title>
         <meta
           name="description"
           content="A centralized, real-time registry to find eligible blood donors in your area instantly. Maintained by trusted hospitals and NGOs. No account required to search."
@@ -59,7 +59,7 @@ export default function Home() {
         <meta property="og:type" content="website" />
         <meta
           property="og:title"
-          content="BlooDonate | Find Blood Donors Instantly"
+          content="Bloodonate | Find Blood Donors Instantly"
         />
         <meta
           property="og:description"
@@ -72,7 +72,7 @@ export default function Home() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
-          content="BlooDonate | Find Blood Donors Instantly"
+          content="Bloodonate | Find Blood Donors Instantly"
         />
         <meta
           name="twitter:description"
@@ -201,7 +201,7 @@ export default function Home() {
             <div className="mb-16 md:flex md:items-end md:justify-between">
               <div className="max-w-2xl">
                 <h2 className="text-3xl font-bold text-white mb-4">
-                  Why Use BlooDonate?
+                  Why Use Bloodonate?
                 </h2>
                 <p className="text-slate-400 text-lg">
                   Our platform is designed to be the fastest, most reliable
