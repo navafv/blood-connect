@@ -23,15 +23,15 @@ export default function Home() {
     },
     {
       icon: Shield,
-      title: "Privacy Protected",
+      title: "100% Proxy Routing",
       description:
-        "Donor contact details are protected and only revealed when necessary, keeping personal information secure.",
+        "Donor phone numbers are never exposed. All communication is securely routed through the verified medical organization.",
     },
     {
       icon: Activity,
       title: "Hyper-Local Search",
       description:
-        "Filter by state, district, and pincode to find eligible donors in your immediate vicinity in seconds.",
+        "Filter by country, state, and district to find eligible donors in your immediate vicinity in seconds.",
     },
     {
       icon: Building2,
@@ -66,7 +66,10 @@ export default function Home() {
           content="Find eligible blood donors in your area instantly. Maintained by trusted hospitals and NGOs."
         />
         <meta property="og:url" content="https://www.bloodonate.org/" />
-        <meta property="og:image" content="https://www.bloodonate.org/og-image.jpg" />
+        <meta
+          property="og:image"
+          content="https://www.bloodonate.org/og-image.jpg"
+        />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -78,7 +81,10 @@ export default function Home() {
           name="twitter:description"
           content="Find eligible blood donors in your area instantly. Maintained by trusted hospitals and NGOs."
         />
-        <meta name="twitter:image" content="https://www.bloodonate.org/twitter-image.jpg" />
+        <meta
+          name="twitter:image"
+          content="https://www.bloodonate.org/twitter-image.jpg"
+        />
 
         {/* Canonical Link */}
         <link rel="canonical" href="https://www.bloodonate.org/" />
@@ -106,8 +112,9 @@ export default function Home() {
             </h1>
 
             <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-              A centralized, real-time registry maintained by trusted hospitals
-              and NGOs. Find eligible blood donors in your area instantly.
+              A centralized, real-time registry maintained by trusted hospitals,
+              blood banks, clinics, and NGOs. Find eligible blood donors in your
+              area instantly.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -167,8 +174,8 @@ export default function Home() {
                 },
                 {
                   num: 3,
-                  title: "Contact Directly",
-                  desc: "Reveal the donor's contact information and reach out immediately to arrange the donation.",
+                  title: "Contact Organization",
+                  desc: "Connect instantly with the verified hospital, blood bank, or NGO managing the donor to arrange the donation.",
                 },
               ].map((step) => (
                 <div

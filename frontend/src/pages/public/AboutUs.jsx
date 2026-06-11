@@ -22,9 +22,9 @@ export default function AboutUs() {
     },
     {
       icon: ShieldCheck,
-      title: "Data Privacy",
+      title: "Total Anonymity",
       description:
-        "We prioritize the security of medical and personal data. Contact details are strictly protected and never sold or shared with third parties.",
+        "Donor phone numbers are never exposed to the public directory. We utilize a proxy-routing architecture where all contact goes directly through the verified managing organization.",
     },
     {
       icon: Zap,
@@ -36,7 +36,7 @@ export default function AboutUs() {
       icon: Users,
       title: "Community Driven",
       description:
-        "We empower local hospitals, NGOs, and blood banks by giving them the digital infrastructure to manage their invaluable donor registries.",
+        "We empower local hospitals, blood banks, private clinics, and NGOs by giving them the digital infrastructure to manage their invaluable donor registries.",
     },
   ];
 

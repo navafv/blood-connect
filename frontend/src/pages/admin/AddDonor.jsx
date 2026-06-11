@@ -338,7 +338,7 @@ export default function AddDonor() {
                   >
                     <option value="M">Male (90-day cycle)</option>
                     <option value="F">Female (120-day cycle)</option>
-                    <option value="O">Other</option>
+                    <option value="O">Other (120-day cycle)</option>
                   </Select>
                   {fieldErrors.gender && (
                     <p className="text-xs text-red-400 mt-1">

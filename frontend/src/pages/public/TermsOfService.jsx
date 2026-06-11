@@ -15,7 +15,7 @@ import {
 } from "../../components/ui/Card";
 
 export default function TermsOfService() {
-  const lastUpdated = "May 17, 2026";
+  const lastUpdated = "June 11, 2026";
 
   const terms = [
     {
@@ -49,8 +49,9 @@ export default function TermsOfService() {
             </li>
             <li>
               We do not medically verify the hematological eligibility of the
-              donors listed; this clinical responsibility lies strictly with the
-              registered tenant hospitals and NGOs operating the platform.
+              anonymized donors listed; this clinical responsibility lies
+              strictly with the registered tenant hospitals, blood banks,
+              clinics, and NGOs operating the platform.
             </li>
             <li>
               <strong className="text-rose-300">CRITICAL:</strong> In the event
@@ -68,9 +69,9 @@ export default function TermsOfService() {
       content: (
         <div className="space-y-4">
           <p>
-            Hospitals, Blood Banks, and NGOs utilizing our SaaS backend operate
-            as independent Data Controllers and agree to the following
-            operational tenets:
+            Hospitals, Blood Banks, Private Clinics, and NGOs utilizing our SaaS
+            backend operate as independent Data Controllers and agree to the
+            following operational tenets:
           </p>
           <ul className="list-disc pl-5 space-y-3 text-slate-400">
             <li>
@@ -80,10 +81,16 @@ export default function TermsOfService() {
               maintained with strict clinical accuracy.
             </li>
             <li>
+              <strong className="text-slate-200">Proxy Communication:</strong>{" "}
+              Organizations agree to act as the sole point of contact for public
+              blood donation requests routed through the directory, maintaining
+              the anonymity of their registered donors.
+            </li>
+            <li>
               <strong className="text-slate-200">Medical Vetting:</strong>{" "}
               Organizations hold sole clinical responsibility for executing
               requisite hematological screenings and infectious disease panels
-              before processing a donation from an individual surfaced via this
+              before processing a donation from an individual sourced via this
               directory.
             </li>
             <li>
@@ -103,16 +110,17 @@ export default function TermsOfService() {
         <div className="space-y-4">
           <p>
             Unauthenticated individuals querying the public directory to locate
-            donors must adhere to strict behavioral guidelines:
+            compatible donors must adhere to strict behavioral guidelines:
           </p>
           <ul className="list-disc pl-5 space-y-3 text-slate-400">
             <li>
               <strong className="text-slate-200">
                 Zero Tolerance for Harassment:
               </strong>{" "}
-              Users may only initiate contact with donors for legitimate,
-              immediate blood donation requests. Harassment, spamming, or
-              commercial solicitation will result in network-level IP bans and
+              Users may only initiate contact with the registered Tenant
+              Organizations for legitimate, immediate blood donation requests.
+              Harassment, spamming, or commercial solicitation directed at
+              healthcare facilities will result in network-level IP bans and
               potential criminal prosecution.
             </li>
             <li>
@@ -120,8 +128,8 @@ export default function TermsOfService() {
                 No Automated Extraction:
               </strong>{" "}
               Automated scraping, bot-net mining, or systematic extraction of
-              donor PII (Personally Identifiable Information) from our directory
-              is strictly prohibited and actively monitored.
+              organizational contact data or masked donor metrics from our
+              directory is strictly prohibited and actively monitored.
             </li>
           </ul>
         </div>
@@ -144,9 +152,8 @@ export default function TermsOfService() {
               access the directory.
             </li>
             <li>
-              The clinical conduct, communication, or actions of any third party
-              on the service, including both individual donors and registered
-              organizations.
+              The clinical conduct, communication, or actions of any registered
+              organization acting as a proxy contact on the service.
             </li>
             <li>
               Any medical complications, adverse reactions, or fatalities
@@ -181,11 +188,11 @@ export default function TermsOfService() {
         <title>Terms of Service | Bloodonate</title>
         <meta
           name="description"
-          content="Review the Bloodonate Terms of Service, including our medical and emergency disclaimers, user code of conduct, and organizational responsibilities."
+          content="Review the Bloodonate Terms of Service, including our medical and emergency disclaimers, user code of conduct, and organizational proxy responsibilities."
         />
         <meta
           name="keywords"
-          content="terms of service, Bloodonate terms, medical disclaimer, SaaS terms, user agreement, blood directory rules"
+          content="terms of service, Bloodonate terms, medical disclaimer, SaaS terms, user agreement, proxy contact rules"
         />
 
         {/* Open Graph / Facebook */}

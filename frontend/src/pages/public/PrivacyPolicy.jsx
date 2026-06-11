@@ -15,7 +15,7 @@ import {
 } from "../../components/ui/Card";
 
 export default function PrivacyPolicy() {
-  const lastUpdated = "May 17, 2026";
+  const lastUpdated = "June 11, 2026";
 
   const policies = [
     {
@@ -27,16 +27,25 @@ export default function PrivacyPolicy() {
           <ul className="list-disc pl-5 space-y-3 text-slate-400">
             <li>
               <strong className="text-slate-200">Organization Data:</strong>{" "}
-              When a hospital or NGO registers, we collect official contact
-              details, physical addresses, and administrative credentials
-              required for tenant provisioning.
+              When a healthcare organization (hospital, blood bank, clinic, or
+              NGO) registers, we collect official contact details, physical
+              addresses, and administrative credentials required for tenant
+              provisioning.
             </li>
             <li>
               <strong className="text-slate-200">Donor Data:</strong>{" "}
               Organizations input donor details into their secure tenant
-              environment. This includes Full Name, Blood Group, Gender, Phone
-              Number, Date of Birth, Location (City/District), and historical
-              donation timelines.
+              environment. This includes Blood Group, Gender, Date of Birth,
+              Location (City/District), historical donation timelines, and
+              medical deferral status.
+              <br />
+              <br />
+              <span className="text-emerald-400 font-medium">
+                Important Note:
+              </span>{" "}
+              We do not collect or expose donor phone numbers to the public
+              directory. All public-facing contact data utilizes the managing
+              Organization's contact details.
             </li>
           </ul>
         </div>
@@ -53,11 +62,13 @@ export default function PrivacyPolicy() {
           </p>
           <ul className="list-disc pl-5 space-y-3 text-slate-400">
             <li>
-              <strong className="text-slate-200">Contact Masking:</strong> Donor
-              phone numbers are masked by default on the public directory. Full
-              identifiers are only revealed via explicit user action, subject to
-              systemic rate-limiting to prevent automated scraping and data
-              harvesting.
+              <strong className="text-slate-200">
+                Organizational Proxy Routing:
+              </strong>
+              Donor personal phone numbers and full identifying names are
+              strictly isolated from the public directory. If a patient requires
+              a donor, the system routes the connection strictly to the verified
+              healthcare organization managing that donor.
             </li>
             <li>
               <strong className="text-slate-200">
@@ -81,9 +92,9 @@ export default function PrivacyPolicy() {
             Our Software-as-a-Service (SaaS) platform operates on a strict
             multi-tenant architecture. Donor data is cryptographically and
             logically isolated by organization. Personnel from Hospital A cannot
-            query, view, or modify the donor registry managed by NGO B. All
-            persistent data is encrypted at rest using industry-standard AES-256
-            protocols.
+            query, view, or modify the donor registry managed by Blood Bank B.
+            All persistent data is encrypted at rest using industry-standard
+            AES-256 protocols.
           </p>
         </div>
       ),
@@ -101,9 +112,10 @@ export default function PrivacyPolicy() {
           <ul className="list-disc pl-5 space-y-3 text-slate-400">
             <li>
               <strong className="text-slate-200">Public Directory:</strong>{" "}
-              Basic, masked donor attributes (Name, Blood Group, Region) are
-              surfaced publicly for the sole operational purpose of facilitating
-              emergency blood donations.
+              Basic, masked donor attributes (Anonymized Name, Blood Group,
+              Region) are surfaced publicly for the sole operational purpose of
+              facilitating emergency blood donations via the managing
+              organization.
             </li>
             <li>
               <strong className="text-slate-200">Legal Requirements:</strong>{" "}
@@ -123,11 +135,11 @@ export default function PrivacyPolicy() {
           <p>
             As Bloodonate operates as a Data Processor for our subscribing
             healthcare organizations (the Data Controllers), individual donors
-            seeking to exercise their rights to access, correct, or delete their
-            records must submit requests directly to the specific hospital or
-            NGO that registered them. Organization Administrators possess full
-            CRUD (Create, Read, Update, Delete) privileges to permanently
-            expunge a donor record from the database upon request.
+            seeking to exercise their rights to access, correct, or remove their
+            records must submit requests directly to the specific organization
+            that registered them. Organization Administrators possess the
+            privileges to securely deactivate and remove a donor record from the
+            active directory upon request.
           </p>
         </div>
       ),
@@ -141,11 +153,11 @@ export default function PrivacyPolicy() {
         <title>Privacy Policy | Bloodonate</title>
         <meta
           name="description"
-          content="Review the Bloodonate Privacy Policy to understand our data collection, tenant isolation, and cryptographic standards for protecting organization and donor data."
+          content="Review the Bloodonate Privacy Policy to understand our data collection, proxy routing architecture, and cryptographic standards for protecting donor data."
         />
         <meta
           name="keywords"
-          content="privacy policy, data protection, blood donation privacy, SaaS security, multi-tenant security, Bloodonate privacy"
+          content="privacy policy, data protection, blood donation privacy, SaaS security, multi-tenant security, proxy routing"
         />
 
         {/* Open Graph / Facebook */}
@@ -153,7 +165,7 @@ export default function PrivacyPolicy() {
         <meta property="og:title" content="Privacy Policy | Bloodonate" />
         <meta
           property="og:description"
-          content="Understand how Bloodonate protects and manages organizational and donor data."
+          content="Understand how Bloodonate protects and manages organizational and donor data via secure proxy routing."
         />
         <meta
           property="og:url"
@@ -165,7 +177,7 @@ export default function PrivacyPolicy() {
         <meta name="twitter:title" content="Privacy Policy | Bloodonate" />
         <meta
           name="twitter:description"
-          content="Understand how Bloodonate protects and manages organizational and donor data."
+          content="Understand how Bloodonate protects and manages organizational and donor data via secure proxy routing."
         />
 
         {/* Canonical Link */}

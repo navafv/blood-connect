@@ -32,7 +32,11 @@ export default function DonorGuidelines() {
       label: "Hemoglobin",
       value: "Not less than 12.5 g/dL (checked at the donation site).",
     },
-    { label: "Donation Interval", value: "Male: 90 days | Female: 120 days." },
+    {
+      label: "Donation Interval",
+      value:
+        "Whole Blood: 90 days (Male) / 120 days (Female/Other). Platelets (Apheresis): 14 days. Plasma: 28 days.",
+    },
   ];
 
   const prepTips = [
@@ -137,7 +141,10 @@ export default function DonorGuidelines() {
             <CardContent className="pt-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {basicRequirements.map((req, idx) => (
-                  <div key={idx} className="flex gap-4 group">
+                  <div
+                    key={idx}
+                    className="flex gap-4 group md:last:col-span-2"
+                  >
                     <div className="mt-1.5 shrink-0">
                       <div
                         className="h-3 w-3 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform"
