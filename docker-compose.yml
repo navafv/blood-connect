@@ -25,8 +25,6 @@ services:
              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     volumes:
       - ./backend/media:/app/media
-    ports:
-      - "127.0.0.1:8000:8000" # Exposed locally to the VPS host on port 8000
     env_file: 
       - ./backend/.env
     environment:
@@ -42,8 +40,20 @@ services:
       dockerfile: Dockerfile
     container_name: bloodonate_frontend
     restart: always
+    networks:
+      - bloodonate_net
+
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx_proxy
+    restart: always
     ports:
-      - "127.0.0.1:3000:80" # Exposed locally to the VPS host on port 3000
+      - '80:80'    # HTTP Traffic
+      - '443:443'  # HTTPS Traffic
+      - '81:81'    # Admin Dashboard
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
     networks:
       - bloodonate_net
 
