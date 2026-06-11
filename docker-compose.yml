@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -16,7 +14,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: bloodonate_backend
     restart: always
@@ -38,6 +36,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://api.navaf.duckdns.org/api
     container_name: bloodonate_frontend
     restart: always
     networks:
@@ -48,9 +48,9 @@ services:
     container_name: nginx_proxy
     restart: always
     ports:
-      - '80:80'    # HTTP Traffic
-      - '443:443'  # HTTPS Traffic
-      - '81:81'    # Admin Dashboard
+      - '80:80'
+      - '443:443'
+      - '81:81'
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt

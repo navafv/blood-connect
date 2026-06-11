@@ -8,21 +8,18 @@ ENV PYTHONUNBUFFERED=1
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies required for PostgreSQL and building packages
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY backend/requirements.txt /app/
+COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the Django project
-COPY backend/ /app/
-
-# Collect static files (for Django Admin interface)
-RUN python manage.py collectstatic --noinput
+COPY . /app/
 
 # Expose the Gunicorn port
 EXPOSE 8000
