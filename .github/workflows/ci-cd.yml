@@ -1,104 +1,31 @@
-name: Bloodonate CI/CD Pipeline
+name: VPS Production Deployment
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  # Added workflow_dispatch so you can manually trigger deployments for client testing
-  workflow_dispatch: 
-
-# Cancel in-progress runs if a new commit is pushed to save GitHub Action minutes
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches:
+      - main
 
 jobs:
-  test-frontend:
-    name: Frontend Tests & Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-          
-      - name: Install Dependencies
-        working-directory: ./frontend
-        run: npm ci
-        
-      - name: Run Linter
-        working-directory: ./frontend
-        # Use --if-present in case you ever temporarily remove the lint script
-        run: npm run lint --if-present
-        
-      - name: Run Vitest
-        working-directory: ./frontend
-        # --run ensures Vitest runs once and exits instead of hanging in watch mode
-        run: npm run test -- --run
-        
-      - name: Verify Production Build
-        working-directory: ./frontend
-        # Crucial: Ensures the Vite build actually succeeds before deploying
-        run: npm run build
-
-  test-backend:
-    name: Backend Tests
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-          cache: 'pip'
-          
-      - name: Install Dependencies
-        working-directory: ./backend
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          
-      - name: Run Pytest
-        working-directory: ./backend
-        env:
-          SECRET_KEY: test-key-do-not-use
-          DEBUG: True
-          # Ensure URL matches the postgres service defined above
-          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
-        # Added -v for verbose output to make debugging easier if it fails again
-        run: pytest -v
-
   deploy:
-    name: Production Deployment
+    name: Deploy to VPS
     runs-on: ubuntu-latest
-    needs: [test-frontend, test-backend]
-    # Only run deployment if we are on the main branch
-    if: github.ref == 'refs/heads/main' 
-    
+
     steps:
-      - name: Deployment Success Simulation
-        run: |
-          echo "All tests passed!"
-          echo "Ready for manual or client deployment."
-          # curl -f -s -X POST "${{ secrets.DEPLOY_WEBHOOK_URL }}"
+      - name: Execute Remote SSH Commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Navigate to your project directory
+            cd ${{ secrets.VPS_PROJECT_PATH }}
+            
+            # Pull the newest code
+            git pull origin main
+            
+            # Rebuild and restart the containers silently
+            docker-compose up -d --build
+            
+            # Clean up old unused Docker images to save VPS storage
+            docker image prune -f

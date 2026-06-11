@@ -2,7 +2,9 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 const api = axios.create({
-  baseURL: import.meta.env.PROD ?"/api" : "http://localhost:8000/api",
+  baseURL: import.meta.env.PROD
+    ? import.meta.env.VITE_API_BASE_URL || "https://api.bloodonate.org/api"
+    : "http://localhost:8000/api",
   headers: {
     "Content-Type": "application/json",
   },

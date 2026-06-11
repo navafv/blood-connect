@@ -246,7 +246,7 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_SECURE': not DEBUG,
     'AUTH_COOKIE_HTTP_ONLY': True,
     'AUTH_COOKIE_PATH': '/',
-    'AUTH_COOKIE_DOMAIN': None,
+    'AUTH_COOKIE_DOMAIN': os.environ.get('AUTH_COOKIE_DOMAIN', None),
     'AUTH_COOKIE_SAMESITE': 'Lax',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
@@ -259,7 +259,7 @@ SIMPLE_JWT = {
 # ==========================================
 # DEPLOYMENT & URL SETTINGS
 # ==========================================
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://www.bloodonate.org')
 
 
 # ==========================================

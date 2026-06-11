@@ -31,7 +31,10 @@ export function AdBanner({ className = "" }) {
   // --- Fallback States ---
   if (isLoading || ads.length === 0) return null;
 
-  const baseURL = import.meta.env.PROD ? "/" : "http://localhost:8000";
+  const apiBase = import.meta.env.PROD
+    ? import.meta.env.VITE_API_BASE_URL || "https://api.bloodonate.org/api"
+    : "http://localhost:8000/api";
+  const baseURL = apiBase.replace(/\/api\/?$/, "");
 
   return (
     <div

@@ -46,7 +46,10 @@ export default function ManageAds() {
   });
   const [extendMonths, setExtendMonths] = useState("1");
 
-  const baseURL = import.meta.env.PROD ? "/" : "http://localhost:8000";
+  const apiBase = import.meta.env.PROD
+    ? import.meta.env.VITE_API_BASE_URL || "https://api.navaf.duckdns.org/api"
+    : "http://localhost:8000/api";
+  const baseURL = apiBase.replace(/\/api\/?$/, "");
 
   // --- Query Pipeline: Fetch Campaigns ---
   const {

@@ -4,40 +4,52 @@ services:
   db:
     image: postgres:15-alpine
     container_name: bloodonate_db
-    restart: unless-stopped
+    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: bloodonate
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-bloodonate}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks:
+      - bloodonate_net
 
-  web:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: bloodonate_web
-    restart: unless-stopped
+    container_name: bloodonate_backend
+    restart: always
     command: >
       sh -c "python manage.py migrate && 
              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     volumes:
-      # Map local media so uploads aren't lost if the container restarts locally
-      - ./backend/media:/app/backend/media
+      - ./backend/media:/app/media
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000" # Exposed locally to the VPS host on port 8000
+    env_file: 
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@db:5432/${POSTGRES_DB:-bloodonate}
     depends_on:
       - db
-    
-    # This automatically loads all variables (EMAIL, CLOUDINARY, CORS, etc.) from your .env file
-    env_file: 
-      - .env
-      
-    environment:
-      # Override the DATABASE_URL to use the internal Docker network connection
-      - DATABASE_URL=postgres://postgres:postgrespassword@db:5432/bloodonate
+    networks:
+      - bloodonate_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bloodonate_frontend
+    restart: always
+    ports:
+      - "127.0.0.1:3000:80" # Exposed locally to the VPS host on port 3000
+    networks:
+      - bloodonate_net
+
+networks:
+  bloodonate_net:
+    driver: bridge
 
 volumes:
   postgres_data:
