@@ -24,9 +24,7 @@ services:
     volumes:
       - ./backend/media:/app/media
     env_file: 
-      - ./backend/.env
-    environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@db:5432/${POSTGRES_DB:-bloodonate}
+      - .env
     depends_on:
       - db
     networks:
@@ -37,7 +35,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: https://api.navaf.duckdns.org/api
+        VITE_API_BASE_URL: https://api.bloodonate.org/api
     container_name: bloodonate_frontend
     restart: always
     networks:
