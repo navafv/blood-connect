@@ -94,7 +94,7 @@ export default function Home() {
         {/* --- Hero Composition --- */}
         <section className="relative px-4 pt-20 pb-32 md:pt-32 md:pb-40 lg:pt-40 lg:pb-48">
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-rose-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000 transition-colors dark:bg-rose-600/15"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-rose-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000 transition-colors dark:bg-rose-600/15"
             aria-hidden="true"
           />
 

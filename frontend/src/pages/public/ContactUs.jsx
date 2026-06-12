@@ -100,7 +100,7 @@ export default function ContactUs() {
         {/* --- Composition Header --- */}
         <section className="relative px-4 pt-20 pb-16 text-center">
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000 transition-colors bg-blue-500/10 dark:bg-blue-600/15"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-75 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000 transition-colors bg-blue-500/10 dark:bg-blue-600/15"
             aria-hidden="true"
           />
 
@@ -233,7 +233,7 @@ export default function ContactUs() {
                 />
 
                 {status === "success" ? (
-                  <CardContent className="p-16 flex flex-col items-center justify-center text-center h-full min-h-[500px] animate-in fade-in zoom-in-95 duration-500">
+                  <CardContent className="p-16 flex flex-col items-center justify-center text-center h-full min-h-125 animate-in fade-in zoom-in-95 duration-500">
                     <div className="h-24 w-24 rounded-full flex items-center justify-center border mb-8 relative transition-colors duration-300 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20">
                       <div className="absolute inset-0 rounded-full blur-md animate-pulse transition-colors duration-300 bg-emerald-200/50 dark:bg-emerald-500/20" />
                       <CheckCircle2

@@ -289,7 +289,7 @@ export default function Dashboard() {
               Active Inventory Distribution
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-8 flex-1 min-h-[350px]">
+          <CardContent className="pt-8 flex-1 min-h-87.5">
             {bloodGroupDistribution.length === 0 ? (
               <div className="flex flex-col h-full items-center justify-center text-center animate-in fade-in">
                 <div className="h-16 w-16 bg-slate-100 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 border rounded-full flex items-center justify-center mb-4 shadow-inner transition-colors duration-300">

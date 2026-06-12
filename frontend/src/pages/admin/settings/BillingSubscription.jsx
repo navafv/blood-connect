@@ -104,7 +104,7 @@ export default function BillingSubscription() {
   const hasActiveSub = orgData?.has_active_subscription;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 transition-colors duration-300">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
@@ -246,7 +246,7 @@ export default function BillingSubscription() {
 
               <button
                 onClick={() => window.open(`tel:${adminPhone}`, "_self")}
-                className="w-full flex items-center justify-center gap-2 font-bold h-12 rounded-xl transition-all border shadow-sm transition-colors duration-300 bg-white border-slate-200 text-slate-800 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white dark:border-slate-700"
+                className="w-full flex items-center justify-center gap-2 font-bold h-12 rounded-xl border shadow-sm transition-colors duration-300 bg-white border-slate-200 text-slate-800 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white dark:border-slate-700"
               >
                 <Phone className="h-5 w-5" /> Call Administrator
               </button>

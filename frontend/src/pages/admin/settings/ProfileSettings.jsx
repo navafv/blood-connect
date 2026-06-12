@@ -124,7 +124,7 @@ export default function ProfileSettings() {
 
   if (isError) {
     return (
-      <div className="flex flex-col h-[60vh] items-center justify-center text-center animate-in fade-in duration-500 transition-colors duration-300">
+      <div className="flex flex-col h-[60vh] items-center justify-center text-center animate-in fade-in transition-colors duration-300">
         <div className="h-20 w-20 rounded-2xl flex items-center justify-center border mb-6 transition-colors duration-300 bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20">
           <AlertCircle className="h-10 w-10 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
         </div>
@@ -146,7 +146,7 @@ export default function ProfileSettings() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 transition-colors duration-300">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300">
       {/* --- Workspace Header --- */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
         <div>

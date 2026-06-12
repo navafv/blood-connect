@@ -166,7 +166,7 @@ export default function OrganizationProfile() {
 
       <div className="min-h-screen transition-colors duration-300 bg-slate-50 dark:bg-slate-950 pb-24">
         {/* --- Dynamic Hero Banner --- */}
-        <div className="relative h-[300px] md:h-[400px] w-full border-b overflow-hidden animate-in fade-in duration-700 transition-colors duration-300 bg-slate-200 border-slate-300 dark:bg-slate-900 dark:border-slate-800">
+        <div className="relative h-75 md:h-100 w-full border-b overflow-hidden animate-in fade-in duration-700 transition-colors bg-slate-200 border-slate-300 dark:bg-slate-900 dark:border-slate-800">
           {optimizedBanner ? (
             <img
               src={optimizedBanner}
@@ -189,7 +189,7 @@ export default function OrganizationProfile() {
 
         {/* --- Profile Header --- */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-8 -mt-[88px] md:-mt-[176px] mb-8">
+          <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-8 -mt-22 md:-mt-44 mb-8">
             {/* Institutional Logo Profile Picture */}
             <div className="relative shrink-0 animate-in zoom-in-90 duration-500 delay-100">
               {optimizedLogo ? (

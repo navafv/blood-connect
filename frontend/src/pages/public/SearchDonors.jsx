@@ -271,7 +271,7 @@ export default function SearchDonors() {
         {/* --- Search Console Header --- */}
         <section className="pt-12 pb-16 px-4 relative overflow-hidden transition-colors duration-300 bg-white/40 border-b border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80">
           <div
-            className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/10"
+            className="absolute top-0 right-1/4 w-125 h-125 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/10"
             aria-hidden="true"
           />
 
@@ -415,7 +415,7 @@ export default function SearchDonors() {
         </div>
 
         {/* --- Data Visualization Render Surface --- */}
-        <div className="container mx-auto max-w-5xl px-4 mt-12 min-h-[400px]">
+        <div className="container mx-auto max-w-5xl px-4 mt-12 min-h-100">
           {!hasSearched ? (
             /* Pre-Query State */
             <div className="flex flex-col items-center justify-center text-center py-24 animate-in fade-in duration-700">

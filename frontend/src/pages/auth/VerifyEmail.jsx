@@ -124,11 +124,11 @@ export default function VerifyEmail() {
     <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       {/* Ambient Background */}
       <div
-        className="absolute top-[-10%] right-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-emerald-500/10 dark:bg-emerald-600/15"
+        className="absolute top-[-10%] right-[-5%] w-120 h-120 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-emerald-500/10 dark:bg-emerald-600/15"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-10%] left-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
+        className="absolute bottom-[-10%] left-[-5%] w-120 h-120 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
         aria-hidden="true"
       />
 

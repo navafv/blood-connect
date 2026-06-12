@@ -79,7 +79,7 @@ export default function AboutUs() {
         <section className="relative px-4 pt-24 pb-20 md:pt-32 md:pb-32 text-center">
           {/* Ambient Gradient Mesh */}
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-rose-500/10 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 dark:bg-rose-600/10"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-125 bg-rose-500/10 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 dark:bg-rose-600/10"
             aria-hidden="true"
           />
 

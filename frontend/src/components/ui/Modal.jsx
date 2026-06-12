@@ -79,7 +79,7 @@ export function Modal({ isOpen, onClose, title, children, className }) {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-0">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300 transition-colors dark:bg-slate-950/80"
@@ -95,7 +95,7 @@ export function Modal({ isOpen, onClose, title, children, className }) {
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         className={cn(
-          "relative z-[101] w-full max-w-lg rounded-2xl border p-6 sm:p-8 animate-in zoom-in-95 fade-in duration-300 focus:outline-none transition-colors",
+          "relative z-101 w-full max-w-lg rounded-2xl border p-6 sm:p-8 animate-in zoom-in-95 fade-in duration-300 focus:outline-none transition-colors",
           // Light Mode
           "bg-white/95 border-slate-200 shadow-2xl text-slate-900 backdrop-blur-xl",
           // Dark Mode

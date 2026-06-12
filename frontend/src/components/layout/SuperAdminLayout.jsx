@@ -278,7 +278,7 @@ export function SuperAdminLayout() {
         <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10">
           {/* Ambient Content Glow (Adapted for Light/Dark) */}
           <div
-            className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[150px] pointer-events-none transition-colors duration-500 bg-indigo-500/5 dark:bg-indigo-600/5"
+            className="absolute top-0 right-0 w-125 h-125 rounded-full blur-[150px] pointer-events-none transition-colors duration-500 bg-indigo-500/5 dark:bg-indigo-600/5"
             aria-hidden="true"
           />
           <Outlet />

@@ -142,11 +142,11 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       {/* Ambient Background */}
       <div
-        className="absolute top-[-10%] right-[-5%] w-[400px] md:w-[600px] h-[450px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
+        className="absolute top-[-10%] right-[-5%] w-100 md:w-150 h-112.5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-10%] left-[-5%] w-[400px] md:w-[600px] h-[450px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
+        className="absolute bottom-[-10%] left-[-5%] w-100 md:w-150 h-112.5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
         aria-hidden="true"
       />
 

@@ -199,7 +199,7 @@ export default function PrivacyPolicy() {
         {/* --- Composition Header --- */}
         <section className="relative px-4 pt-24 pb-20 text-center border-b transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-900/20 dark:border-slate-800/80">
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-emerald-500/10 dark:bg-emerald-600/10"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-175 h-87.5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-emerald-500/10 dark:bg-emerald-600/10"
             aria-hidden="true"
           />
 

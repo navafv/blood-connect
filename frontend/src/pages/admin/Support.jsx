@@ -145,7 +145,7 @@ export default function Support() {
     });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 transition-colors duration-300">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300">
       {/* --- Workspace Header --- */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
         <div>
@@ -236,7 +236,7 @@ export default function Support() {
                           <Ticket className="h-5 w-5 transition-colors duration-300 text-slate-500 group-hover:text-blue-600 dark:text-slate-400 dark:group-hover:text-blue-400" />
                         </div>
                         <div>
-                          <p className="font-bold text-sm truncate max-w-[200px] sm:max-w-xs transition-colors duration-300 text-slate-900 dark:text-white">
+                          <p className="font-bold text-sm truncate max-w-50 sm:max-w-xs transition-colors duration-300 text-slate-900 dark:text-white">
                             {ticket.subject}
                           </p>
                           <p className="text-xs font-mono mt-1 font-semibold transition-colors duration-300 text-slate-500 dark:text-slate-500">
@@ -330,7 +330,7 @@ export default function Support() {
               disabled={
                 createMutation.isPending || !subject.trim() || !message.trim()
               }
-              className="shadow-md min-w-[128px] hover:shadow-lg hover:-translate-y-0.5 transition-all dark:shadow-lg"
+              className="shadow-md min-w-32 hover:shadow-lg hover:-translate-y-0.5 transition-all dark:shadow-lg"
             >
               {createMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -351,7 +351,7 @@ export default function Support() {
             <span className="font-mono text-sm px-2 py-1 rounded border transition-colors duration-300 bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-500 dark:border-rose-500/20">
               TCKT-{activeTicket?.id.toString().padStart(4, "0")}
             </span>
-            <span className="truncate max-w-[200px] sm:max-w-xs transition-colors duration-300 text-slate-900 dark:text-white">
+            <span className="truncate max-w-50 sm:max-w-xs transition-colors duration-300 text-slate-900 dark:text-white">
               {activeTicket?.subject}
             </span>
           </div>
@@ -367,7 +367,7 @@ export default function Support() {
             </div>
 
             {/* Chat History Container */}
-            <div className="flex-1 space-y-5 overflow-y-auto pr-2 custom-scrollbar min-h-[300px] p-2">
+            <div className="flex-1 space-y-5 overflow-y-auto pr-2 custom-scrollbar min-h-75 p-2">
               {/* Original Message (User) */}
               <div className="flex flex-col items-end animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="p-4 rounded-2xl rounded-tr-sm max-w-[85%] text-sm shadow-sm leading-relaxed border transition-colors duration-300 bg-white border-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700/50">

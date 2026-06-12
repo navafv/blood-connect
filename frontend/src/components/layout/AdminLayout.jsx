@@ -468,7 +468,7 @@ export function AdminLayout() {
         {/* Content Viewport */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
           <div
-            className="absolute top-0 right-0 w-[500px] h-[500px] blur-[150px] rounded-full pointer-events-none transition-colors duration-500 bg-rose-500/5 dark:bg-rose-500/5"
+            className="absolute top-0 right-0 w-125 h-125 blur-[150px] rounded-full pointer-events-none transition-colors duration-500 bg-rose-500/5 dark:bg-rose-500/5"
             aria-hidden="true"
           />
           <div className="relative z-10 w-full min-h-full">

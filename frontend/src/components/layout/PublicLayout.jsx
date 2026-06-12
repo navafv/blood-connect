@@ -23,7 +23,7 @@ export function PublicLayout() {
 
       <a
         href="#main-content"
-        className="absolute top-4 left-4 z-[9999] translate-y-[-150%] rounded-md bg-rose-600 px-4 py-2 font-bold text-white transition focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+        className="absolute top-4 left-4 z-9999 translate-y-[-150%] rounded-md bg-rose-600 px-4 py-2 font-bold text-white transition focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-rose-500/50"
       >
         Skip to main content
       </a>

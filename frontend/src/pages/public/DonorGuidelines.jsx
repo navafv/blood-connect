@@ -107,7 +107,7 @@ export default function DonorGuidelines() {
         {/* --- Hero Section --- */}
         <section className="relative px-4 pt-24 pb-20 text-center overflow-hidden">
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full blur-[100px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/10"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-75 rounded-full blur-[100px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/10"
             aria-hidden="true"
           />
 
