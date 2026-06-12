@@ -201,9 +201,9 @@ export default function AddDonor() {
 
   if (isLoadingGeo) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh]">
-        <Loader2 className="h-10 w-10 animate-spin text-rose-500 mb-4" />
-        <p className="text-slate-400 font-medium tracking-widest uppercase text-sm">
+      <div className="flex flex-col items-center justify-center h-[60vh] transition-colors duration-300">
+        <Loader2 className="h-10 w-10 animate-spin text-rose-600 dark:text-rose-500 mb-4 transition-colors duration-300" />
+        <p className="text-slate-500 dark:text-slate-400 font-medium tracking-widest uppercase text-sm transition-colors duration-300">
           Provisioning Form Schema...
         </p>
       </div>
@@ -211,28 +211,28 @@ export default function AddDonor() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 transition-colors duration-300">
       {/* --- Workspace Header --- */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6 relative z-10">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 relative z-10 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Link to="/admin/donors">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 rounded-full hover:bg-slate-800 text-slate-400 transition-colors"
+                className="h-8 w-8 p-0 rounded-full transition-colors duration-300 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
-              <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                <UserPlus className="h-5 w-5 text-rose-500" />
+            <h1 className="text-2xl font-bold flex items-center gap-3 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
+              <div className="p-1.5 rounded-lg border shadow-inner transition-colors duration-300 bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20">
+                <UserPlus className="h-5 w-5 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
               </div>
               Register New Donor
             </h1>
           </div>
-          <p className="text-sm text-slate-400 ml-11">
+          <p className="text-sm ml-11 transition-colors duration-300 text-slate-600 dark:text-slate-400">
             Register a new blood donor to your facility's active directory.
           </p>
         </div>
@@ -246,11 +246,11 @@ export default function AddDonor() {
         {/* LEFT COLUMN: Identity & Location (HIGHER Z-INDEX TO OVERLAP RIGHT COLUMN ON MOBILE) */}
         <div className="lg:col-span-2 space-y-6 relative z-30">
           {/* Module 1: Identity & Demographics */}
-          <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl relative z-20">
-            <CardHeader className="border-b border-slate-800/60 pb-4">
-              <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shrink-0">
-                  <UserCircle className="h-5 w-5 text-blue-500" />
+          <Card className="backdrop-blur-xl shadow-lg relative z-20 transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-xl">
+            <CardHeader className="border-b pb-4 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+              <CardTitle className="text-lg font-bold flex items-center gap-3 transition-colors duration-300 text-slate-900 dark:text-white">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20">
+                  <UserCircle className="h-5 w-5 transition-colors duration-300 text-blue-600 dark:text-blue-500" />
                 </div>
                 Identity & Demographics
               </CardTitle>
@@ -259,21 +259,21 @@ export default function AddDonor() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2 sm:col-span-2">
                   <label
-                    className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.full_name ? "text-red-400" : "text-slate-400"}`}
+                    className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${fieldErrors.full_name ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}`}
                   >
                     Full Name *
                   </label>
                   <Input
                     name="full_name"
                     placeholder="E.g. John Doe"
-                    className={`h-11 ${fieldErrors.full_name ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                    className={`h-11 transition-all duration-300 ${fieldErrors.full_name ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "focus:border-rose-500 focus:ring-rose-500/20"}`}
                     value={formData.full_name}
                     onChange={handleChange}
                     required
                     autoFocus
                   />
                   {fieldErrors.full_name && (
-                    <p className="text-xs text-red-400 mt-1">
+                    <p className="text-xs mt-1 transition-colors duration-300 text-red-600 dark:text-red-400">
                       {fieldErrors.full_name[0]}
                     </p>
                   )}
@@ -281,7 +281,7 @@ export default function AddDonor() {
 
                 <div className="space-y-2">
                   <label
-                    className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.phone_number ? "text-red-400" : "text-slate-400"}`}
+                    className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${fieldErrors.phone_number ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}`}
                   >
                     Phone Number *
                   </label>
@@ -289,13 +289,13 @@ export default function AddDonor() {
                     name="phone_number"
                     type="tel"
                     placeholder="+919876543210"
-                    className={`font-mono h-11 ${fieldErrors.phone_number ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                    className={`font-mono h-11 transition-all duration-300 ${fieldErrors.phone_number ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "focus:border-rose-500 focus:ring-rose-500/20"}`}
                     value={formData.phone_number}
                     onChange={handleChange}
                     required
                   />
                   {fieldErrors.phone_number && (
-                    <p className="text-xs text-red-400 mt-1">
+                    <p className="text-xs mt-1 transition-colors duration-300 text-red-600 dark:text-red-400">
                       {fieldErrors.phone_number[0]}
                     </p>
                   )}
@@ -303,21 +303,21 @@ export default function AddDonor() {
 
                 <div className="space-y-2">
                   <label
-                    className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.date_of_birth ? "text-red-400" : "text-slate-400"}`}
+                    className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${fieldErrors.date_of_birth ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}`}
                   >
                     Date of Birth *
                   </label>
                   <Input
                     name="date_of_birth"
                     type="date"
-                    className={`h-11 ${fieldErrors.date_of_birth ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                    className={`h-11 transition-all duration-300 ${fieldErrors.date_of_birth ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "focus:border-rose-500 focus:ring-rose-500/20"}`}
                     value={formData.date_of_birth}
                     onChange={handleChange}
                     max={new Date().toISOString().split("T")[0]}
                     required
                   />
                   {fieldErrors.date_of_birth && (
-                    <p className="text-xs text-red-400 mt-1">
+                    <p className="text-xs mt-1 transition-colors duration-300 text-red-600 dark:text-red-400">
                       {fieldErrors.date_of_birth[0]}
                     </p>
                   )}
@@ -325,13 +325,13 @@ export default function AddDonor() {
 
                 <div className="space-y-2 sm:col-span-2">
                   <label
-                    className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.gender ? "text-red-400" : "text-slate-400"}`}
+                    className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${fieldErrors.gender ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}`}
                   >
                     Biological Gender *
                   </label>
                   <Select
                     name="gender"
-                    className={`h-11 ${fieldErrors.gender ? "border-red-500/80 focus:border-red-500 focus:ring-red-500/30 text-red-100" : "bg-slate-950/50 border-slate-700 focus:border-rose-500"}`}
+                    className={`h-11 transition-all duration-300 ${fieldErrors.gender ? "border-red-500 focus:border-red-500 focus:ring-red-500/30 text-red-600 dark:text-red-100" : "focus:border-rose-500 focus:ring-rose-500/20"}`}
                     value={formData.gender}
                     onChange={handleChange}
                     required
@@ -341,7 +341,7 @@ export default function AddDonor() {
                     <option value="O">Other (120-day cycle)</option>
                   </Select>
                   {fieldErrors.gender && (
-                    <p className="text-xs text-red-400 mt-1">
+                    <p className="text-xs mt-1 transition-colors duration-300 text-red-600 dark:text-red-400">
                       {fieldErrors.gender[0]}
                     </p>
                   )}
@@ -350,25 +350,25 @@ export default function AddDonor() {
             </CardContent>
           </Card>
 
-          {/* Module 2: Geographic Jurisdiction (Z-INDEX OVERRIDE APPLIED HERE) */}
-          <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl overflow-visible relative z-30">
-            <CardHeader className="border-b border-slate-800/60 pb-4">
-              <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
-                  <MapPin className="h-5 w-5 text-amber-500" />
+          {/* Module 2: Geographic Jurisdiction */}
+          <Card className="backdrop-blur-xl shadow-lg overflow-visible relative z-30 transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-xl">
+            <CardHeader className="border-b pb-4 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+              <CardTitle className="text-lg font-bold flex items-center gap-3 transition-colors duration-300 text-slate-900 dark:text-white">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20">
+                  <MapPin className="h-5 w-5 transition-colors duration-300 text-amber-600 dark:text-amber-500" />
                 </div>
                 Donor Location
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <p className="text-xs text-slate-400 mb-5 font-medium uppercase tracking-wider">
+              <p className="text-xs mb-5 font-medium uppercase tracking-wider transition-colors duration-300 text-slate-500 dark:text-slate-400">
                 Defaults to your organization's registered region.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div className="space-y-2">
                   <SearchableSelect
                     placeholder="Country *"
-                    className={`h-11 ${fieldErrors.country ? "border-red-500/80 focus:border-red-500" : "bg-slate-950/50"}`}
+                    className={`h-11 transition-all duration-300 ${fieldErrors.country ? "border-red-500 focus:border-red-500" : ""}`}
                     value={formData.country}
                     options={
                       initialData?.countries?.map((c) => ({
@@ -384,7 +384,7 @@ export default function AddDonor() {
                 <div className="space-y-2">
                   <SearchableSelect
                     placeholder="State/Province *"
-                    className={`h-11 ${fieldErrors.state ? "border-red-500/80 focus:border-red-500" : "bg-slate-950/50"}`}
+                    className={`h-11 transition-all duration-300 ${fieldErrors.state ? "border-red-500 focus:border-red-500" : ""}`}
                     value={formData.state}
                     options={states.map((s) => ({
                       label: s.name,
@@ -399,7 +399,7 @@ export default function AddDonor() {
                 <div className="space-y-2">
                   <SearchableSelect
                     placeholder="District/City *"
-                    className={`h-11 ${fieldErrors.district ? "border-red-500/80 focus:border-red-500" : "bg-slate-950/50"}`}
+                    className={`h-11 transition-all duration-300 ${fieldErrors.district ? "border-red-500 focus:border-red-500" : ""}`}
                     value={formData.district}
                     options={districts.map((d) => ({
                       label: d.name,
@@ -420,11 +420,11 @@ export default function AddDonor() {
         {/* RIGHT COLUMN: Medical & Submission (LOWER Z-INDEX SO LEFT COLUMN DROPDOWNS OVERLAP IT) */}
         <div className="lg:col-span-1 space-y-6 relative z-10">
           {/* Module 3: Medical Context */}
-          <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl relative z-10">
-            <CardHeader className="border-b border-slate-800/60 pb-4">
-              <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                  <Activity className="h-5 w-5 text-emerald-500" />
+          <Card className="backdrop-blur-xl shadow-lg relative z-10 transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-xl">
+            <CardHeader className="border-b pb-4 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+              <CardTitle className="text-lg font-bold flex items-center gap-3 transition-colors duration-300 text-slate-900 dark:text-white">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20">
+                  <Activity className="h-5 w-5 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
                 </div>
                 Medical Status
               </CardTitle>
@@ -432,13 +432,13 @@ export default function AddDonor() {
             <CardContent className="p-6 space-y-6">
               <div className="space-y-2">
                 <label
-                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.blood_group ? "text-red-400" : "text-slate-400"}`}
+                  className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${fieldErrors.blood_group ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}`}
                 >
                   Blood Group *
                 </label>
                 <Select
                   name="blood_group"
-                  className={`h-11 ${fieldErrors.blood_group ? "border-red-500/80 text-red-100" : "bg-slate-950/50 border-slate-700"}`}
+                  className={`h-11 transition-all duration-300 ${fieldErrors.blood_group ? "border-red-500 text-red-600 dark:text-red-100" : "focus:border-rose-500"}`}
                   value={formData.blood_group}
                   onChange={handleChange}
                   required
@@ -453,7 +453,7 @@ export default function AddDonor() {
                   ))}
                 </Select>
                 {fieldErrors.blood_group && (
-                  <p className="text-xs text-red-400 mt-1">
+                  <p className="text-xs mt-1 transition-colors duration-300 text-red-600 dark:text-red-400">
                     {fieldErrors.blood_group[0]}
                   </p>
                 )}
@@ -461,34 +461,34 @@ export default function AddDonor() {
 
               <div className="space-y-2">
                 <label
-                  className={`text-xs font-bold uppercase tracking-wider ${fieldErrors.last_donation_date ? "text-red-400" : "text-slate-400"}`}
+                  className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${fieldErrors.last_donation_date ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}`}
                 >
                   Last Donation Date
                 </label>
                 <Input
                   name="last_donation_date"
                   type="date"
-                  className={`h-11 ${fieldErrors.last_donation_date ? "border-red-500/80" : "bg-slate-950/50 border-slate-700"}`}
+                  className={`h-11 transition-all duration-300 ${fieldErrors.last_donation_date ? "border-red-500" : "focus:border-rose-500"}`}
                   value={formData.last_donation_date}
                   max={new Date().toISOString().split("T")[0]}
                   onChange={handleChange}
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-800/60">
-                <label className="flex items-start gap-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 cursor-pointer hover:bg-amber-500/10 transition-colors">
+              <div className="pt-4 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+                <label className="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors duration-300 bg-amber-50 border-amber-200 hover:bg-amber-100 dark:bg-amber-500/5 dark:border-amber-500/20 dark:hover:bg-amber-500/10">
                   <input
                     type="checkbox"
                     name="is_permanently_deferred"
-                    className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-950 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-900 transition-all cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded transition-colors duration-300 cursor-pointer border-slate-300 bg-white text-amber-600 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-950 dark:text-amber-500 dark:focus:ring-offset-slate-900"
                     checked={formData.is_permanently_deferred}
                     onChange={handleChange}
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-bold text-amber-500 flex items-center gap-2 mb-1">
+                    <span className="text-sm font-bold flex items-center gap-2 mb-1 transition-colors duration-300 text-amber-700 dark:text-amber-500">
                       <ShieldAlert className="h-4 w-4" /> Medical Deferral
                     </span>
-                    <p className="text-xs text-slate-400 leading-relaxed">
+                    <p className="text-xs leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Mark as medically ineligible. They will be hidden from the
                       public emergency directory.
                     </p>
@@ -500,7 +500,7 @@ export default function AddDonor() {
                     <textarea
                       name="deferral_reason"
                       placeholder="Required: Deferral Reason (e.g. Chronic condition)..."
-                      className={`w-full min-h-25 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 transition-all resize-none shadow-inner ${fieldErrors.deferral_reason ? "border border-red-500/80 bg-slate-950/50" : "border border-amber-500/20 bg-slate-950/50 focus:border-amber-500"}`}
+                      className={`w-full min-h-25 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 transition-all duration-300 resize-none shadow-inner ${fieldErrors.deferral_reason ? "border bg-white border-red-500 dark:border-red-500/80 dark:bg-slate-950/50" : "bg-white border text-slate-900 border-amber-200 focus:border-amber-500 dark:border-amber-500/20 dark:bg-slate-950/50 dark:focus:border-amber-500 dark:text-slate-200"}`}
                       value={formData.deferral_reason}
                       onChange={handleChange}
                       required={formData.is_permanently_deferred}
@@ -512,8 +512,8 @@ export default function AddDonor() {
           </Card>
 
           {/* Module 4: Authorization & Submission */}
-          <Card className="border-rose-500/30 bg-slate-900/80 backdrop-blur-xl shadow-2xl relative overflow-hidden z-10">
-            <div className="absolute inset-0 bg-linear-to-br from-rose-500/10 to-transparent pointer-events-none" />
+          <Card className="backdrop-blur-xl shadow-lg relative overflow-hidden z-10 transition-colors duration-300 bg-white/80 border-rose-200 dark:bg-slate-900/80 dark:border-rose-500/30 dark:shadow-2xl">
+            <div className="absolute inset-0 bg-linear-to-br pointer-events-none transition-colors duration-300 from-rose-100 to-transparent dark:from-rose-500/10" />
             <CardContent className="p-6 relative z-10 flex flex-col gap-6">
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
@@ -521,19 +521,19 @@ export default function AddDonor() {
                   type="checkbox"
                   checked={formData.has_consented}
                   onChange={handleChange}
-                  className={`mt-1 h-5 w-5 rounded bg-slate-950 transition-all cursor-pointer ${fieldErrors.has_consented ? "border-red-500 text-red-500 focus:ring-red-500" : "border-slate-600 text-emerald-500 focus:ring-emerald-500"}`}
+                  className={`mt-1 h-5 w-5 rounded transition-all cursor-pointer bg-white dark:bg-slate-950 ${fieldErrors.has_consented ? "border-red-500 text-red-600 focus:ring-red-500 dark:text-red-500" : "border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-600 dark:text-emerald-500"}`}
                   required
                 />
                 <div>
                   <span
-                    className={`text-sm font-bold flex items-center gap-2 transition-colors ${fieldErrors.has_consented ? "text-red-400" : "text-white group-hover:text-rose-100"}`}
+                    className={`text-sm font-bold flex items-center gap-2 transition-colors ${fieldErrors.has_consented ? "text-red-600 dark:text-red-400" : "text-slate-900 group-hover:text-rose-600 dark:text-white dark:group-hover:text-rose-100"}`}
                   >
                     <ClipboardCheck
-                      className={`h-4 w-4 ${fieldErrors.has_consented ? "text-red-500" : "text-emerald-500"}`}
+                      className={`h-4 w-4 ${fieldErrors.has_consented ? "text-red-600 dark:text-red-500" : "text-emerald-600 dark:text-emerald-500"}`}
                     />
                     Explicit Consent Verified
                   </span>
-                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                  <p className="text-xs mt-1.5 leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     I attest that this individual has authorized our facility to
                     store their medical data and surface their masked contact
                     information to the public.
@@ -544,7 +544,7 @@ export default function AddDonor() {
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full h-14 text-base font-bold shadow-[0_0_20px_rgba(225,29,72,0.2)] hover:shadow-[0_0_30px_rgba(225,29,72,0.4)] transition-all"
+                className="w-full h-14 text-base font-bold shadow-md hover:shadow-lg transition-all dark:shadow-[0_0_20px_rgba(225,29,72,0.2)] dark:hover:shadow-[0_0_30px_rgba(225,29,72,0.4)]"
                 disabled={createMutation.isPending}
               >
                 {createMutation.isPending ? (

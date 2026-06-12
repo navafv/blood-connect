@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Droplet, Menu, X } from "lucide-react";
+import { Droplet, Menu, X, Sun, Moon } from "lucide-react";
 import { Button } from "../ui/Button";
+// Ensure this path matches where you created the ThemeContext
+import { useTheme } from "../../context/ThemeContext";
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -18,7 +21,7 @@ export function Navbar() {
   return (
     <nav
       aria-label="Main Navigation"
-      className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-xl shadow-sm transition-all duration-300"
+      className="sticky top-0 z-50 w-full border-b transition-all duration-300 bg-white/80 border-slate-200 shadow-sm backdrop-blur-xl dark:bg-slate-900/70 dark:border-slate-800/80"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 sm:h-20 items-center justify-between">
@@ -29,13 +32,13 @@ export function Navbar() {
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Bloodonate Homepage"
           >
-            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 shadow-inner group-hover:bg-rose-500/20 transition-colors">
+            <div className="p-1.5 rounded-lg bg-rose-50 border border-rose-100 shadow-inner group-hover:bg-rose-100 transition-colors dark:bg-rose-500/10 dark:border-rose-500/20 dark:group-hover:bg-rose-500/20">
               <Droplet
-                className="h-5 w-5 text-rose-500 fill-rose-500/20"
+                className="h-5 w-5 text-rose-600 fill-rose-600/20 dark:text-rose-500 dark:fill-rose-500/20"
                 aria-hidden="true"
               />
             </div>
-            <span className="text-xl font-black tracking-tight text-white">
+            <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white transition-colors">
               Bloodonate
             </span>
           </Link>
@@ -52,8 +55,8 @@ export function Navbar() {
                     aria-current={isActive ? "page" : undefined}
                     className={`text-sm font-semibold transition-all hover:-translate-y-0.5 ${
                       isActive
-                        ? "text-rose-400 drop-shadow-[0_0_8px_rgba(225,29,72,0.5)]"
-                        : "text-slate-300 hover:text-white"
+                        ? "text-rose-600 drop-shadow-[0_0_8px_rgba(225,29,72,0.2)] dark:text-rose-400 dark:drop-shadow-[0_0_8px_rgba(225,29,72,0.5)]"
+                        : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                     }`}
                   >
                     {link.name}
@@ -62,29 +65,52 @@ export function Navbar() {
               })}
             </div>
 
-            {/* Authentication Gateways */}
-            <div className="flex items-center gap-4 pl-8 border-l border-slate-700/50 h-8">
+            {/* Authentication Gateways & Theme Toggle */}
+            <div className="flex items-center gap-4 pl-8 border-l border-slate-200 dark:border-slate-700/50 h-8 transition-colors">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+                aria-label="Toggle Theme"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </button>
+
               <Link to="/login">
                 <Button
                   variant="ghost"
-                  className="text-slate-300 hover:text-white font-semibold"
+                  className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white font-semibold"
                 >
                   Facility Login
                 </Button>
               </Link>
               <Link to="/register-org">
-                <Button variant="primary" className="shadow-lg font-bold">
+                <Button variant="primary" className="shadow-md font-bold">
                   Register Facility
                 </Button>
               </Link>
             </div>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <div className="lg:hidden flex items-center">
+          {/* Mobile Menu Toggle & Theme Button */}
+          <div className="lg:hidden flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+              aria-label="Toggle Theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-slate-300 hover:text-white p-3 rounded-xl hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-700 active:scale-95 flex items-center justify-center min-h-11 min-w-11"
+              className="text-slate-600 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200 active:scale-95 flex items-center justify-center min-h-11 min-w-11 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 dark:hover:border-slate-700"
               aria-expanded={isMobileMenuOpen}
               aria-controls="mobile-menu"
               aria-label={
@@ -107,7 +133,7 @@ export function Navbar() {
       {isMobileMenuOpen && (
         <div
           id="mobile-menu"
-          className="lg:hidden absolute top-full left-0 w-full border-b border-slate-800 bg-slate-900/95 backdrop-blur-3xl shadow-2xl animate-in slide-in-from-top-2 duration-200"
+          className="lg:hidden absolute top-full left-0 w-full border-b shadow-2xl animate-in slide-in-from-top-2 duration-200 bg-white/95 border-slate-200 dark:bg-slate-900/95 dark:border-slate-800 backdrop-blur-3xl"
         >
           <div className="px-4 py-6 space-y-2 max-w-7xl mx-auto">
             {navLinks.map((link) => {
@@ -120,8 +146,8 @@ export function Navbar() {
                   aria-current={isActive ? "page" : undefined}
                   className={`block px-4 py-3 rounded-xl text-base font-bold transition-colors ${
                     isActive
-                      ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      ? "bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                   }`}
                 >
                   {link.name}
@@ -129,7 +155,7 @@ export function Navbar() {
               );
             })}
 
-            <div className="pt-6 mt-2 border-t border-slate-800/80 flex flex-col gap-3 px-2">
+            <div className="pt-6 mt-2 border-t flex flex-col gap-3 px-2 border-slate-200 dark:border-slate-800/80">
               <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                 <Button variant="secondary" className="w-full font-bold h-12">
                   Facility Login
@@ -141,7 +167,7 @@ export function Navbar() {
               >
                 <Button
                   variant="primary"
-                  className="w-full font-bold h-12 shadow-lg"
+                  className="w-full font-bold h-12 shadow-md"
                 >
                   Register Healthcare Facility
                 </Button>

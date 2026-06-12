@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./hooks/useScrollRestoration";
 import PageLoader from "./components/ui/PageLoader";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // --- Core Layouts ---
 import { PublicLayout } from "./components/layout/PublicLayout";
@@ -75,76 +76,84 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      {/* Session Expired Modal catches 401 errors globally */}
-      <SessionExpiredModal
-        isOpen={isSessionExpired}
-        onClose={() => setIsSessionExpired(false)}
-      />
+    <ThemeProvider>
+      <BrowserRouter>
+        {/* Session Expired Modal catches 401 errors globally */}
+        <SessionExpiredModal
+          isOpen={isSessionExpired}
+          onClose={() => setIsSessionExpired(false)}
+        />
 
-      <ScrollToTop />
+        <ScrollToTop />
 
-      <Suspense fallback={<PageLoader />}>
-        <ErrorBoundary>
-          <Routes>
-            {/* --- Public Subgraph --- */}
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/search" element={<SearchDonors />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/guidelines" element={<DonorGuidelines />} />
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/hospital/:slug" element={<OrganizationProfile />} />
-            </Route>
-
-            {/* --- Authentication Subgraph --- */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register-org" element={<RegisterOrg />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-
-            {/* --- Tenant Administration Subgraph --- */}
-            <Route element={<ProtectedRoute requireOrgAdmin={true} />}>
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="donors" element={<ManageDonors />} />
-                <Route path="add-donor" element={<AddDonor />} />
-                <Route path="support" element={<Support />} />
-                <Route path="settings" element={<ProfileSettings />} />
+        <Suspense fallback={<PageLoader />}>
+          <ErrorBoundary>
+            <Routes>
+              {/* --- Public Subgraph --- */}
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/search" element={<SearchDonors />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/guidelines" element={<DonorGuidelines />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 <Route
-                  path="settings/security"
-                  element={<SecuritySettings />}
-                />
-                <Route
-                  path="settings/billing"
-                  element={<BillingSubscription />}
+                  path="/hospital/:slug"
+                  element={<OrganizationProfile />}
                 />
               </Route>
-            </Route>
 
-            {/* --- System Administration Subgraph --- */}
-            <Route element={<ProtectedRoute requireSuperAdmin={true} />}>
-              <Route path="/superadmin" element={<SuperAdminLayout />}>
-                <Route index element={<GlobalDashboard />} />
-                <Route path="organizations" element={<ManageOrganizations />} />
-                <Route path="locations" element={<ManageLocations />} />
-                <Route path="ads" element={<ManageAds />} />
-                <Route path="messages" element={<ManageMessages />} />
-                <Route path="support" element={<SupportTickets />} />
-                <Route path="archives" element={<ManageArchivedDonors />} />
-                <Route path="logs" element={<SystemLogs />} />
+              {/* --- Authentication Subgraph --- */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register-org" element={<RegisterOrg />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+
+              {/* --- Tenant Administration Subgraph --- */}
+              <Route element={<ProtectedRoute requireOrgAdmin={true} />}>
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="donors" element={<ManageDonors />} />
+                  <Route path="add-donor" element={<AddDonor />} />
+                  <Route path="support" element={<Support />} />
+                  <Route path="settings" element={<ProfileSettings />} />
+                  <Route
+                    path="settings/security"
+                    element={<SecuritySettings />}
+                  />
+                  <Route
+                    path="settings/billing"
+                    element={<BillingSubscription />}
+                  />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Unmatched Routes Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ErrorBoundary>
-      </Suspense>
-    </BrowserRouter>
+              {/* --- System Administration Subgraph --- */}
+              <Route element={<ProtectedRoute requireSuperAdmin={true} />}>
+                <Route path="/superadmin" element={<SuperAdminLayout />}>
+                  <Route index element={<GlobalDashboard />} />
+                  <Route
+                    path="organizations"
+                    element={<ManageOrganizations />}
+                  />
+                  <Route path="locations" element={<ManageLocations />} />
+                  <Route path="ads" element={<ManageAds />} />
+                  <Route path="messages" element={<ManageMessages />} />
+                  <Route path="support" element={<SupportTickets />} />
+                  <Route path="archives" element={<ManageArchivedDonors />} />
+                  <Route path="logs" element={<SystemLogs />} />
+                </Route>
+              </Route>
+
+              {/* Unmatched Routes Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ErrorBoundary>
+        </Suspense>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

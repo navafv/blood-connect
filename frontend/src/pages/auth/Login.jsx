@@ -139,36 +139,37 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       {/* Ambient Background */}
       <div
-        className="absolute top-[-10%] right-[-5%] w-md h-112 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none"
+        className="absolute top-[-10%] right-[-5%] w-[400px] md:w-[600px] h-[450px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-10%] left-[-5%] w-md h-112 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"
+        className="absolute bottom-[-10%] left-[-5%] w-[400px] md:w-[600px] h-[450px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
         aria-hidden="true"
       />
+
       {/* Main Container */}
       <div className="w-full max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <Link
             to="/"
-            className="group flex items-center justify-center h-16 w-16 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl transition-all duration-300 hover:border-rose-500/40"
+            className="group flex items-center justify-center h-16 w-16 rounded-2xl border transition-all duration-300 shadow-md bg-white border-slate-200 hover:border-rose-300 dark:bg-slate-900 dark:border-slate-800 dark:shadow-2xl dark:hover:border-rose-500/40"
           >
             {requires2FA ? (
-              <ShieldCheck className="h-8 w-8 text-blue-500 transition-transform duration-300 group-hover:scale-110" />
+              <ShieldCheck className="h-8 w-8 transition-transform duration-300 group-hover:scale-110 text-blue-600 dark:text-blue-500" />
             ) : (
-              <Droplet className="h-8 w-8 text-rose-500 transition-transform duration-300 group-hover:scale-110" />
+              <Droplet className="h-8 w-8 transition-transform duration-300 group-hover:scale-110 text-rose-600 dark:text-rose-500" />
             )}
           </Link>
 
-          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-white text-center">
+          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-center transition-colors duration-300 text-slate-900 dark:text-white">
             {requires2FA ? "Two-Factor Verification" : "Welcome Back"}
           </h1>
 
-          <p className="mt-3 text-sm text-slate-400 text-center leading-relaxed max-w-sm">
+          <p className="mt-3 text-sm text-center leading-relaxed max-w-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
             {requires2FA
               ? "Enter the 6-digit verification code from your authenticator app."
               : "Sign in to access your Bloodonate organization dashboard."}
@@ -176,20 +177,20 @@ export default function Login() {
         </div>
 
         {/* Auth Card */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl shadow-2xl px-6 sm:px-10 py-10">
+        <div className="backdrop-blur-xl border rounded-3xl shadow-xl px-6 sm:px-10 py-10 transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80 dark:shadow-2xl">
           {!requires2FA ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email */}
               <div className="space-y-2">
                 <label
                   htmlFor="email"
-                  className="text-xs font-bold uppercase tracking-wider text-slate-400"
+                  className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400"
                 >
                   Email Address
                 </label>
 
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                   <Input
                     id="email"
@@ -201,7 +202,7 @@ export default function Login() {
                     value={formData.email}
                     onChange={handleChange}
                     disabled={loginMutation.isPending}
-                    className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                    className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
                   />
                 </div>
               </div>
@@ -211,21 +212,21 @@ export default function Login() {
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="password"
-                    className="text-xs font-bold uppercase tracking-wider text-slate-400"
+                    className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400"
                   >
                     Password
                   </label>
 
                   <Link
                     to="/forgot-password"
-                    className="text-sm font-medium text-rose-500 hover:text-rose-400 transition-colors"
+                    className="text-sm font-medium transition-colors duration-300 text-rose-600 hover:text-rose-700 dark:text-rose-500 dark:hover:text-rose-400"
                   >
                     Forgot password?
                   </Link>
                 </div>
 
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                   <Input
                     id="password"
@@ -237,13 +238,13 @@ export default function Login() {
                     value={formData.password}
                     onChange={handleChange}
                     disabled={loginMutation.isPending}
-                    className="pl-12 pr-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                    className="pl-12 pr-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-300 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -260,7 +261,7 @@ export default function Login() {
                   type="submit"
                   variant="primary"
                   disabled={loginMutation.isPending}
-                  className="w-full py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-rose-500/20 transition-all gap-2"
+                  className="w-full py-6 text-base font-semibold rounded-xl shadow-md transition-all gap-2 hover:-translate-y-0.5 hover:shadow-lg dark:shadow-lg dark:hover:shadow-rose-500/20"
                 >
                   {loginMutation.isPending ? (
                     <>
@@ -282,7 +283,7 @@ export default function Login() {
               className="space-y-6 animate-in slide-in-from-right-8 duration-500"
             >
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Verification Code
                 </label>
 
@@ -296,7 +297,7 @@ export default function Login() {
                     setOtpCode(e.target.value.replace(/\D/g, ""))
                   }
                   placeholder="000000"
-                  className="h-16 text-center text-3xl tracking-[0.5em] font-mono bg-slate-950/50 border-slate-700 text-white focus:border-blue-500 focus:ring-blue-500/20"
+                  className="h-16 text-center text-3xl tracking-[0.5em] font-mono focus:border-blue-500 focus:ring-blue-500/20"
                 />
               </div>
 
@@ -304,7 +305,7 @@ export default function Login() {
                 type="submit"
                 variant="primary"
                 disabled={verify2FAMutation.isPending || otpCode.length !== 6}
-                className="w-full py-6 text-base font-semibold rounded-xl shadow-lg transition-all"
+                className="w-full py-6 text-base font-semibold rounded-xl shadow-md transition-all hover:shadow-lg dark:shadow-lg"
               >
                 {verify2FAMutation.isPending ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -319,7 +320,7 @@ export default function Login() {
                   setRequires2FA(false);
                   setOtpCode("");
                 }}
-                className="w-full text-sm text-slate-400 hover:text-white transition-colors"
+                className="w-full text-sm transition-colors duration-300 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               >
                 ← Back to login
               </button>
@@ -328,12 +329,12 @@ export default function Login() {
 
           {/* Footer */}
           {!requires2FA && (
-            <div className="mt-8 pt-6 border-t border-slate-800/80 text-center">
-              <p className="text-sm text-slate-400">
+            <div className="mt-8 pt-6 border-t text-center transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
+              <p className="text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                 Need organization access?{" "}
                 <Link
                   to="/register-org"
-                  className="font-semibold text-white hover:text-rose-400 transition-colors"
+                  className="font-semibold transition-colors duration-300 text-slate-900 hover:text-rose-600 dark:text-white dark:hover:text-rose-400"
                 >
                   Register Organization
                 </Link>

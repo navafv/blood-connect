@@ -79,13 +79,15 @@ export function Modal({ isOpen, onClose, title, children, className }) {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300"
+        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300 transition-colors dark:bg-slate-950/80"
         onClick={() => onCloseRef.current()}
         aria-hidden="true"
       />
 
+      {/* Modal Container */}
       <div
         ref={modalRef}
         tabIndex={-1}
@@ -93,22 +95,26 @@ export function Modal({ isOpen, onClose, title, children, className }) {
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         className={cn(
-          "relative z-101 w-full max-w-lg rounded-2xl border border-slate-700/60 bg-slate-900/95 backdrop-blur-xl p-6 sm:p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in zoom-in-95 fade-in duration-300 focus:outline-none",
+          "relative z-[101] w-full max-w-lg rounded-2xl border p-6 sm:p-8 animate-in zoom-in-95 fade-in duration-300 focus:outline-none transition-colors",
+          // Light Mode
+          "bg-white/95 border-slate-200 shadow-2xl text-slate-900 backdrop-blur-xl",
+          // Dark Mode
+          "dark:bg-slate-900/95 dark:border-slate-700/60 dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] dark:text-white",
           className,
         )}
       >
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/80">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200 transition-colors dark:border-slate-800/80">
           {title && (
             <h2
               id={titleId}
-              className="text-xl font-bold tracking-tight text-white"
+              className="text-xl font-bold tracking-tight text-slate-900 transition-colors dark:text-white"
             >
               {title}
             </h2>
           )}
           <button
             onClick={() => onCloseRef.current()}
-            className="rounded-full p-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+            className="rounded-full p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />

@@ -5,15 +5,15 @@ const Button = React.forwardRef(
   ({ className, variant = "primary", size = "default", ...props }, ref) => {
     const variants = {
       primary:
-        "bg-rose-600 text-white hover:bg-rose-500 shadow-lg border border-transparent",
+        "bg-rose-600 text-white hover:bg-rose-700 shadow-md border border-transparent dark:hover:bg-rose-500 dark:shadow-lg",
       secondary:
-        "bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-700 shadow-sm",
+        "bg-white text-slate-900 hover:bg-slate-50 border border-slate-200 shadow-sm dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 dark:border-slate-700",
       outline:
-        "border border-slate-700 bg-transparent text-slate-300 hover:text-white hover:bg-slate-800",
+        "border border-slate-200 bg-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800",
       ghost:
-        "hover:bg-slate-800/50 text-slate-400 hover:text-slate-100 border border-transparent",
+        "hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-transparent dark:hover:bg-slate-800/50 dark:text-slate-400 dark:hover:text-slate-100",
       danger:
-        "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20",
+        "bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-100 dark:bg-red-500/10 dark:text-red-500 dark:hover:bg-red-500 dark:hover:text-white dark:border-red-500/20",
     };
 
     const sizes = {
@@ -27,7 +27,7 @@ const Button = React.forwardRef(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-xl font-bold transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 tracking-wide",
+          "inline-flex items-center justify-center rounded-xl font-bold transition-all duration-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 tracking-wide",
           variants[variant],
           sizes[size],
           className,

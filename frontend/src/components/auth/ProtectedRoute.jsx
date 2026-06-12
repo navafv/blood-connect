@@ -26,9 +26,9 @@ export const ProtectedRoute = ({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
-        <span className="text-sm font-bold tracking-widest text-slate-500 uppercase">
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-50 transition-colors duration-300 dark:bg-slate-950 gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-rose-600 dark:text-rose-500 transition-colors" />
+        <span className="text-sm font-bold tracking-widest text-slate-600 dark:text-slate-500 uppercase transition-colors">
           Verifying Clearance...
         </span>
       </div>

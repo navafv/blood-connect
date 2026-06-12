@@ -38,7 +38,7 @@ export function AdBanner({ className = "" }) {
 
   return (
     <div
-      className={`relative w-full h-48 sm:h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl border border-slate-800 bg-slate-950 group ${className}`}
+      className={`relative w-full h-48 sm:h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl border transition-colors duration-300 bg-slate-50 border-slate-200 dark:border-slate-800 dark:bg-slate-950 group ${className}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -70,8 +70,8 @@ export function AdBanner({ className = "" }) {
               loading="lazy"
             />
 
-            {/* Dark Gradient Overlay for Text Readability */}
-            <div className="absolute inset-0 bg-linear-to-t from-slate-950/90 via-slate-900/20 to-transparent" />
+            {/* Dark Gradient Overlay for Text/Dots Readability (remains dark to contrast images) */}
+            <div className="absolute inset-0 bg-linear-to-t from-slate-950/90 via-slate-900/20 to-transparent transition-opacity duration-300" />
 
             {/* Sponsored Badge */}
             <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-bold text-white/90 uppercase tracking-widest border border-white/10 shadow-lg">
@@ -102,8 +102,8 @@ export function AdBanner({ className = "" }) {
               aria-label={`Go to slide ${idx + 1}`}
               className={`h-1.5 rounded-full transition-all duration-500 ease-in-out ${
                 idx === currentIndex
-                  ? "w-8 bg-rose-500"
-                  : "w-2 bg-white/40 hover:bg-white/70"
+                  ? "w-8 bg-rose-600 dark:bg-rose-500"
+                  : "w-2 bg-white/60 hover:bg-white/90 dark:bg-white/40 dark:hover:bg-white/70"
               }`}
             />
           ))}

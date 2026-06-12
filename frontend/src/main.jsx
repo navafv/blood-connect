@@ -28,23 +28,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           position="top-right"
           toastOptions={{
             className:
-              "bg-slate-800 text-slate-100 border border-slate-700 shadow-2xl",
-            style: {
-              background: "#1e293b",
-              color: "#f1f5f9",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-            },
+              "!bg-white !text-slate-900 !border !border-slate-200 shadow-xl dark:!bg-slate-800 dark:!text-slate-100 dark:!border-slate-700 !rounded-xl transition-colors duration-300",
             success: {
               iconTheme: {
-                primary: "#10b981",
-                secondary: "#1e293b",
+                primary: "#10b981", // Emerald 500
+                secondary: "transparent",
               },
             },
             error: {
               iconTheme: {
-                primary: "#e11d48",
-                secondary: "#1e293b",
+                primary: "#e11d48", // Rose 600
+                secondary: "transparent",
               },
             },
           }}

@@ -114,7 +114,7 @@ export default function SupportTickets() {
         return (
           <Badge
             variant="warning"
-            className="bg-amber-500/10 text-amber-400 border-amber-500/20"
+            className="transition-colors duration-300 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20"
           >
             Open
           </Badge>
@@ -123,7 +123,7 @@ export default function SupportTickets() {
         return (
           <Badge
             variant="primary"
-            className="bg-blue-500/10 text-blue-400 border-blue-500/20"
+            className="transition-colors duration-300 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20"
           >
             In Progress
           </Badge>
@@ -132,7 +132,7 @@ export default function SupportTickets() {
         return (
           <Badge
             variant="success"
-            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+            className="transition-colors duration-300 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
           >
             Resolved
           </Badge>
@@ -143,17 +143,17 @@ export default function SupportTickets() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       {/* --- Workspace Header --- */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
-              <LifeBuoy className="h-5 w-5 text-rose-500" />
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3 transition-colors duration-300 text-slate-900 dark:text-white">
+            <div className="p-1.5 rounded-lg border transition-colors duration-300 bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20">
+              <LifeBuoy className="h-5 w-5 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
             </div>
             Tenant Support Queue
           </h1>
-          <p className="text-sm text-slate-400 mt-2">
+          <p className="text-sm mt-2 transition-colors duration-300 text-slate-600 dark:text-slate-400">
             Manage, triage, and resolve helpdesk tickets submitted by registered
             facilities.
           </p>
@@ -161,12 +161,12 @@ export default function SupportTickets() {
       </div>
 
       {/* --- Search & Filter Toolbar --- */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800/60 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 p-5 rounded-2xl border shadow-sm backdrop-blur-md transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60">
         <div className="relative w-full flex-1 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-rose-500 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
           <Input
             placeholder="Search by facility name or ticket subject..."
-            className="pl-11 bg-slate-950/50 border-slate-700 h-11 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+            className="pl-11 h-11 transition-all duration-300 focus:ring-rose-500/20 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-slate-950/50 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -174,7 +174,7 @@ export default function SupportTickets() {
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-slate-950/50 border-slate-700 h-11 w-full sm:w-56 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+          className="h-11 w-full sm:w-56 transition-all duration-300 focus:ring-rose-500/20 bg-white border-slate-200 text-slate-700 dark:bg-slate-950/50 dark:border-slate-700 dark:text-slate-300"
         >
           <option value="ALL">All Statuses</option>
           <option value="OPEN">Open (Awaiting Triage)</option>
@@ -184,10 +184,10 @@ export default function SupportTickets() {
       </div>
 
       {/* --- Primary Data Table Area --- */}
-      <Card className="border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl overflow-hidden">
+      <Card className="overflow-hidden backdrop-blur-xl shadow-xl dark:shadow-2xl transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-950/40 text-xs uppercase text-slate-500 font-bold border-b border-slate-800/80">
+          <table className="w-full text-left text-sm transition-colors duration-300 text-slate-700 dark:text-slate-300">
+            <thead className="text-xs uppercase font-bold border-b transition-colors duration-300 bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-950/40 dark:border-slate-800/80">
               <tr>
                 <th className="px-6 py-5">Tenant Organization</th>
                 <th className="px-6 py-5">Subject Line</th>
@@ -196,12 +196,12 @@ export default function SupportTickets() {
                 <th className="px-6 py-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y transition-colors duration-300 divide-slate-200 dark:divide-slate-800/50">
               {isLoading ? (
                 <tr>
                   <td colSpan="5" className="px-6 py-24 text-center">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-rose-500 mb-4" />
-                    <p className="text-sm font-medium tracking-widest uppercase text-slate-400">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
+                    <p className="text-sm font-medium tracking-widest uppercase transition-colors duration-300 text-slate-500 dark:text-slate-400">
                       Loading Queue...
                     </p>
                   </td>
@@ -212,19 +212,19 @@ export default function SupportTickets() {
                     colSpan="5"
                     className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
-                    <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                      <ServerCrash className="h-10 w-10 text-rose-500" />
+                    <div className="h-20 w-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border transition-colors duration-300 bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20">
+                      <ServerCrash className="h-10 w-10 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                    <h3 className="text-xl font-bold mb-2 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                       Telemetry Failure
                     </h3>
-                    <p className="text-slate-400 max-w-sm mx-auto leading-relaxed text-sm mb-6">
+                    <p className="max-w-sm mx-auto leading-relaxed text-sm mb-6 transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Unable to retrieve support tickets from the central
                       database.
                     </p>
                     <Button
                       variant="outline"
-                      className="border-slate-700 bg-slate-900/50"
+                      className="transition-colors duration-300 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300 dark:hover:bg-slate-800"
                       onClick={() => refetch()}
                     >
                       <RefreshCw className="h-4 w-4 mr-2" /> Retry Connection
@@ -237,13 +237,13 @@ export default function SupportTickets() {
                     colSpan="5"
                     className="px-6 py-24 text-center animate-in fade-in duration-500"
                   >
-                    <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                      <Inbox className="h-10 w-10 text-slate-500" />
+                    <div className="h-20 w-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
+                      <Inbox className="h-10 w-10 transition-colors duration-300 text-slate-400 dark:text-slate-500" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                    <h3 className="text-xl font-bold mb-2 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                       Queue Empty
                     </h3>
-                    <p className="text-slate-400 max-w-sm mx-auto leading-relaxed text-sm">
+                    <p className="max-w-sm mx-auto leading-relaxed text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       There are no support tickets from any tenant organization.
                     </p>
                   </td>
@@ -254,11 +254,11 @@ export default function SupportTickets() {
                     colSpan="5"
                     className="px-6 py-24 text-center animate-in fade-in duration-300"
                   >
-                    <SearchX className="h-12 w-12 text-slate-600 mb-4 mx-auto" />
-                    <h3 className="text-lg font-bold text-white mb-2">
+                    <SearchX className="h-12 w-12 mb-4 mx-auto transition-colors duration-300 text-slate-400 dark:text-slate-600" />
+                    <h3 className="text-lg font-bold mb-2 transition-colors duration-300 text-slate-900 dark:text-white">
                       No Matches Found
                     </h3>
-                    <p className="text-slate-400 text-sm max-w-sm mx-auto">
+                    <p className="text-sm max-w-sm mx-auto transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       No tickets match your search parameters or status filter.
                     </p>
                   </td>
@@ -267,18 +267,18 @@ export default function SupportTickets() {
                 filteredTickets.map((ticket) => (
                   <tr
                     key={ticket.id}
-                    className="hover:bg-slate-800/30 transition-colors group"
+                    className="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/30"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center font-bold text-slate-300 shadow-inner group-hover:bg-slate-800 transition-colors shrink-0">
-                          <Building2 className="h-5 w-5 text-slate-400" />
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center font-bold shadow-inner shrink-0 border transition-colors duration-300 bg-slate-100 border-slate-200 text-slate-500 group-hover:bg-slate-200 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-400 dark:group-hover:bg-slate-800">
+                          <Building2 className="h-5 w-5 transition-colors duration-300 text-slate-400 dark:text-slate-400" />
                         </div>
                         <div>
-                          <p className="font-bold text-white text-sm">
+                          <p className="font-bold text-sm transition-colors duration-300 text-slate-900 dark:text-white">
                             {ticket.organization_name}
                           </p>
-                          <p className="text-xs font-medium text-slate-500 mt-0.5 tracking-tight">
+                          <p className="text-xs font-medium mt-0.5 tracking-tight transition-colors duration-300 text-slate-500 dark:text-slate-500">
                             Requested by: {ticket.created_by_name}
                           </p>
                         </div>
@@ -286,10 +286,10 @@ export default function SupportTickets() {
                     </td>
 
                     <td className="px-6 py-4">
-                      <p className="truncate max-w-50 sm:max-w-xs text-slate-200 font-medium">
+                      <p className="truncate max-w-[200px] sm:max-w-xs font-medium transition-colors duration-300 text-slate-900 dark:text-slate-200">
                         {ticket.subject}
                       </p>
-                      <p className="text-xs font-medium text-slate-500 font-mono mt-1 tracking-tight">
+                      <p className="text-xs font-medium font-mono mt-1 tracking-tight transition-colors duration-300 text-slate-500 dark:text-slate-500">
                         TCKT-{ticket.id.toString().padStart(4, "0")}
                       </p>
                     </td>
@@ -299,8 +299,8 @@ export default function SupportTickets() {
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                        <Clock className="h-3.5 w-3.5 text-slate-500" />
+                      <div className="flex items-center gap-1.5 text-xs font-medium transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                        <Clock className="h-3.5 w-3.5 transition-colors duration-300 text-slate-400 dark:text-slate-500" />
                         {formatDate(ticket.updated_at)}
                       </div>
                     </td>
@@ -309,10 +309,10 @@ export default function SupportTickets() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-slate-700 bg-slate-900/50 hover:bg-slate-800 hover:text-white transition-colors"
+                        className="transition-colors duration-300 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                         onClick={() => setSelectedTicketId(ticket.id)}
                       >
-                        <MessageSquare className="h-4 w-4 mr-2 text-blue-400" />{" "}
+                        <MessageSquare className="h-4 w-4 mr-2 transition-colors duration-300 text-blue-600 dark:text-blue-400" />{" "}
                         Triage
                       </Button>
                     </td>
@@ -337,27 +337,27 @@ export default function SupportTickets() {
           <div className="flex flex-col h-[75vh] sm:h-[80vh] w-full">
             {/* 1. Header & Original Inquiry - PINNED TOP */}
             <div className="shrink-0 mb-4 overflow-y-auto pr-1">
-              <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 shadow-inner">
-                <div className="flex justify-between items-start border-b border-slate-800/80 pb-3 mb-3">
+              <div className="p-5 rounded-2xl border shadow-inner transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-800">
+                <div className="flex justify-between items-start border-b pb-3 mb-3 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
                   <div>
-                    <h3 className="text-white font-bold text-lg tracking-tight">
+                    <h3 className="font-bold text-lg tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                       {activeTicket.organization_name}
                     </h3>
-                    <p className="text-xs font-medium text-slate-500 font-mono tracking-tight mt-0.5">
+                    <p className="text-xs font-medium font-mono tracking-tight mt-0.5 transition-colors duration-300 text-slate-600 dark:text-slate-500">
                       TCKT-{activeTicket.id.toString().padStart(4, "0")} •{" "}
                       {activeTicket.subject}
                     </p>
                   </div>
                   {getStatusBadge(activeTicket.status)}
                 </div>
-                <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800/50">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                <div className="rounded-xl p-4 border transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-900/50 dark:border-slate-800/50">
+                  <p className="text-xs font-bold uppercase tracking-wider mb-2 transition-colors duration-300 text-slate-500 dark:text-slate-500">
                     Original Inquiry
                   </p>
-                  <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap transition-colors duration-300 text-slate-800 dark:text-slate-300">
                     {activeTicket.message}
                   </div>
-                  <div className="text-xs font-medium text-slate-500 mt-3 flex items-center gap-1.5">
+                  <div className="text-xs font-medium mt-3 flex items-center gap-1.5 transition-colors duration-300 text-slate-500 dark:text-slate-500">
                     <Clock className="h-3 w-3" />{" "}
                     {formatDate(activeTicket.created_at)}
                   </div>
@@ -375,14 +375,23 @@ export default function SupportTickets() {
                   }`}
                 >
                   <div
-                    className={`p-4 rounded-2xl max-w-[90%] sm:max-w-[80%] text-sm shadow-md border ${
+                    className={`p-4 rounded-2xl max-w-[90%] sm:max-w-[80%] text-sm shadow-sm border transition-colors duration-300 ${
                       reply.is_superadmin
-                        ? "bg-blue-600/20 text-blue-100 border-blue-500/30"
-                        : "bg-slate-800 text-slate-200 border-slate-700/50"
+                        ? "bg-blue-50 text-blue-900 border-blue-200 rounded-tr-sm dark:bg-blue-600/20 dark:text-blue-100 dark:border-blue-500/30 dark:rounded-tl-none dark:rounded-tr-2xl"
+                        : // Note: Added distinct corner radii below for visual flow
+                          "bg-white text-slate-800 border-slate-200 rounded-tl-sm dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700/50 dark:rounded-tr-none dark:rounded-tl-2xl"
                     }`}
+                    style={{
+                      borderTopRightRadius: reply.is_superadmin
+                        ? "0.125rem"
+                        : "1rem",
+                      borderTopLeftRadius: !reply.is_superadmin
+                        ? "0.125rem"
+                        : "1rem",
+                    }}
                   >
                     <p
-                      className={`text-xs font-bold mb-1.5 flex items-center gap-1.5 ${reply.is_superadmin ? "text-blue-400" : "text-slate-400"}`}
+                      className={`text-xs font-bold mb-1.5 flex items-center gap-1.5 transition-colors duration-300 ${reply.is_superadmin ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}
                     >
                       {reply.is_superadmin ? (
                         <ShieldCheck className="h-3.5 w-3.5" />
@@ -393,7 +402,7 @@ export default function SupportTickets() {
                     </p>
                     <span className="whitespace-pre-wrap">{reply.message}</span>
                   </div>
-                  <span className="text-xs font-medium text-slate-500 mt-1.5">
+                  <span className="text-xs font-medium mt-1.5 transition-colors duration-300 text-slate-500 dark:text-slate-500">
                     {formatDate(reply.created_at)}
                   </span>
                 </div>
@@ -403,7 +412,7 @@ export default function SupportTickets() {
             {/* 3. Reply Actions - PINNED BOTTOM */}
             <form
               onSubmit={handleReplySubmit}
-              className="shrink-0 bg-slate-900 border-t border-slate-800 pt-4"
+              className="shrink-0 border-t pt-4 transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800"
             >
               <div className="space-y-2 mb-4">
                 <textarea
@@ -411,7 +420,7 @@ export default function SupportTickets() {
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Type a response..."
-                  className="w-full rounded-xl border border-slate-700 bg-slate-950/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all resize-none shadow-inner"
+                  className="w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-1 resize-none shadow-sm dark:shadow-inner transition-colors duration-300 bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500/20 dark:bg-slate-950/50 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:ring-blue-500/30"
                   disabled={replyMutation.isPending}
                 />
               </div>
@@ -420,7 +429,7 @@ export default function SupportTickets() {
                 <Select
                   value={updateStatus}
                   onChange={(e) => setUpdateStatus(e.target.value)}
-                  className="bg-slate-950 border-slate-700 w-full sm:w-40"
+                  className="w-full sm:w-40 transition-colors duration-300 bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-white"
                   disabled={replyMutation.isPending}
                 >
                   <option value="OPEN">Open</option>
@@ -433,14 +442,14 @@ export default function SupportTickets() {
                     type="button"
                     variant="ghost"
                     onClick={() => setSelectedTicketId(null)}
-                    className="flex-1 sm:flex-none"
+                    className="flex-1 sm:flex-none transition-colors duration-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
                   >
                     Close
                   </Button>
                   <Button
                     type="submit"
                     variant="primary"
-                    className="flex-1 sm:flex-none bg-blue-600 font-bold"
+                    className="flex-1 sm:flex-none font-bold transition-all duration-300 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg dark:shadow-lg dark:bg-blue-600 dark:hover:bg-blue-500"
                     disabled={replyMutation.isPending}
                   >
                     {replyMutation.isPending ? (

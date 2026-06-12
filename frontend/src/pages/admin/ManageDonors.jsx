@@ -275,15 +275,15 @@ export default function ManageDonors() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* --- Workspace Header --- */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-6 transition-colors duration-300">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
-            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
-              <Users className="h-5 w-5 text-rose-500" />
+          <h1 className="text-2xl font-bold flex items-center gap-3 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
+            <div className="p-1.5 rounded-lg border shadow-inner transition-colors duration-300 bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20">
+              <Users className="h-5 w-5 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
             </div>
             Donor Registry
           </h1>
-          <p className="text-sm text-slate-400 mt-2">
+          <p className="text-sm mt-2 transition-colors duration-300 text-slate-600 dark:text-slate-400">
             Administer your organization's verified blood donor pool.
           </p>
         </div>
@@ -291,7 +291,7 @@ export default function ManageDonors() {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
             variant="outline"
-            className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 w-full sm:w-auto transition-colors"
+            className="gap-2 w-full sm:w-auto transition-colors duration-300 text-slate-700 border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:bg-slate-800 dark:text-slate-300"
             onClick={() => setIsUploadModalOpen(true)}
           >
             <FileUp className="h-4 w-4" /> Bulk Import
@@ -299,7 +299,7 @@ export default function ManageDonors() {
           <Link to="/admin/add-donor" className="w-full sm:w-auto">
             <Button
               variant="primary"
-              className="gap-2 shadow-lg w-full sm:w-auto"
+              className="gap-2 shadow-md w-full sm:w-auto dark:shadow-lg"
             >
               <Plus className="h-4 w-4" /> Register Donor
             </Button>
@@ -309,46 +309,48 @@ export default function ManageDonors() {
 
       {/* --- High-Level Analytics Matrix --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-        <Card className="bg-slate-900/40 border-slate-800/60 shadow-md">
+        <Card className="shadow-md transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60">
           <CardContent className="p-5 flex items-center gap-5">
-            <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shrink-0">
-              <Users className="h-6 w-6 text-blue-500" />
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20">
+              <Users className="h-6 w-6 transition-colors duration-300 text-blue-600 dark:text-blue-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider mb-0.5 transition-colors duration-300 text-slate-500">
                 Total Records
               </p>
-              <p className="text-2xl font-black text-white">{donors.length}</p>
+              <p className="text-2xl font-black transition-colors duration-300 text-slate-900 dark:text-white">
+                {donors.length}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900/40 border-emerald-500/20 shadow-md">
+        <Card className="shadow-md transition-colors duration-300 bg-white/60 border-emerald-200 dark:bg-slate-900/40 dark:border-emerald-500/20">
           <CardContent className="p-5 flex items-center gap-5">
-            <div className="h-12 w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
-              <Droplet className="h-6 w-6 text-emerald-500" />
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20">
+              <Droplet className="h-6 w-6 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider mb-0.5 transition-colors duration-300 text-emerald-600 dark:text-emerald-500">
                 Available Now
               </p>
-              <p className="text-2xl font-black text-white">
+              <p className="text-2xl font-black transition-colors duration-300 text-slate-900 dark:text-white">
                 {donors.filter((d) => d.is_available_now).length}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900/40 border-amber-500/20 shadow-md">
+        <Card className="shadow-md transition-colors duration-300 bg-white/60 border-amber-200 dark:bg-slate-900/40 dark:border-amber-500/20">
           <CardContent className="p-5 flex items-center gap-5">
-            <div className="h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
-              <Calendar className="h-6 w-6 text-amber-500" />
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20">
+              <Calendar className="h-6 w-6 transition-colors duration-300 text-amber-600 dark:text-amber-500" />
             </div>
             <div>
-              <p className="text-xs font-bold text-amber-500 uppercase tracking-wider mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider mb-0.5 transition-colors duration-300 text-amber-600 dark:text-amber-500">
                 Resting Period
               </p>
-              <p className="text-2xl font-black text-white">
+              <p className="text-2xl font-black transition-colors duration-300 text-slate-900 dark:text-white">
                 {
                   donors.filter(
                     (d) => !d.is_available_now && !d.is_permanently_deferred,
@@ -361,20 +363,20 @@ export default function ManageDonors() {
       </div>
 
       {/* --- Primary Data Table Area --- */}
-      <Card className="border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shadow-2xl">
-        <CardHeader className="border-b border-slate-800/60 pb-5">
+      <Card className="backdrop-blur-xl shadow-xl transition-colors duration-300 bg-white/80 border-slate-200 dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-2xl">
+        <CardHeader className="border-b pb-5 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <CardTitle className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            <CardTitle className="text-lg font-bold tracking-tight flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
               Active Registry
             </CardTitle>
 
             {/* Status Filter Dropdown */}
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-slate-500" />
+              <Filter className="h-4 w-4 transition-colors duration-300 text-slate-500" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-300 focus:outline-none focus:border-rose-500 transition-colors"
+                className="rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-colors bg-white border border-slate-200 text-slate-700 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300"
               >
                 <option value="ALL">All Donors</option>
                 <option value="AVAILABLE">Available Only</option>
@@ -388,22 +390,22 @@ export default function ManageDonors() {
 
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+            <div className="flex flex-col items-center justify-center py-24 gap-4 transition-colors duration-300 text-slate-500 dark:text-slate-400">
+              <Loader2 className="h-8 w-8 animate-spin transition-colors duration-300 text-rose-600 dark:text-rose-500" />
               <p className="text-sm font-medium tracking-widest uppercase">
                 Fetching Records...
               </p>
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <AlertCircle className="h-10 w-10 mb-4 text-rose-500" />
-              <p className="text-slate-300 font-medium mb-4">
+              <AlertCircle className="h-10 w-10 mb-4 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
+              <p className="font-medium mb-4 transition-colors duration-300 text-slate-600 dark:text-slate-300">
                 {error?.message ||
                   "Failed to establish connection with registry database."}
               </p>
               <Button
                 variant="outline"
-                className="border-slate-700 bg-slate-900/50"
+                className="transition-colors duration-300 text-slate-700 border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300"
                 onClick={() => refetch()}
               >
                 Retry Connection
@@ -411,28 +413,31 @@ export default function ManageDonors() {
             </div>
           ) : donors.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center px-4 animate-in fade-in duration-500">
-              <div className="h-20 w-20 bg-slate-800/50 border border-slate-700 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
-                <Users className="h-10 w-10 text-slate-500" />
+              <div className="h-20 w-20 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-colors duration-300 bg-slate-50 border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
+                <Users className="h-10 w-10 transition-colors duration-300 text-slate-400 dark:text-slate-500" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+              <h3 className="text-xl font-bold mb-2 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                 Registry Empty
               </h3>
-              <p className="text-slate-400 max-w-sm mb-8 leading-relaxed text-sm">
+              <p className="max-w-sm mb-8 leading-relaxed text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                 Your organizational pool currently has no donors registered.
               </p>
               <Link to="/admin/add-donor">
-                <Button variant="primary" className="shadow-lg">
+                <Button
+                  variant="primary"
+                  className="shadow-md hover:shadow-lg dark:shadow-lg"
+                >
                   Register New Donor
                 </Button>
               </Link>
             </div>
           ) : filteredDonors.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center px-4 animate-in fade-in duration-300">
-              <SearchX className="h-12 w-12 text-slate-600 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">
+              <SearchX className="h-12 w-12 mb-4 transition-colors duration-300 text-slate-400 dark:text-slate-600" />
+              <h3 className="text-lg font-bold mb-2 transition-colors duration-300 text-slate-900 dark:text-white">
                 No Matches Found
               </h3>
-              <p className="text-slate-400 text-sm max-w-sm">
+              <p className="text-sm max-w-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                 No records match your search query or status filters.
               </p>
             </div>
@@ -441,7 +446,7 @@ export default function ManageDonors() {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800/80 text-xs uppercase tracking-wider text-slate-500 font-bold bg-slate-950/40">
+                    <tr className="border-b text-xs uppercase tracking-wider font-bold transition-colors duration-300 border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800/80 dark:bg-slate-950/40">
                       <th className="px-6 py-5">Donor Identity</th>
                       <th className="px-6 py-5">Contact Vector</th>
                       <th className="px-6 py-5">Location Lock</th>
@@ -449,22 +454,22 @@ export default function ManageDonors() {
                       <th className="px-6 py-5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/50">
+                  <tbody className="divide-y transition-colors duration-300 divide-slate-200 dark:divide-slate-800/50">
                     {filteredDonors.map((donor) => (
                       <tr
                         key={donor.id}
-                        className="hover:bg-slate-800/30 transition-colors group"
+                        className="transition-colors group hover:bg-slate-50 dark:hover:bg-slate-800/30"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
-                            <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-black text-sm shadow-inner group-hover:bg-rose-500/20 transition-colors">
+                            <div className="h-11 w-11 rounded-xl border flex items-center justify-center font-black text-sm shadow-inner transition-colors duration-300 bg-rose-50 border-rose-200 text-rose-600 group-hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-500 dark:border-rose-500/20 dark:group-hover:bg-rose-500/20">
                               {donor.blood_group}
                             </div>
                             <div>
-                              <p className="font-bold text-white text-sm">
+                              <p className="font-bold text-sm transition-colors duration-300 text-slate-900 dark:text-white">
                                 {donor.full_name}
                               </p>
-                              <p className="text-xs font-medium text-slate-500 mt-0.5">
+                              <p className="text-xs font-medium mt-0.5 transition-colors duration-300 text-slate-500">
                                 {donor.gender === "M"
                                   ? "Male"
                                   : donor.gender === "F"
@@ -476,16 +481,16 @@ export default function ManageDonors() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-sm font-semibold text-slate-300 font-mono tracking-tight">
+                          <p className="text-sm font-semibold font-mono tracking-tight transition-colors duration-300 text-slate-700 dark:text-slate-300">
                             {donor.phone_number}
                           </p>
-                          <p className="text-xs font-medium text-slate-500 mt-1">
+                          <p className="text-xs font-medium mt-1 transition-colors duration-300 text-slate-500">
                             Last Donated:{" "}
                             {donor.last_donation_date || "No History"}
                           </p>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors duration-300 bg-slate-50 border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300">
                             <MapPin className="h-3 w-3 text-slate-500" />
                             {donor.district_name || "Unknown"}
                           </span>
@@ -494,24 +499,11 @@ export default function ManageDonors() {
                         {/* DYNAMIC BADGE */}
                         <td className="px-6 py-4">
                           {donor.is_available_now ? (
-                            <Badge
-                              variant="success"
-                              className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            >
-                              Available
-                            </Badge>
+                            <Badge variant="success">Available</Badge>
                           ) : donor.is_permanently_deferred ? (
-                            <Badge
-                              variant="danger"
-                              className="bg-rose-500/10 text-rose-400 border-rose-500/20"
-                            >
-                              Deferred
-                            </Badge>
+                            <Badge variant="danger">Deferred</Badge>
                           ) : (
-                            <Badge
-                              variant="warning"
-                              className="bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1"
-                            >
+                            <Badge variant="warning" className="gap-1">
                               <Clock className="h-3 w-3" /> Resting
                             </Badge>
                           )}
@@ -524,7 +516,7 @@ export default function ManageDonors() {
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Message Donor on WhatsApp"
-                              className="h-8 w-8 flex items-center justify-center rounded-md text-emerald-500/70 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                              className="h-8 w-8 flex items-center justify-center rounded-md transition-colors text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-500/70 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10"
                             >
                               <MessageCircle className="h-4 w-4" />
                             </a>
@@ -532,7 +524,7 @@ export default function ManageDonors() {
                               variant="ghost"
                               size="sm"
                               title="Log New Donation"
-                              className="h-8 w-8 p-0 text-emerald-500/70 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                              className="h-8 w-8 p-0 transition-colors text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-500/70 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10"
                               onClick={() => {
                                 setDonorToLog(donor);
                                 setDonationLogData({
@@ -549,7 +541,7 @@ export default function ManageDonors() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
+                              className="h-8 w-8 p-0 transition-colors text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-blue-500/10"
                               aria-label={`Edit ${donor.full_name}`}
                               onClick={() => {
                                 setEditingDonor(donor);
@@ -563,7 +555,7 @@ export default function ManageDonors() {
                               size="sm"
                               title="Archive Record"
                               aria-label={`Archive ${donor.full_name}`}
-                              className="h-8 w-8 p-0 text-amber-500/70 hover:text-amber-400 hover:bg-amber-500/10 disabled:opacity-50 transition-colors"
+                              className="h-8 w-8 p-0 disabled:opacity-50 transition-colors text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-500/70 dark:hover:text-amber-400 dark:hover:bg-amber-500/10"
                               onClick={() =>
                                 handleDelete(donor.id, donor.full_name)
                               }
@@ -589,18 +581,18 @@ export default function ManageDonors() {
                 {filteredDonors.map((donor) => (
                   <div
                     key={donor.id}
-                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 flex flex-col gap-4 shadow-sm"
+                    className="border rounded-2xl p-4 flex flex-col gap-4 shadow-sm transition-colors duration-300 bg-slate-50/50 border-slate-200 dark:bg-slate-900/50 dark:border-slate-800"
                   >
                     <div className="flex justify-between items-start gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-black text-sm shadow-inner shrink-0">
+                        <div className="h-11 w-11 rounded-xl border flex items-center justify-center font-black text-sm shadow-inner shrink-0 transition-colors duration-300 bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-500/10 dark:text-rose-500 dark:border-rose-500/20">
                           {donor.blood_group}
                         </div>
                         <div>
-                          <p className="font-bold text-white text-[15px] leading-tight">
+                          <p className="font-bold text-[15px] leading-tight transition-colors duration-300 text-slate-900 dark:text-white">
                             {donor.full_name}
                           </p>
-                          <p className="text-xs font-medium text-slate-500 mt-0.5">
+                          <p className="text-xs font-medium mt-0.5 transition-colors duration-300 text-slate-500">
                             {donor.gender === "M"
                               ? "Male"
                               : donor.gender === "F"
@@ -613,23 +605,23 @@ export default function ManageDonors() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80">
-                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                      <div className="p-2.5 rounded-xl border transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-950/50 dark:border-slate-800/80">
+                        <span className="block text-[10px] font-bold uppercase tracking-wider mb-1 transition-colors duration-300 text-slate-500">
                           Contact
                         </span>
                         <a
                           href={`tel:${donor.phone_number}`}
-                          className="font-semibold text-slate-300 font-mono tracking-tight"
+                          className="font-semibold font-mono tracking-tight transition-colors duration-300 text-slate-700 dark:text-slate-300"
                         >
                           {donor.phone_number}
                         </a>
                       </div>
-                      <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80">
-                        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                      <div className="p-2.5 rounded-xl border transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-950/50 dark:border-slate-800/80">
+                        <span className="block text-[10px] font-bold uppercase tracking-wider mb-1 transition-colors duration-300 text-slate-500">
                           Location
                         </span>
-                        <span className="font-semibold text-slate-300 flex items-center gap-1.5 truncate">
-                          <MapPin className="h-3 w-3 text-slate-500 shrink-0" />
+                        <span className="font-semibold flex items-center gap-1.5 truncate transition-colors duration-300 text-slate-700 dark:text-slate-300">
+                          <MapPin className="h-3 w-3 shrink-0 transition-colors duration-300 text-slate-500" />
                           <span className="truncate">
                             {donor.district_name || "Unknown"}
                           </span>
@@ -637,28 +629,15 @@ export default function ManageDonors() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
+                    <div className="flex items-center justify-between pt-3 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
                       <div>
                         {/* DYNAMIC BADGE MOBILE */}
                         {donor.is_available_now ? (
-                          <Badge
-                            variant="success"
-                            className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          >
-                            Available
-                          </Badge>
+                          <Badge variant="success">Available</Badge>
                         ) : donor.is_permanently_deferred ? (
-                          <Badge
-                            variant="danger"
-                            className="bg-rose-500/10 text-rose-400 border-rose-500/20"
-                          >
-                            Deferred
-                          </Badge>
+                          <Badge variant="danger">Deferred</Badge>
                         ) : (
-                          <Badge
-                            variant="warning"
-                            className="bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1"
-                          >
+                          <Badge variant="warning" className="gap-1">
                             <Clock className="h-3 w-3" /> Resting
                           </Badge>
                         )}
@@ -667,7 +646,7 @@ export default function ManageDonors() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-9 w-9 p-0 text-emerald-500/70 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+                          className="h-9 w-9 p-0 border transition-colors duration-300 bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-700 dark:text-emerald-500/70 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 dark:border-emerald-500/20"
                           title="Log New Donation"
                           onClick={() => {
                             setDonorToLog(donor);
@@ -685,7 +664,7 @@ export default function ManageDonors() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-9 w-9 p-0 text-slate-400 bg-slate-800/50 hover:bg-slate-800"
+                          className="h-9 w-9 p-0 transition-colors duration-300 bg-slate-100 text-slate-600 hover:bg-slate-200 dark:text-slate-400 dark:bg-slate-800/50 dark:hover:bg-slate-800"
                           onClick={() => {
                             setEditingDonor(donor);
                             setIsEditModalOpen(true);
@@ -696,7 +675,7 @@ export default function ManageDonors() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-9 w-9 p-0 text-amber-500/80 bg-amber-500/10 border border-amber-500/20"
+                          className="h-9 w-9 p-0 border transition-colors duration-300 bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 hover:text-amber-700 dark:text-amber-500/80 dark:bg-amber-500/10 dark:border-amber-500/20"
                           onClick={() =>
                             handleDelete(donor.id, donor.full_name)
                           }
@@ -736,11 +715,11 @@ export default function ManageDonors() {
             }}
             className="space-y-6"
           >
-            <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/80 mb-6">
-              <div className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+            <div className="p-4 rounded-xl border mb-6 transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-950/50 dark:border-slate-800/80">
+              <div className="text-xs uppercase tracking-wider font-bold mb-1 transition-colors duration-300 text-slate-500">
                 Target Donor
               </div>
-              <div className="text-sm font-semibold text-white flex items-center gap-2">
+              <div className="text-sm font-semibold flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
                 {donorToLog.full_name}{" "}
                 <Badge variant="primary" className="py-0">
                   {donorToLog.blood_group}
@@ -750,11 +729,11 @@ export default function ManageDonors() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Donation Type
                 </label>
                 <select
-                  className="flex h-11 w-full rounded-xl border border-slate-700/80 bg-slate-950/50 px-4 py-2 text-sm text-slate-100 focus:ring-1 focus:ring-rose-500"
+                  className="flex h-11 w-full rounded-xl border px-4 py-2 text-sm focus:ring-2 focus:outline-none focus:border-rose-500 transition-colors duration-300 bg-white border-slate-200 text-slate-900 focus:ring-rose-500/20 dark:border-slate-700/80 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:ring-rose-500"
                   value={donationLogData.donation_type}
                   onChange={(e) =>
                     setDonationLogData({
@@ -775,12 +754,12 @@ export default function ManageDonors() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Date of Extraction
                 </label>
                 <Input
                   type="date"
-                  className="h-11 bg-slate-950/50"
+                  className="h-11 transition-colors duration-300 bg-white dark:bg-slate-950/50"
                   value={donationLogData.donation_date}
                   max={new Date().toISOString().split("T")[0]} // Prevent future dates
                   onChange={(e) =>
@@ -794,11 +773,11 @@ export default function ManageDonors() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Clinical Notes (Optional)
                 </label>
                 <textarea
-                  className="w-full rounded-xl border border-slate-700/80 bg-slate-950/50 px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/30 resize-none h-24"
+                  className="w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:border-rose-500 transition-colors duration-300 resize-none h-24 bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:ring-rose-500/20 dark:border-slate-700/80 dark:bg-slate-950/50 dark:text-slate-100 dark:placeholder-slate-600 dark:focus:ring-rose-500/30"
                   placeholder="E.g., Low hemoglobin initial reading, 500ml extracted..."
                   value={donationLogData.clinical_notes}
                   onChange={(e) =>
@@ -811,7 +790,7 @@ export default function ManageDonors() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
+            <div className="flex justify-end gap-3 pt-6 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800">
               <Button
                 type="button"
                 variant="ghost"
@@ -848,41 +827,41 @@ export default function ManageDonors() {
           <form onSubmit={handleEditSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2 sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Full Name
                 </label>
                 <Input
                   name="full_name"
                   value={editingDonor.full_name || ""}
                   onChange={handleEditChange}
-                  className="bg-slate-950/50"
+                  className="transition-colors duration-300 bg-white dark:bg-slate-950/50"
                   required
                   autoFocus
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Phone Number
                 </label>
                 <Input
                   name="phone_number"
                   value={editingDonor.phone_number || ""}
                   onChange={handleEditChange}
-                  className="bg-slate-950/50"
+                  className="transition-colors duration-300 bg-white dark:bg-slate-950/50"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Blood Group
                 </label>
                 <select
                   name="blood_group"
                   value={editingDonor.blood_group || ""}
                   onChange={handleEditChange}
-                  className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors"
+                  className="flex h-10 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors duration-300 bg-white border-slate-200 text-slate-900 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100"
                   required
                 >
                   <option value="" disabled>
@@ -899,14 +878,14 @@ export default function ManageDonors() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Gender
                 </label>
                 <select
                   name="gender"
                   value={editingDonor.gender || ""}
                   onChange={handleEditChange}
-                  className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors"
+                  className="flex h-10 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors duration-300 bg-white border-slate-200 text-slate-900 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100"
                   required
                 >
                   <option value="" disabled>
@@ -919,7 +898,7 @@ export default function ManageDonors() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Date of Birth
                 </label>
                 <Input
@@ -927,13 +906,13 @@ export default function ManageDonors() {
                   type="date"
                   value={editingDonor.date_of_birth || ""}
                   onChange={handleEditChange}
-                  className="bg-slate-950/50"
+                  className="transition-colors duration-300 bg-white dark:bg-slate-950/50"
                   required
                 />
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase">
+                <label className="text-xs font-semibold uppercase transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Last Donation Date
                 </label>
                 <Input
@@ -941,24 +920,24 @@ export default function ManageDonors() {
                   type="date"
                   value={editingDonor.last_donation_date || ""}
                   onChange={handleEditChange}
-                  className="bg-slate-950/50"
+                  className="transition-colors duration-300 bg-white dark:bg-slate-950/50"
                 />
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <label className="flex items-center gap-3 p-4 rounded-xl border border-rose-500/20 bg-rose-500/5 cursor-pointer hover:bg-rose-500/10 transition-colors">
+                <label className="flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors duration-300 bg-rose-50 border-rose-200 hover:bg-rose-100 dark:border-rose-500/20 dark:bg-rose-500/5 dark:hover:bg-rose-500/10">
                   <input
                     type="checkbox"
                     name="is_permanently_deferred"
                     checked={editingDonor.is_permanently_deferred || false}
                     onChange={handleEditChange}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-950 text-rose-500 focus:ring-rose-500"
+                    className="h-5 w-5 rounded transition-colors duration-300 border-slate-300 bg-white text-rose-600 focus:ring-rose-500 dark:border-slate-600 dark:bg-slate-950 dark:text-rose-500"
                   />
                   <div className="text-sm">
-                    <span className="font-semibold text-rose-400 block mb-1">
+                    <span className="font-semibold block mb-1 transition-colors duration-300 text-rose-700 dark:text-rose-400">
                       Permanently Deferred
                     </span>
-                    <span className="text-slate-400 text-xs">
+                    <span className="text-xs transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Mark this donor as medically ineligible for future
                       donations. They will no longer appear in public search
                       results.
@@ -968,7 +947,7 @@ export default function ManageDonors() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
+            <div className="flex justify-end gap-3 pt-6 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800">
               <Button
                 type="button"
                 variant="ghost"
@@ -976,7 +955,6 @@ export default function ManageDonors() {
                   setIsEditModalOpen(false);
                   setEditingDonor(null);
                 }}
-                className="text-slate-400 hover:text-white"
               >
                 Cancel
               </Button>
@@ -1008,16 +986,16 @@ export default function ManageDonors() {
         title="Batch Record Ingestion"
       >
         <div className="space-y-6">
-          <p className="text-sm text-slate-400 leading-relaxed">
+          <p className="text-sm leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
             Upload an authorized CSV payload to map legacy records to your
             current tenant workspace. All imported entities are automatically
             locked to your organizational jurisdiction.
           </p>
 
-          <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between shadow-inner">
+          <div className="p-4 border rounded-xl flex items-center justify-between shadow-sm dark:shadow-inner transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <Download className="h-5 w-5 text-emerald-500" />
-              <div className="text-sm text-white font-medium">
+              <Download className="h-5 w-5 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
+              <div className="text-sm font-medium transition-colors duration-300 text-slate-900 dark:text-white">
                 Standard Ingestion Matrix
               </div>
             </div>
@@ -1025,7 +1003,7 @@ export default function ManageDonors() {
               variant="outline"
               size="sm"
               onClick={downloadTemplate}
-              className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+              className="transition-colors duration-300 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:bg-slate-900/50 dark:hover:bg-slate-800 dark:hover:text-white"
             >
               Download Template
             </Button>
@@ -1034,10 +1012,10 @@ export default function ManageDonors() {
           {/* Ingestion Telemetry Feedback */}
           {uploadResult && (
             <div
-              className={`p-4 rounded-xl text-sm border ${
+              className={`p-4 rounded-xl text-sm border transition-colors duration-300 ${
                 uploadResult.success
-                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                  : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400"
+                  : "bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400"
               }`}
             >
               <div className="flex items-center gap-2 font-bold mb-2">
@@ -1077,21 +1055,21 @@ export default function ManageDonors() {
                 <div
                   className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl transition-all duration-300 ${
                     uploadFile
-                      ? "border-emerald-500 bg-emerald-500/5"
-                      : "border-slate-700 group-hover:border-rose-500/50 bg-slate-900/50 group-hover:bg-slate-900/80"
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/5"
+                      : "border-slate-300 bg-slate-50 group-hover:border-rose-400 group-hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/50 dark:group-hover:border-rose-500/50 dark:group-hover:bg-slate-900/80"
                   }`}
                 >
                   {uploadFile ? (
                     <>
-                      <CheckCircle2 className="h-10 w-10 text-emerald-500 mb-3" />
-                      <span className="text-emerald-400 font-semibold tracking-wide">
+                      <CheckCircle2 className="h-10 w-10 mb-3 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
+                      <span className="font-semibold tracking-wide transition-colors duration-300 text-emerald-700 dark:text-emerald-400">
                         {uploadFile.name}
                       </span>
                     </>
                   ) : (
                     <>
-                      <FileUp className="h-10 w-10 text-slate-500 mb-3 group-hover:text-rose-500 transition-colors" />
-                      <span className="text-slate-400 text-sm font-medium">
+                      <FileUp className="h-10 w-10 mb-3 transition-colors duration-300 text-slate-400 group-hover:text-rose-500 dark:text-slate-500" />
+                      <span className="text-sm font-medium transition-colors duration-300 text-slate-500 dark:text-slate-400">
                         Click to browse or drop CSV payload
                       </span>
                     </>
@@ -1100,11 +1078,10 @@ export default function ManageDonors() {
               </label>
             </div>
 
-            <div className="flex justify-end gap-3 mt-8 pt-5 border-t border-slate-800">
+            <div className="flex justify-end gap-3 mt-8 pt-5 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800">
               <Button
                 type="button"
                 variant="ghost"
-                className="text-slate-400 hover:text-white"
                 onClick={() => {
                   setIsUploadModalOpen(false);
                   setUploadResult(null);

@@ -6,7 +6,7 @@ import { Footer } from "./Footer";
 
 export function PublicLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100 font-sans selection:bg-rose-500/30 selection:text-rose-200 overflow-x-hidden relative">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 font-sans selection:bg-rose-500/30 selection:text-rose-900 dark:bg-slate-950 dark:text-slate-100 dark:selection:text-rose-200 overflow-x-hidden relative transition-colors duration-300">
       <Helmet
         titleTemplate="%s | Bloodonate"
         defaultTitle="Bloodonate - Multi-Tenant Blood Bank System"
@@ -23,7 +23,7 @@ export function PublicLayout() {
 
       <a
         href="#main-content"
-        className="absolute top-4 left-4 z-9999 translate-y-[-150%] rounded-md bg-rose-600 px-4 py-2 font-bold text-white transition focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-white"
+        className="absolute top-4 left-4 z-[9999] translate-y-[-150%] rounded-md bg-rose-600 px-4 py-2 font-bold text-white transition focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-rose-500/50"
       >
         Skip to main content
       </a>
@@ -32,8 +32,9 @@ export function PublicLayout() {
         className="fixed inset-0 overflow-hidden pointer-events-none z-0"
         aria-hidden="true"
       >
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-rose-500/5 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/5 blur-[120px]" />
+        {/* Adjusted ambient glows to look good in both light and dark modes */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-rose-500/10 blur-[120px] dark:bg-rose-500/5 transition-colors duration-300" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] dark:bg-blue-500/5 transition-colors duration-300" />
       </div>
 
       <div className="relative z-50">

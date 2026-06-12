@@ -117,26 +117,26 @@ export default function ProfileSettings() {
   // --- UI Transition States ---
   if (isLoading)
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
+      <div className="flex h-[60vh] items-center justify-center transition-colors duration-300">
+        <Loader2 className="h-10 w-10 animate-spin transition-colors duration-300 text-rose-600 dark:text-rose-500" />
       </div>
     );
 
   if (isError) {
     return (
-      <div className="flex flex-col h-[60vh] items-center justify-center text-center animate-in fade-in duration-500">
-        <div className="h-20 w-20 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 mb-6">
-          <AlertCircle className="h-10 w-10 text-rose-500" />
+      <div className="flex flex-col h-[60vh] items-center justify-center text-center animate-in fade-in duration-500 transition-colors duration-300">
+        <div className="h-20 w-20 rounded-2xl flex items-center justify-center border mb-6 transition-colors duration-300 bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20">
+          <AlertCircle className="h-10 w-10 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
         </div>
-        <h3 className="text-2xl font-bold text-white mb-2">
+        <h3 className="text-2xl font-bold mb-2 transition-colors duration-300 text-slate-900 dark:text-white">
           Telemetry Failure
         </h3>
-        <p className="text-slate-400 max-w-md mb-6 leading-relaxed">
+        <p className="max-w-md mb-6 leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
           Unable to retrieve organizational profile from the central database.
         </p>
         <Button
           variant="outline"
-          className="border-slate-700 bg-slate-900/50"
+          className="transition-colors duration-300 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           onClick={() => refetch()}
         >
           Retry Connection
@@ -146,17 +146,17 @@ export default function ProfileSettings() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 transition-colors duration-300">
       {/* --- Workspace Header --- */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/80 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
-            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
-              <Building2 className="h-5 w-5 text-rose-500" />
+          <h1 className="text-2xl font-bold flex items-center gap-3 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
+            <div className="p-1.5 rounded-lg border transition-colors duration-300 bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20">
+              <Building2 className="h-5 w-5 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
             </div>
             Organization Profile
           </h1>
-          <p className="text-sm text-slate-400 mt-2">
+          <p className="text-sm mt-2 transition-colors duration-300 text-slate-600 dark:text-slate-400">
             Manage your facility's public-facing directory details and media
             assets.
           </p>
@@ -164,7 +164,7 @@ export default function ProfileSettings() {
         {!isEditing && (
           <Button
             variant="outline"
-            className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 w-full sm:w-auto transition-colors"
+            className="gap-2 w-full sm:w-auto transition-colors duration-300 text-slate-700 border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:bg-slate-800 dark:hover:text-white"
             onClick={() => setIsEditing(true)}
           >
             <Edit className="h-4 w-4" /> Edit Profile
@@ -179,11 +179,11 @@ export default function ProfileSettings() {
              ========================================= */
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Module 1: Institutional Identity */}
-            <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl">
-              <CardHeader className="border-b border-slate-800/60 pb-5">
-                <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shrink-0">
-                    <Building2 className="h-5 w-5 text-blue-500" />
+            <Card className="backdrop-blur-xl shadow-lg transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-xl">
+              <CardHeader className="border-b pb-5 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+                <CardTitle className="text-lg font-bold flex items-center gap-3 transition-colors duration-300 text-slate-900 dark:text-white">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20">
+                    <Building2 className="h-5 w-5 transition-colors duration-300 text-blue-600 dark:text-blue-500" />
                   </div>
                   Institutional Identity
                 </CardTitle>
@@ -191,37 +191,37 @@ export default function ProfileSettings() {
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Organization Name *
                     </label>
                     <Input
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="bg-slate-950/50 border-slate-700 h-11"
+                      className="h-11 transition-colors duration-300 focus:ring-rose-500/20"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Public Profile URL *
                     </label>
                     <div className="flex rounded-lg shadow-sm">
-                      <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-slate-700 bg-slate-800/50 text-slate-400 text-sm">
+                      <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 text-sm transition-colors duration-300 bg-slate-50 border-slate-200 text-slate-500 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-400">
                         bloodonate.org/hospital/
                       </span>
                       <Input
                         name="slug"
                         value={formData.slug}
                         onChange={handleSlugChange}
-                        className="flex-1 rounded-none rounded-r-lg bg-slate-950/50 border-slate-700 focus:ring-rose-500 h-11"
+                        className="flex-1 rounded-none rounded-r-lg h-11 transition-colors duration-300 focus:ring-rose-500/20"
                         placeholder="your-hospital-name"
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Public Contact Email *
                     </label>
                     <Input
@@ -229,19 +229,19 @@ export default function ProfileSettings() {
                       type="email"
                       value={formData.contact_email}
                       onChange={handleChange}
-                      className="bg-slate-950/50 border-slate-700 h-11"
+                      className="h-11 transition-colors duration-300 focus:ring-rose-500/20"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Public Phone Number *
                     </label>
                     <Input
                       name="contact_phone"
                       value={formData.contact_phone}
                       onChange={handleChange}
-                      className="bg-slate-950/50 border-slate-700 h-11"
+                      className="h-11 transition-colors duration-300 focus:ring-rose-500/20"
                       required
                     />
                   </div>
@@ -250,30 +250,30 @@ export default function ProfileSettings() {
             </Card>
 
             {/* Module 2: Location & Description */}
-            <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl">
-              <CardHeader className="border-b border-slate-800/60 pb-5">
-                <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                    <MapPin className="h-5 w-5 text-emerald-500" />
+            <Card className="backdrop-blur-xl shadow-lg transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-xl">
+              <CardHeader className="border-b pb-5 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+                <CardTitle className="text-lg font-bold flex items-center gap-3 transition-colors duration-300 text-slate-900 dark:text-white">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20">
+                    <MapPin className="h-5 w-5 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
                   </div>
                   Location & Description
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Street Address *
                   </label>
                   <Input
                     name="address_line"
                     value={formData.address_line}
                     onChange={handleChange}
-                    className="bg-slate-950/50 border-slate-700 h-11"
+                    className="h-11 transition-colors duration-300 focus:ring-rose-500/20"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Organization Bio
                   </label>
                   <textarea
@@ -281,7 +281,7 @@ export default function ProfileSettings() {
                     value={formData.description}
                     onChange={handleChange}
                     rows={4}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-950/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500/50 transition-all resize-none shadow-inner"
+                    className="w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-1 transition-all resize-none shadow-sm dark:shadow-inner bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-rose-500 focus:ring-rose-500/20 dark:bg-slate-950/50 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:ring-rose-500/50"
                     placeholder="Provide a brief overview of your facility to public donors..."
                   />
                 </div>
@@ -289,11 +289,11 @@ export default function ProfileSettings() {
             </Card>
 
             {/* Module 3: Branding Assets */}
-            <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl">
-              <CardHeader className="border-b border-slate-800/60 pb-5">
-                <CardTitle className="text-lg font-bold text-white flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
-                    <ImagePlus className="h-5 w-5 text-amber-500" />
+            <Card className="backdrop-blur-xl shadow-lg transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-xl">
+              <CardHeader className="border-b pb-5 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+                <CardTitle className="text-lg font-bold flex items-center gap-3 transition-colors duration-300 text-slate-900 dark:text-white">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20">
+                    <ImagePlus className="h-5 w-5 transition-colors duration-300 text-amber-600 dark:text-amber-500" />
                   </div>
                   Branding Assets
                 </CardTitle>
@@ -301,7 +301,7 @@ export default function ProfileSettings() {
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Square Logo (PNG/JPG)
                     </label>
                     <Input
@@ -309,11 +309,11 @@ export default function ProfileSettings() {
                       accept="image/*"
                       name="logo"
                       onChange={handleFileChange}
-                      className="bg-slate-950/50 text-slate-400 file:text-rose-500 file:bg-rose-500/10 file:border-0 file:rounded-md file:mr-4 file:px-4 file:py-1.5 file:font-semibold text-sm h-12"
+                      className="h-12 transition-colors duration-300 text-slate-600 dark:text-slate-400 file:text-rose-600 file:bg-rose-50 hover:file:bg-rose-100 dark:file:text-rose-500 dark:file:bg-rose-500/10 dark:hover:file:bg-rose-500/20 file:border-0 file:rounded-md file:mr-4 file:px-4 file:py-1.5 file:font-semibold text-sm"
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Hero Banner
                     </label>
                     <Input
@@ -321,7 +321,7 @@ export default function ProfileSettings() {
                       accept="image/*"
                       name="banner_image"
                       onChange={handleFileChange}
-                      className="bg-slate-950/50 text-slate-400 file:text-rose-500 file:bg-rose-500/10 file:border-0 file:rounded-md file:mr-4 file:px-4 file:py-1.5 file:font-semibold text-sm h-12"
+                      className="h-12 transition-colors duration-300 text-slate-600 dark:text-slate-400 file:text-rose-600 file:bg-rose-50 hover:file:bg-rose-100 dark:file:text-rose-500 dark:file:bg-rose-500/10 dark:hover:file:bg-rose-500/20 file:border-0 file:rounded-md file:mr-4 file:px-4 file:py-1.5 file:font-semibold text-sm"
                     />
                   </div>
                 </div>
@@ -333,7 +333,7 @@ export default function ProfileSettings() {
               <Button
                 type="button"
                 variant="ghost"
-                className="text-slate-400 hover:text-white"
+                className="transition-colors duration-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
                 onClick={() => setIsEditing(false)}
                 disabled={updateMutation.isPending}
               >
@@ -343,7 +343,7 @@ export default function ProfileSettings() {
                 type="submit"
                 variant="primary"
                 disabled={updateMutation.isPending}
-                className="min-w-40 shadow-lg"
+                className="min-w-40 shadow-md hover:shadow-lg dark:shadow-lg"
               >
                 {updateMutation.isPending ? (
                   <>
@@ -362,10 +362,10 @@ export default function ProfileSettings() {
              READ-ONLY MODE
              ========================================= */
           <div className="space-y-6">
-            <Card className="border-slate-800/80 bg-slate-900/40 backdrop-blur-xl shadow-xl overflow-hidden relative">
+            <Card className="backdrop-blur-xl shadow-xl overflow-hidden relative transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80">
               {orgData.banner_image && (
-                <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
-                  <div className="absolute inset-0 bg-linear-to-r from-slate-900 to-transparent z-10" />
+                <div className="absolute top-0 right-0 w-1/2 h-full opacity-30 dark:opacity-10 pointer-events-none">
+                  <div className="absolute inset-0 z-10 transition-colors duration-300 bg-linear-to-r from-white to-transparent dark:from-slate-900" />
                   <img
                     src={orgData.banner_image}
                     alt="Cover"
@@ -374,24 +374,24 @@ export default function ProfileSettings() {
                 </div>
               )}
               <CardContent className="p-8 relative z-20">
-                {/* NEW: Logo & Name Header */}
-                <div className="flex items-center gap-6 mb-10 pb-8 border-b border-slate-800/60">
+                {/* Logo & Name Header */}
+                <div className="flex items-center gap-6 mb-10 pb-8 border-b transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
                   {orgData.logo ? (
                     <img
                       src={orgData.logo}
                       alt="Logo"
-                      className="h-24 w-24 rounded-2xl object-cover border border-slate-700 shadow-xl bg-slate-950"
+                      className="h-24 w-24 rounded-2xl object-cover border shadow-xl transition-colors duration-300 bg-white border-white dark:bg-slate-950 dark:border-slate-700"
                     />
                   ) : (
-                    <div className="h-24 w-24 rounded-2xl bg-slate-800/80 flex items-center justify-center border border-slate-700 shadow-xl">
-                      <Building2 className="h-10 w-10 text-slate-400" />
+                    <div className="h-24 w-24 rounded-2xl flex items-center justify-center border shadow-xl transition-colors duration-300 bg-slate-100 border-slate-200 dark:bg-slate-800/80 dark:border-slate-700">
+                      <Building2 className="h-10 w-10 transition-colors duration-300 text-slate-400 dark:text-slate-500" />
                     </div>
                   )}
                   <div>
-                    <h2 className="text-3xl font-black text-white tracking-tight">
+                    <h2 className="text-3xl font-black tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                       {orgData.name}
                     </h2>
-                    <div className="flex items-center gap-1.5 mt-2 text-rose-400 font-medium">
+                    <div className="flex items-center gap-1.5 mt-2 font-medium transition-colors duration-300 text-rose-600 dark:text-rose-400">
                       <LinkIcon className="h-4 w-4" />
                       bloodonate.org/hospital/{orgData.slug}
                     </div>
@@ -401,65 +401,65 @@ export default function ProfileSettings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-8">
                     <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-slate-800/80 flex items-center justify-center border border-slate-700 shrink-0">
-                        <MapPin className="h-6 w-6 text-slate-400" />
+                      <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/80 dark:border-slate-700">
+                        <MapPin className="h-6 w-6 transition-colors duration-300 text-slate-500 dark:text-slate-400" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        <p className="text-xs font-bold uppercase tracking-wider mb-1 transition-colors duration-300 text-slate-500 dark:text-slate-500">
                           Registered Location
                         </p>
-                        <p className="text-white font-medium">
+                        <p className="font-medium transition-colors duration-300 text-slate-900 dark:text-white">
                           {orgData.address_line}
                         </p>
-                        <p className="text-slate-400 text-sm mt-0.5">
+                        <p className="text-sm mt-0.5 transition-colors duration-300 text-slate-600 dark:text-slate-400">
                           {orgData.district_name}, {orgData.state_name}
                         </p>
-                        <p className="text-slate-500 text-sm">
+                        <p className="text-sm transition-colors duration-300 text-slate-500 dark:text-slate-500">
                           {orgData.country_name}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-slate-800/80 flex items-center justify-center border border-slate-700 shrink-0">
-                        <Mail className="h-6 w-6 text-slate-400" />
+                      <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/80 dark:border-slate-700">
+                        <Mail className="h-6 w-6 transition-colors duration-300 text-slate-500 dark:text-slate-400" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        <p className="text-xs font-bold uppercase tracking-wider mb-1 transition-colors duration-300 text-slate-500 dark:text-slate-500">
                           Support Email
                         </p>
-                        <p className="text-white font-medium font-mono tracking-tight">
+                        <p className="font-medium font-mono tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                           {orgData.contact_email}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-slate-800/80 flex items-center justify-center border border-slate-700 shrink-0">
-                        <Phone className="h-6 w-6 text-slate-400" />
+                      <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/80 dark:border-slate-700">
+                        <Phone className="h-6 w-6 transition-colors duration-300 text-slate-500 dark:text-slate-400" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        <p className="text-xs font-bold uppercase tracking-wider mb-1 transition-colors duration-300 text-slate-500 dark:text-slate-500">
                           Phone Hotline
                         </p>
-                        <p className="text-white font-medium font-mono tracking-tight">
+                        <p className="font-medium font-mono tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                           {orgData.contact_phone}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4 h-full border-t md:border-t-0 md:border-l border-slate-800/60 pt-8 md:pt-0 md:pl-10">
-                    <div className="h-12 w-12 rounded-xl bg-slate-800/80 flex items-center justify-center border border-slate-700 shrink-0">
-                      <FileText className="h-6 w-6 text-slate-400" />
+                  <div className="flex items-start gap-4 h-full border-t md:border-t-0 md:border-l pt-8 md:pt-0 md:pl-10 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+                    <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/80 dark:border-slate-700">
+                      <FileText className="h-6 w-6 transition-colors duration-300 text-slate-500 dark:text-slate-400" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                      <p className="text-xs font-bold uppercase tracking-wider mb-2 transition-colors duration-300 text-slate-500 dark:text-slate-500">
                         Institutional Biography
                       </p>
-                      <p className="text-slate-300 text-sm leading-relaxed">
+                      <p className="text-sm leading-relaxed transition-colors duration-300 text-slate-700 dark:text-slate-300">
                         {orgData.description || (
-                          <span className="italic text-slate-600">
+                          <span className="italic transition-colors duration-300 text-slate-500 dark:text-slate-600">
                             No organizational description provided.
                           </span>
                         )}

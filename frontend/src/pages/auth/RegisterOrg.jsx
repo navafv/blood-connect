@@ -181,69 +181,69 @@ export default function RegisterOrg() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10 relative overflow-hidden">
-      {/* Ambient Background */}{" "}
+    <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
+      {/* Ambient Background */}
       <div
-        className="absolute top-[-10%] right-[-5%] w-120 h-120 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none"
+        className="absolute top-[-10%] right-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-10%] left-[-5%] w-120 h-120 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"
+        className="absolute bottom-[-10%] left-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
         aria-hidden="true"
       />
+
       {/* Main Container */}
       <div className="w-full max-w-4xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
           <Link
             to="/"
-            className="group flex items-center justify-center h-16 w-16 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl transition-all duration-300 hover:border-rose-500/40"
+            className="group flex items-center justify-center h-16 w-16 rounded-2xl border transition-all duration-300 shadow-md bg-white border-slate-200 hover:border-rose-300 dark:bg-slate-900 dark:border-slate-800 dark:shadow-2xl dark:hover:border-rose-500/40"
           >
-            <Droplet className="h-8 w-8 text-rose-500 transition-transform duration-300 group-hover:scale-110" />
+            <Droplet className="h-8 w-8 transition-transform duration-300 group-hover:scale-110 text-rose-600 dark:text-rose-500" />
           </Link>
 
-          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-white text-center">
+          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-center transition-colors duration-300 text-slate-900 dark:text-white">
             Register Your Organization
           </h1>
 
-          <p className="mt-3 text-sm text-slate-400 text-center leading-relaxed max-w-2xl">
+          <p className="mt-3 text-sm text-center leading-relaxed max-w-2xl transition-colors duration-300 text-slate-600 dark:text-slate-400">
             Create a secure Bloodonate workspace to manage blood donors,
             emergency requests, and organization operations.
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl shadow-2xl px-6 sm:px-10 py-10">
+        <div className="backdrop-blur-xl border rounded-3xl shadow-xl px-6 sm:px-10 py-10 transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80 dark:shadow-2xl">
           {status === "success" ? (
             <div className="text-center py-12 animate-in fade-in zoom-in duration-500">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6 relative">
-                <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-md animate-pulse" />
-
-                <CheckCircle2 className="h-12 w-12 text-emerald-500 relative z-10" />
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border mb-6 relative transition-colors duration-300 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20">
+                <div className="absolute inset-0 rounded-full blur-md animate-pulse transition-colors duration-300 bg-emerald-200/50 dark:bg-emerald-500/20" />
+                <CheckCircle2 className="h-12 w-12 relative z-10 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
               </div>
 
-              <h3 className="text-3xl font-bold text-white mb-3">
+              <h3 className="text-3xl font-bold mb-3 transition-colors duration-300 text-slate-900 dark:text-white">
                 Registration Successful
               </h3>
 
-              <p className="text-slate-400 text-base max-w-md mx-auto leading-relaxed mb-8">
+              <p className="text-base max-w-md mx-auto leading-relaxed mb-8 transition-colors duration-300 text-slate-600 dark:text-slate-400">
                 Your organization account has been created successfully.
                 Redirecting you to email verification...
               </p>
 
-              <Loader2 className="h-8 w-8 text-rose-500 animate-spin mx-auto" />
+              <Loader2 className="h-8 w-8 animate-spin mx-auto transition-colors duration-300 text-rose-600 dark:text-rose-500" />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-10">
               {/* Organization Info */}
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-rose-500" />
+                  <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
+                    <Building2 className="h-4 w-4 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
                     Organization Information
                   </h2>
 
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Enter your organization details and administrator
                     information.
                   </p>
@@ -252,7 +252,7 @@ export default function RegisterOrg() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Org Name */}
                   <div className="md:col-span-2 relative group">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                     <Input
                       name="orgName"
@@ -261,7 +261,7 @@ export default function RegisterOrg() {
                       value={formData.orgName}
                       onChange={handleChange}
                       disabled={status === "loading"}
-                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
                     />
                   </div>
 
@@ -279,14 +279,13 @@ export default function RegisterOrg() {
                       }
                       options={orgTypeOptions}
                       placeholder="Select Organization Type"
-                      className="bg-slate-950/50"
                       required
                     />
                   </div>
 
                   {/* Contact Name */}
                   <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                     <Input
                       name="contactName"
@@ -295,13 +294,13 @@ export default function RegisterOrg() {
                       value={formData.contactName}
                       onChange={handleChange}
                       disabled={status === "loading"}
-                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
                     />
                   </div>
 
                   {/* Contact Phone */}
                   <div className="relative group">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                     <Input
                       name="contact_phone"
@@ -310,13 +309,13 @@ export default function RegisterOrg() {
                       value={formData.contact_phone}
                       onChange={handleChange}
                       disabled={status === "loading"}
-                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
                     />
                   </div>
 
                   {/* Email */}
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                     <Input
                       type="email"
@@ -326,13 +325,13 @@ export default function RegisterOrg() {
                       value={formData.email}
                       onChange={handleChange}
                       disabled={status === "loading"}
-                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
                     />
                   </div>
 
                   {/* Password */}
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                     <Input
                       type={showPassword ? "text" : "password"}
@@ -342,13 +341,13 @@ export default function RegisterOrg() {
                       value={formData.password}
                       onChange={handleChange}
                       disabled={status === "loading"}
-                      className="pl-12 pr-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                      className="pl-12 pr-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
                     />
 
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-300 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                     >
                       {showPassword ? (
                         <EyeOff className="h-5 w-5" />
@@ -360,7 +359,7 @@ export default function RegisterOrg() {
 
                   {/* Address Line */}
                   <div className="md:col-span-2 relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                     <Input
                       name="address_line"
@@ -369,13 +368,13 @@ export default function RegisterOrg() {
                       value={formData.address_line}
                       onChange={handleChange}
                       disabled={status === "loading"}
-                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all"
+                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
                     />
                   </div>
 
                   {/* Logo Upload */}
                   <div className="md:col-span-2 relative group">
-                    <Upload className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 transition-colors group-focus-within:text-rose-500" />
+                    <Upload className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
 
                     <Input
                       type="file"
@@ -383,21 +382,21 @@ export default function RegisterOrg() {
                       accept="image/*"
                       onChange={handleChange}
                       disabled={status === "loading"}
-                      className="pl-12 h-12 bg-slate-950/50 border-slate-700 focus:border-rose-500 focus:ring-rose-500/20 transition-all text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-500/10 file:text-rose-500 hover:file:bg-rose-500/20"
+                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20 text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 dark:file:bg-rose-500/10 dark:file:text-rose-500 dark:hover:file:bg-rose-500/20"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Location */}
-              <div className="space-y-6 border-t border-slate-800 pt-8">
+              <div className="space-y-6 border-t pt-8 transition-colors duration-300 border-slate-200 dark:border-slate-800">
                 <div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-emerald-500" />
+                  <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
+                    <MapPin className="h-4 w-4 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
                     Location Information
                   </h2>
 
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Select the region where your organization operates.
                   </p>
                 </div>
@@ -412,7 +411,6 @@ export default function RegisterOrg() {
                       value: c.id.toString(),
                     }))}
                     placeholder="Select Country"
-                    className="bg-slate-950/50"
                     required
                   />
 
@@ -426,7 +424,6 @@ export default function RegisterOrg() {
                     }))}
                     placeholder="Select State"
                     disabled={!formData.country_id}
-                    className="bg-slate-950/50"
                     required
                   />
 
@@ -447,42 +444,41 @@ export default function RegisterOrg() {
                     }))}
                     placeholder="Select District"
                     disabled={!formData.state_id}
-                    className="bg-slate-950/50"
                     required
                   />
                 </div>
               </div>
 
               {/* Public Listing */}
-              <div className="space-y-5 border-t border-slate-800 pt-8">
+              <div className="space-y-5 border-t pt-8 transition-colors duration-300 border-slate-200 dark:border-slate-800">
                 <div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-blue-500" />
+                  <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
+                    <Globe className="h-4 w-4 transition-colors duration-300 text-blue-600 dark:text-blue-500" />
                     Public Directory
                   </h2>
 
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Allow your organization to appear in public donor search
                     results.
                   </p>
                 </div>
 
-                <label className="flex items-start gap-4 p-5 rounded-2xl border border-slate-700 bg-slate-950/40 hover:bg-slate-900 transition-all cursor-pointer">
+                <label className="flex items-start gap-4 p-5 rounded-2xl border transition-all duration-300 cursor-pointer bg-slate-50 border-slate-200 hover:bg-slate-100 dark:bg-slate-950/40 dark:border-slate-700 dark:hover:bg-slate-900">
                   <input
                     type="checkbox"
                     name="is_searchable"
                     checked={formData.is_searchable}
                     onChange={handleChange}
                     disabled={status === "loading"}
-                    className="mt-1 h-5 w-5 rounded border-slate-600 bg-slate-950 text-rose-500 focus:ring-rose-500"
+                    className="mt-1 h-5 w-5 rounded transition-colors duration-300 border-slate-300 bg-white text-rose-600 focus:ring-rose-500 dark:border-slate-600 dark:bg-slate-950 dark:text-rose-500"
                   />
 
                   <div>
-                    <span className="block text-white font-medium">
+                    <span className="block font-medium transition-colors duration-300 text-slate-900 dark:text-white">
                       Enable Public Visibility
                     </span>
 
-                    <span className="block mt-1 text-sm text-slate-400 leading-relaxed">
+                    <span className="block mt-1 text-sm leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Your organization and available donors may appear in
                       emergency donor searches while protecting personal donor
                       information.
@@ -497,7 +493,7 @@ export default function RegisterOrg() {
                   type="submit"
                   variant="primary"
                   disabled={status === "loading"}
-                  className="w-full py-6 text-base font-semibold rounded-xl shadow-lg hover:shadow-rose-500/20 transition-all gap-2"
+                  className="w-full py-6 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all gap-2 dark:shadow-lg dark:hover:shadow-rose-500/20"
                 >
                   {status === "loading" ? (
                     <>
@@ -517,12 +513,12 @@ export default function RegisterOrg() {
 
           {/* Footer */}
           {status !== "success" && (
-            <div className="mt-8 pt-6 border-t border-slate-800 text-center">
-              <p className="text-sm text-slate-400">
+            <div className="mt-8 pt-6 border-t text-center transition-colors duration-300 border-slate-200 dark:border-slate-800">
+              <p className="text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                 Already have an account?{" "}
                 <Link
                   to="/login"
-                  className="font-semibold text-white hover:text-rose-400 transition-colors"
+                  className="font-semibold transition-colors duration-300 text-slate-900 hover:text-rose-600 dark:text-white dark:hover:text-rose-400"
                 >
                   Sign In
                 </Link>

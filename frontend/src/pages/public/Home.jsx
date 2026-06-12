@@ -90,28 +90,28 @@ export default function Home() {
         <link rel="canonical" href="https://www.bloodonate.org/" />
       </Helmet>
 
-      <div className="flex flex-col min-h-screen bg-slate-950 overflow-hidden">
+      <div className="flex flex-col min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 overflow-hidden">
         {/* --- Hero Composition --- */}
         <section className="relative px-4 pt-20 pb-32 md:pt-32 md:pb-40 lg:pt-40 lg:pb-48">
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-rose-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-rose-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000 transition-colors dark:bg-rose-600/15"
             aria-hidden="true"
           />
 
           <div className="container mx-auto max-w-5xl text-center relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium mb-8 shadow-[0_0_15px_rgba(225,29,72,0.1)]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-medium mb-8 shadow-sm transition-colors duration-300 bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400 dark:shadow-[0_0_15px_rgba(225,29,72,0.1)]">
               <HeartHandshake className="h-4 w-4" />
               <span>Connecting Donors with Those in Need</span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight mb-8 leading-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-8 leading-tight transition-colors duration-300 text-slate-900 dark:text-white">
               Find a Blood Donor. <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-rose-400 to-rose-600">
+              <span className="text-transparent bg-clip-text bg-linear-to-r transition-colors duration-300 from-rose-500 to-rose-700 dark:from-rose-400 dark:to-rose-600">
                 Save a Life Today.
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+            <p className="text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
               A centralized, real-time registry maintained by trusted hospitals,
               blood banks, clinics, and NGOs. Find eligible blood donors in your
               area instantly.
@@ -122,7 +122,7 @@ export default function Home() {
                 <Button
                   variant="primary"
                   size="lg"
-                  className="w-full text-base gap-2 px-8 py-6 rounded-full shadow-rose-glow hover:shadow-rose-glow-lg transition-all duration-300"
+                  className="w-full text-base gap-2 px-8 py-6 rounded-full shadow-md hover:shadow-lg transition-all duration-300 dark:shadow-rose-glow dark:hover:shadow-rose-glow-lg"
                 >
                   <Search className="h-5 w-5" aria-hidden="true" />
                   Find Donors Now
@@ -132,7 +132,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full text-base gap-2 px-8 py-6 rounded-full bg-slate-900/50 backdrop-blur-md border-slate-700 hover:bg-slate-800 hover:text-white transition-all duration-300"
+                  className="w-full text-base gap-2 px-8 py-6 rounded-full backdrop-blur-md transition-all duration-300 bg-white/50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:bg-slate-900/50 dark:border-slate-700 dark:hover:bg-slate-800 dark:text-slate-300 dark:hover:text-white"
                 >
                   Register Your Organization
                   <ArrowRight className="h-5 w-5" aria-hidden="true" />
@@ -143,13 +143,13 @@ export default function Home() {
         </section>
 
         {/* --- Process Diagram Section --- */}
-        <section className="py-24 bg-slate-900/40 border-y border-slate-800/50 relative">
+        <section className="py-24 border-y relative transition-colors duration-300 bg-slate-100/50 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/50">
           <div className="container mx-auto max-w-7xl px-4">
             <div className="text-center mb-20">
-              <h2 className="text-3xl font-bold text-white mb-4">
+              <h2 className="text-3xl font-bold mb-4 transition-colors duration-300 text-slate-900 dark:text-white">
                 How It Works
               </h2>
-              <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+              <p className="max-w-2xl mx-auto text-lg transition-colors duration-300 text-slate-600 dark:text-slate-400">
                 Three simple steps to connect with a lifesaver in your time of
                 need.
               </p>
@@ -157,7 +157,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
               <div
-                className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-linear-to-r from-slate-800 via-rose-500/20 to-slate-800 -translate-y-1/2 z-0"
+                className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-linear-to-r -translate-y-1/2 z-0 transition-colors duration-300 from-slate-200 via-rose-500/20 to-slate-200 dark:from-slate-800 dark:to-slate-800"
                 aria-hidden="true"
               />
 
@@ -180,15 +180,17 @@ export default function Home() {
               ].map((step) => (
                 <div
                   key={step.num}
-                  className="group relative z-10 flex flex-col items-center text-center p-8 bg-slate-950 rounded-3xl border border-slate-800/80 shadow-xl hover:border-rose-500/30 hover:shadow-[0_0_30px_rgba(225,29,72,0.05)] hover:-translate-y-2 transition-all duration-500"
+                  className="group relative z-10 flex flex-col items-center text-center p-8 rounded-3xl border shadow-md hover:-translate-y-2 transition-all duration-500 bg-white border-slate-200 hover:border-rose-300 hover:shadow-xl dark:bg-slate-950 dark:border-slate-800/80 dark:hover:border-rose-500/30 dark:hover:shadow-[0_0_30px_rgba(225,29,72,0.05)]"
                 >
-                  <div className="w-20 h-20 rounded-2xl bg-slate-900 flex items-center justify-center border border-slate-800 group-hover:border-rose-500/40 text-rose-500 text-3xl font-black mb-8 shadow-inner group-hover:shadow-[inset_0_0_20px_rgba(225,29,72,0.2)] transition-all duration-500">
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center border text-3xl font-black mb-8 shadow-inner transition-all duration-500 bg-slate-50 border-slate-200 text-rose-600 group-hover:border-rose-300 group-hover:bg-rose-50 dark:bg-slate-900 dark:border-slate-800 dark:text-rose-500 dark:group-hover:border-rose-500/40 dark:group-hover:shadow-[inset_0_0_20px_rgba(225,29,72,0.2)]">
                     {step.num}
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-3 tracking-wide">
+                  <h3 className="text-xl font-bold mb-3 tracking-wide transition-colors duration-300 text-slate-900 dark:text-white">
                     {step.title}
                   </h3>
-                  <p className="text-slate-400 leading-relaxed">{step.desc}</p>
+                  <p className="leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                    {step.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -196,21 +198,21 @@ export default function Home() {
         </section>
 
         {/* --- Ad Boundary --- */}
-        <section className="py-16 border-b border-slate-800/50 bg-slate-950">
+        <section className="py-16 border-b transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-800/50">
           <div className="container mx-auto max-w-5xl px-4">
             <AdBanner />
           </div>
         </section>
 
         {/* --- Value Proposition Grid --- */}
-        <section className="py-24 bg-linear-to-b from-slate-950 to-slate-900/20">
+        <section className="py-24 bg-linear-to-b transition-colors duration-300 from-slate-50 to-slate-100/50 dark:from-slate-950 dark:to-slate-900/20">
           <div className="container mx-auto max-w-7xl px-4">
             <div className="mb-16 md:flex md:items-end md:justify-between">
               <div className="max-w-2xl">
-                <h2 className="text-3xl font-bold text-white mb-4">
+                <h2 className="text-3xl font-bold mb-4 transition-colors duration-300 text-slate-900 dark:text-white">
                   Why Use Bloodonate?
                 </h2>
-                <p className="text-slate-400 text-lg">
+                <p className="text-lg transition-colors duration-300 text-slate-600 dark:text-slate-400">
                   Our platform is designed to be the fastest, most reliable
                   bridge between willing donors and patients in critical need.
                 </p>
@@ -223,19 +225,19 @@ export default function Home() {
                 return (
                   <Card
                     key={index}
-                    className="group bg-slate-900/40 border-slate-800/60 hover:border-slate-700 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm"
+                    className="group hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm bg-white/60 border-slate-200 hover:border-slate-300 dark:bg-slate-900/40 dark:border-slate-800/60 dark:hover:border-slate-700"
                   >
                     <CardContent className="p-8">
-                      <div className="h-14 w-14 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center mb-6 group-hover:bg-rose-500/10 group-hover:border-rose-500/20 transition-all duration-300">
+                      <div className="h-14 w-14 rounded-xl flex items-center justify-center mb-6 transition-all duration-300 border bg-slate-50 border-slate-200 group-hover:bg-rose-50 group-hover:border-rose-200 dark:bg-slate-950 dark:border-slate-800 dark:group-hover:bg-rose-500/10 dark:group-hover:border-rose-500/20">
                         <Icon
-                          className="h-7 w-7 text-slate-400 group-hover:text-rose-400 transition-colors duration-300"
+                          className="h-7 w-7 transition-colors duration-300 text-slate-500 group-hover:text-rose-600 dark:text-slate-400 dark:group-hover:text-rose-400"
                           aria-hidden="true"
                         />
                       </div>
-                      <h3 className="text-lg font-bold text-white mb-3">
+                      <h3 className="text-lg font-bold mb-3 transition-colors duration-300 text-slate-900 dark:text-white">
                         {feature.title}
                       </h3>
-                      <p className="text-sm text-slate-400 leading-relaxed">
+                      <p className="text-sm leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
                         {feature.description}
                       </p>
                     </CardContent>
@@ -247,13 +249,13 @@ export default function Home() {
         </section>
 
         {/* --- Conversion Footer --- */}
-        <section className="py-32 relative overflow-hidden border-t border-slate-800/50">
-          <div className="absolute inset-0 bg-linear-to-b from-transparent to-rose-950/20" />
+        <section className="py-32 relative overflow-hidden border-t transition-colors duration-300 border-slate-200 dark:border-slate-800/50">
+          <div className="absolute inset-0 bg-linear-to-b transition-colors duration-300 from-transparent to-rose-50 dark:to-rose-950/20" />
           <div className="container mx-auto max-w-4xl px-4 relative z-10 text-center">
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
               Ready to find a donor?
             </h2>
-            <p className="text-slate-400 mb-10 max-w-2xl mx-auto text-lg">
+            <p className="mb-10 max-w-2xl mx-auto text-lg transition-colors duration-300 text-slate-600 dark:text-slate-400">
               Our directory is entirely free to use for the public. Search the
               database right now without creating an account.
             </p>
@@ -261,7 +263,7 @@ export default function Home() {
               <Button
                 variant="primary"
                 size="lg"
-                className="px-10 py-7 rounded-full text-lg font-semibold gap-3 shadow-rose-glow hover:shadow-rose-glow-lg hover:-translate-y-1 transition-all duration-300"
+                className="px-10 py-7 rounded-full text-lg font-semibold gap-3 hover:-translate-y-1 transition-all duration-300 shadow-md hover:shadow-lg dark:shadow-rose-glow dark:hover:shadow-rose-glow-lg"
               >
                 <Search className="h-6 w-6" aria-hidden="true" />
                 Search the Directory

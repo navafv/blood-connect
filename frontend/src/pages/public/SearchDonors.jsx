@@ -267,19 +267,19 @@ export default function SearchDonors() {
         <link rel="canonical" href="https://www.bloodonate.org/search" />
       </Helmet>
 
-      <div className="min-h-screen bg-slate-950 flex flex-col pb-24">
+      <div className="min-h-screen transition-colors duration-300 bg-slate-50 dark:bg-slate-950 flex flex-col pb-24">
         {/* --- Search Console Header --- */}
-        <section className="pt-12 pb-16 px-4 relative overflow-hidden bg-slate-900/40 border-b border-slate-800/80">
+        <section className="pt-12 pb-16 px-4 relative overflow-hidden transition-colors duration-300 bg-white/40 border-b border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80">
           <div
-            className="absolute top-0 right-1/4 w-125 h-125 bg-rose-600/10 rounded-full blur-[120px] pointer-events-none"
+            className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/10"
             aria-hidden="true"
           />
 
           <div className="container mx-auto max-w-4xl text-center relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
               Directory Search
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg max-w-2xl mx-auto leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
               Our infrastructure connects you securely with eligible donors in
               your locality. Define your geographical parameters to initiate the
               query.
@@ -289,12 +289,12 @@ export default function SearchDonors() {
 
         {/* --- Input Filter Matrix --- */}
         <div className="container mx-auto max-w-5xl px-4 -mt-10 relative z-20">
-          <Card className="bg-slate-900/70 backdrop-blur-xl border-slate-700/80 shadow-2xl overflow-visible">
+          <Card className="backdrop-blur-xl overflow-visible transition-colors duration-300 bg-white/80 border-slate-200 shadow-xl dark:bg-slate-900/70 dark:border-slate-700/80 dark:shadow-2xl">
             <CardContent className="p-6 md:p-8">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-white font-semibold flex items-center gap-2">
+                <h2 className="font-semibold flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
                   <Search
-                    className="h-5 w-5 text-rose-500"
+                    className="h-5 w-5 transition-colors duration-300 text-rose-600 dark:text-rose-500"
                     aria-hidden="true"
                   />{" "}
                   Query Parameters
@@ -305,7 +305,7 @@ export default function SearchDonors() {
                   size="sm"
                   onClick={handleLocateMe}
                   disabled={isLocating}
-                  className="bg-slate-950/50 border-slate-700 text-rose-400 hover:text-rose-300 hover:bg-slate-800 transition-all shadow-inner"
+                  className="transition-colors duration-300 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200 dark:border-slate-700 dark:text-rose-400 dark:hover:text-rose-300 dark:hover:bg-slate-800"
                 >
                   {isLocating ? (
                     <Loader2
@@ -327,7 +327,7 @@ export default function SearchDonors() {
                 className="grid grid-cols-1 md:grid-cols-5 gap-5 items-end"
               >
                 <div className="space-y-2 relative z-50">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Country
                   </label>
                   <SearchableSelect
@@ -342,7 +342,7 @@ export default function SearchDonors() {
                 </div>
 
                 <div className="space-y-2 relative z-40">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     State / Province
                   </label>
                   <SearchableSelect
@@ -358,7 +358,7 @@ export default function SearchDonors() {
                 </div>
 
                 <div className="space-y-2 relative z-30">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     District / City
                   </label>
                   <SearchableSelect
@@ -374,7 +374,7 @@ export default function SearchDonors() {
                 </div>
 
                 <div className="space-y-2 relative z-20">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Blood Group
                   </label>
                   <SearchableSelect
@@ -391,7 +391,7 @@ export default function SearchDonors() {
                 <Button
                   type="submit"
                   variant="primary"
-                  className="h-10 w-full gap-2 text-sm font-semibold shadow-lg hover:shadow-rose-500/20 transition-all"
+                  className="h-11 w-full gap-2 text-sm font-bold shadow-md hover:shadow-lg transition-all"
                   disabled={isSearching}
                 >
                   {isSearching ? (
@@ -415,55 +415,55 @@ export default function SearchDonors() {
         </div>
 
         {/* --- Data Visualization Render Surface --- */}
-        <div className="container mx-auto max-w-5xl px-4 mt-12 min-h-100">
+        <div className="container mx-auto max-w-5xl px-4 mt-12 min-h-[400px]">
           {!hasSearched ? (
             /* Pre-Query State */
-            <div className="flex flex-col items-center justify-center text-center py-24 text-slate-500 animate-in fade-in duration-700">
+            <div className="flex flex-col items-center justify-center text-center py-24 animate-in fade-in duration-700">
               <Globe2
-                className="h-20 w-20 mb-6 text-slate-800"
+                className="h-20 w-20 mb-6 transition-colors duration-300 text-slate-200 dark:text-slate-800"
                 aria-hidden="true"
               />
-              <h3 className="text-xl font-semibold text-slate-400 mb-2">
+              <h3 className="text-xl font-semibold mb-2 transition-colors duration-300 text-slate-500 dark:text-slate-400">
                 Awaiting Parameters
               </h3>
-              <p className="text-base max-w-md">
+              <p className="text-base max-w-md transition-colors duration-300 text-slate-400 dark:text-slate-500">
                 Define your geographic constraints above to securely query the
                 nearest available donors.
               </p>
             </div>
           ) : isSearching ? (
             /* Flight State */
-            <div className="flex flex-col items-center justify-center text-center py-24 text-slate-500">
+            <div className="flex flex-col items-center justify-center text-center py-24">
               <div className="relative mb-6">
-                <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-xl animate-pulse" />
+                <div className="absolute inset-0 rounded-full blur-xl animate-pulse transition-colors duration-300 bg-rose-500/20 dark:bg-rose-500/20" />
                 <Loader2
-                  className="h-16 w-16 animate-spin text-rose-500 relative z-10"
+                  className="h-16 w-16 animate-spin relative z-10 transition-colors duration-300 text-rose-600 dark:text-rose-500"
                   aria-hidden="true"
                 />
               </div>
-              <p className="text-lg font-medium text-slate-300">
+              <p className="text-lg font-medium transition-colors duration-300 text-slate-700 dark:text-slate-300">
                 Scanning regional registries...
               </p>
             </div>
           ) : results.length === 0 ? (
             /* Empty Set Resolution */
-            <div className="flex flex-col items-center justify-center text-center py-24 bg-slate-900/40 backdrop-blur-sm rounded-3xl border border-slate-800/60 shadow-inner animate-in fade-in zoom-in-95 duration-300">
-              <div className="h-20 w-20 rounded-2xl bg-slate-800/50 flex items-center justify-center border border-slate-700 mb-6">
+            <div className="flex flex-col items-center justify-center text-center py-24 backdrop-blur-sm rounded-3xl border animate-in fade-in zoom-in-95 duration-300 transition-colors bg-white border-slate-200 shadow-md dark:bg-slate-900/40 dark:border-slate-800/60 dark:shadow-inner">
+              <div className="h-20 w-20 rounded-2xl flex items-center justify-center border mb-6 transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
                 <AlertCircle
-                  className="h-10 w-10 text-slate-500"
+                  className="h-10 w-10 transition-colors duration-300 text-slate-400 dark:text-slate-500"
                   aria-hidden="true"
                 />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">
+              <h3 className="text-2xl font-bold mb-3 transition-colors duration-300 text-slate-900 dark:text-white">
                 Zero Active Matches
               </h3>
-              <p className="text-slate-400 max-w-md text-base leading-relaxed">
+              <p className="max-w-md text-base leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
                 We could not identify any eligible donors matching{" "}
-                <strong className="text-slate-300">
+                <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-300">
                   {selectedBloodGroup || "any group"}
                 </strong>{" "}
                 in{" "}
-                <strong className="text-slate-300">
+                <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-300">
                   {selectedDistrict?.name || "your selected region"}
                 </strong>{" "}
                 at this time.
@@ -472,16 +472,16 @@ export default function SearchDonors() {
           ) : (
             /* Positive Resolution State */
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-end border-b border-slate-800/80 pb-4">
+              <div className="flex justify-between items-end border-b pb-4 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
                 <div>
-                  <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <h3 className="text-2xl font-bold flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
                     <MapPin
-                      className="h-5 w-5 text-rose-500"
+                      className="h-5 w-5 transition-colors duration-300 text-rose-600 dark:text-rose-500"
                       aria-hidden="true"
                     />
                     Regional Matches
                   </h3>
-                  <p className="text-sm text-slate-400 mt-1">
+                  <p className="text-sm mt-1 transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Surfacing {totalCount} verified records in{" "}
                     {selectedDistrict?.name || "the selected region"}.
                   </p>
@@ -496,15 +496,15 @@ export default function SearchDonors() {
 
               {/* Pagination Controls */}
               {totalCount > 0 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between mt-10 border-t border-slate-800/80 pt-6 gap-4">
-                  <span className="text-sm font-medium text-slate-400">
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-10 border-t pt-6 gap-4 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
+                  <span className="text-sm font-medium transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Displaying batch of {results.length} records.
                   </span>
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-4 transition-colors"
+                      className="gap-2 px-4 flex-1 sm:flex-none"
                       disabled={!prevPageUrl || isSearching}
                       onClick={() => fetchDonors(prevPageUrl)}
                     >
@@ -514,7 +514,7 @@ export default function SearchDonors() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-2 border-slate-700 bg-slate-900/50 hover:bg-slate-800 text-slate-300 px-4 transition-colors"
+                      className="gap-2 px-4 flex-1 sm:flex-none"
                       disabled={!nextPageUrl || isSearching}
                       onClick={() => fetchDonors(nextPageUrl)}
                     >

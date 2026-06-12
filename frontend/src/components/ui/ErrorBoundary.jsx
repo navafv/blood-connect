@@ -19,14 +19,14 @@ export class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-950 px-4 text-center">
-          <div className="h-20 w-20 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
-            <AlertTriangle className="h-10 w-10 text-rose-500" />
+        <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-50 px-4 text-center transition-colors duration-300 dark:bg-slate-950">
+          <div className="h-20 w-20 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-colors duration-300 dark:bg-rose-500/10 dark:border-rose-500/20">
+            <AlertTriangle className="h-10 w-10 text-rose-600 transition-colors duration-300 dark:text-rose-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight transition-colors duration-300 dark:text-white">
             System Interface Error
           </h1>
-          <p className="text-slate-400 max-w-md mb-8 leading-relaxed">
+          <p className="text-slate-600 max-w-md mb-8 leading-relaxed transition-colors duration-300 dark:text-slate-400">
             A critical UI rendering exception occurred. Your data is safe, but
             the interface needs to be reloaded.
           </p>

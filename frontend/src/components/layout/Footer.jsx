@@ -1,15 +1,15 @@
 import React from "react";
-import { Droplet, Heart } from "lucide-react";
+import { Droplet } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative border-t border-slate-800/80 bg-slate-950 overflow-hidden">
+    <footer className="relative border-t transition-colors duration-300 border-slate-200 bg-white dark:border-slate-800/80 dark:bg-slate-950 overflow-hidden">
       {/* Subtle ambient background glow */}
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-24 bg-rose-500/5 blur-[80px] pointer-events-none"
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-24 bg-rose-500/10 blur-[80px] pointer-events-none transition-colors duration-300 dark:bg-rose-500/5"
         aria-hidden="true"
       />
 
@@ -21,13 +21,13 @@ export function Footer() {
             className="flex items-center gap-3 group transition-opacity hover:opacity-90"
             aria-label="Return to Bloodonate Homepage"
           >
-            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 shadow-inner group-hover:bg-rose-500/20 transition-colors">
+            <div className="p-1.5 rounded-lg border shadow-inner transition-colors bg-rose-50 border-rose-100 group-hover:bg-rose-100 dark:bg-rose-500/10 dark:border-rose-500/20 dark:group-hover:bg-rose-500/20">
               <Droplet
-                className="h-5 w-5 text-rose-500 fill-rose-500/20"
+                className="h-5 w-5 transition-colors text-rose-600 fill-rose-600/20 dark:text-rose-500 dark:fill-rose-500/20"
                 aria-hidden="true"
               />
             </div>
-            <span className="text-xl font-black tracking-tight text-white">
+            <span className="text-xl font-black tracking-tight transition-colors text-slate-900 dark:text-white">
               Bloodonate
             </span>
           </Link>
@@ -35,29 +35,35 @@ export function Footer() {
           {/* Navigation Matrix */}
           <nav
             aria-label="Footer Navigation"
-            className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium text-slate-400"
+            className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium transition-colors text-slate-600 dark:text-slate-400"
           >
-            <Link to="/about" className="hover:text-rose-400 transition-colors">
+            <Link
+              to="/about"
+              className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+            >
               About Us
             </Link>
             <Link
               to="/guidelines"
-              className="hover:text-rose-400 transition-colors"
+              className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             >
               Donor Guidelines
             </Link>
             <Link
               to="/privacy"
-              className="hover:text-rose-400 transition-colors"
+              className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             >
               Privacy Policy
             </Link>
-            <Link to="/terms" className="hover:text-rose-400 transition-colors">
+            <Link
+              to="/terms"
+              className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+            >
               Terms of Service
             </Link>
             <Link
               to="/contact"
-              className="hover:text-rose-400 transition-colors"
+              className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             >
               Contact Support
             </Link>
@@ -65,12 +71,20 @@ export function Footer() {
         </div>
 
         {/* Bottom Metadata Bar */}
-        <div className="mt-8 pt-8 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-400 font-medium text-center md:text-left tracking-wide">
+        <div className="mt-8 pt-8 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-xs font-medium text-center md:text-left tracking-wide transition-colors text-slate-500 dark:text-slate-400">
             &copy; {currentYear} Bloodonate SaaS Platform. All rights reserved.
           </p>
-          <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 tracking-wide">
-            Designed & Developed by <a href="https://navaf.vercel.app" target="_blank" rel="noopener noreferrer nofollow">Navaf V</a>
+          <p className="text-xs font-medium flex items-center gap-1.5 tracking-wide transition-colors text-slate-500 dark:text-slate-400">
+            Designed & Developed by{" "}
+            <a
+              href="https://navaf.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="font-bold transition-colors text-slate-700 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400"
+            >
+              Navaf V
+            </a>
           </p>
         </div>
       </div>

@@ -24,23 +24,27 @@ export default function PrivacyPolicy() {
       content: (
         <div className="space-y-4">
           <p>We collect information primarily in two categories:</p>
-          <ul className="list-disc pl-5 space-y-3 text-slate-400">
+          <ul className="list-disc pl-5 space-y-3 transition-colors duration-300 text-slate-600 dark:text-slate-400">
             <li>
-              <strong className="text-slate-200">Organization Data:</strong>{" "}
+              <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-200">
+                Organization Data:
+              </strong>{" "}
               When a healthcare organization (hospital, blood bank, clinic, or
               NGO) registers, we collect official contact details, physical
               addresses, and administrative credentials required for tenant
               provisioning.
             </li>
             <li>
-              <strong className="text-slate-200">Donor Data:</strong>{" "}
+              <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-200">
+                Donor Data:
+              </strong>{" "}
               Organizations input donor details into their secure tenant
               environment. This includes Blood Group, Gender, Date of Birth,
               Location (City/District), historical donation timelines, and
               medical deferral status.
               <br />
               <br />
-              <span className="text-emerald-400 font-medium">
+              <span className="font-medium transition-colors duration-300 text-emerald-600 dark:text-emerald-400">
                 Important Note:
               </span>{" "}
               We do not collect or expose donor phone numbers to the public
@@ -60,18 +64,18 @@ export default function PrivacyPolicy() {
             Protecting donor privacy is a core architectural principle of the
             Bloodonate system:
           </p>
-          <ul className="list-disc pl-5 space-y-3 text-slate-400">
+          <ul className="list-disc pl-5 space-y-3 transition-colors duration-300 text-slate-600 dark:text-slate-400">
             <li>
-              <strong className="text-slate-200">
+              <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-200">
                 Organizational Proxy Routing:
-              </strong>
+              </strong>{" "}
               Donor personal phone numbers and full identifying names are
               strictly isolated from the public directory. If a patient requires
               a donor, the system routes the connection strictly to the verified
               healthcare organization managing that donor.
             </li>
             <li>
-              <strong className="text-slate-200">
+              <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-200">
                 Eligibility Abstraction:
               </strong>{" "}
               We do not publicly display a donor's medical deferral etiology or
@@ -109,16 +113,20 @@ export default function PrivacyPolicy() {
             of personal or medical information. Data disclosure is limited to
             the following vectors:
           </p>
-          <ul className="list-disc pl-5 space-y-3 text-slate-400">
+          <ul className="list-disc pl-5 space-y-3 transition-colors duration-300 text-slate-600 dark:text-slate-400">
             <li>
-              <strong className="text-slate-200">Public Directory:</strong>{" "}
+              <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-200">
+                Public Directory:
+              </strong>{" "}
               Basic, masked donor attributes (Anonymized Name, Blood Group,
               Region) are surfaced publicly for the sole operational purpose of
               facilitating emergency blood donations via the managing
               organization.
             </li>
             <li>
-              <strong className="text-slate-200">Legal Requirements:</strong>{" "}
+              <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-200">
+                Legal Requirements:
+              </strong>{" "}
               Compelled disclosure if mandated by binding court order, law
               enforcement subpoena, or governmental authority within the
               applicable jurisdiction.
@@ -187,35 +195,37 @@ export default function PrivacyPolicy() {
         />
       </Helmet>
 
-      <div className="flex flex-col min-h-screen bg-slate-950 overflow-hidden pb-32">
+      <div className="flex flex-col min-h-screen transition-colors duration-300 bg-slate-50 dark:bg-slate-950 overflow-hidden pb-32">
         {/* --- Composition Header --- */}
-        <section className="relative px-4 pt-24 pb-20 text-center border-b border-slate-800/80 bg-slate-900/20">
+        <section className="relative px-4 pt-24 pb-20 text-center border-b transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-900/20 dark:border-slate-800/80">
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-175 h-87.5 bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-emerald-500/10 dark:bg-emerald-600/10"
             aria-hidden="true"
           />
 
           <div className="container mx-auto max-w-4xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-slate-900 border border-slate-800 mb-8 shadow-2xl relative group">
-              <div className="absolute inset-0 bg-emerald-500/20 rounded-2xl blur-xl" />
+            <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl mb-8 shadow-md relative group transition-colors duration-300 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 dark:shadow-2xl">
+              <div className="absolute inset-0 rounded-2xl blur-xl transition-colors duration-300 bg-emerald-100 dark:bg-emerald-500/20" />
               <ShieldCheck
-                className="h-10 w-10 text-emerald-500 relative z-10"
+                className="h-10 w-10 relative z-10 transition-colors duration-300 text-emerald-600 dark:text-emerald-500"
                 aria-hidden="true"
               />
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 transition-colors duration-300 text-slate-900 dark:text-white">
               Privacy Policy
             </h1>
-            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
               We are committed to securing your personal and medical
               information. Review our policies below to understand our data
               collection, tenant isolation, and cryptographic standards.
             </p>
-            <div className="mt-10 inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-slate-900/80 border border-slate-700/80 text-sm text-slate-400 shadow-inner">
+            <div className="mt-10 inline-flex items-center gap-3 px-5 py-2.5 rounded-full border text-sm shadow-inner transition-colors duration-300 bg-slate-100 border-slate-200 text-slate-600 dark:bg-slate-900/80 dark:border-slate-700/80 dark:text-slate-400">
               <span className="uppercase tracking-wider text-xs font-semibold">
                 Last Updated:
               </span>
-              <span className="font-medium text-slate-200">{lastUpdated}</span>
+              <span className="font-medium transition-colors duration-300 text-slate-900 dark:text-slate-200">
+                {lastUpdated}
+              </span>
             </div>
           </div>
         </section>
@@ -223,7 +233,7 @@ export default function PrivacyPolicy() {
         {/* --- Policy Document Body --- */}
         <div className="container mx-auto max-w-4xl px-4 pt-16 relative z-10 space-y-12">
           {/* Preamble */}
-          <div className="prose prose-invert max-w-none text-slate-400 leading-relaxed text-lg">
+          <div className="prose prose-invert max-w-none leading-relaxed text-lg transition-colors duration-300 text-slate-600 dark:text-slate-400">
             <p>
               Welcome to Bloodonate. This Privacy Policy governs your
               utilization of our SaaS infrastructure, public directory APIs, and
@@ -241,20 +251,20 @@ export default function PrivacyPolicy() {
               return (
                 <Card
                   key={index}
-                  className="border-slate-800/60 bg-slate-900/40 backdrop-blur-md hover:bg-slate-900/60 hover:border-slate-700/80 transition-all duration-300"
+                  className="relative overflow-hidden backdrop-blur-md transition-all duration-300 shadow-sm dark:shadow-none bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-900/40 dark:border-slate-800/60 dark:hover:bg-slate-900/60 dark:hover:border-slate-700/80"
                 >
-                  <CardHeader className="border-b border-slate-800/50 pb-5 px-8 pt-8">
-                    <CardTitle className="flex items-center gap-4 text-xl text-white tracking-tight">
-                      <div className="h-12 w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                  <CardHeader className="border-b pb-5 px-8 pt-8 transition-colors duration-300 border-slate-200 dark:border-slate-800/50">
+                    <CardTitle className="flex items-center gap-4 text-xl tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
+                      <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20">
                         <Icon
-                          className="h-6 w-6 text-emerald-400"
+                          className="h-6 w-6 transition-colors duration-300 text-emerald-600 dark:text-emerald-400"
                           aria-hidden="true"
                         />
                       </div>
                       {policy.title}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-8 text-slate-400 leading-relaxed text-base">
+                  <CardContent className="p-8 leading-relaxed text-base transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     {policy.content}
                   </CardContent>
                 </Card>
@@ -263,22 +273,22 @@ export default function PrivacyPolicy() {
           </div>
 
           {/* DPO Contact Node */}
-          <div className="mt-16 p-8 rounded-3xl border border-slate-800 bg-slate-900/30 text-center relative overflow-hidden">
+          <div className="mt-16 p-8 rounded-3xl border text-center relative overflow-hidden transition-colors duration-300 bg-slate-50 border-slate-200 dark:border-slate-800 dark:bg-slate-900/30">
             <div
-              className="absolute inset-0 bg-linear-to-t from-emerald-900/10 to-transparent"
+              className="absolute inset-0 bg-linear-to-t transition-colors duration-300 from-emerald-100 to-transparent dark:from-emerald-900/10"
               aria-hidden="true"
             />
-            <h3 className="text-xl font-bold text-white mb-3 relative z-10">
+            <h3 className="text-xl font-bold mb-3 relative z-10 transition-colors duration-300 text-slate-900 dark:text-white">
               Questions regarding our cryptographic practices?
             </h3>
-            <p className="text-slate-400 mb-6 max-w-xl mx-auto relative z-10">
+            <p className="mb-6 max-w-xl mx-auto relative z-10 transition-colors duration-300 text-slate-600 dark:text-slate-400">
               If you require technical clarification regarding this Privacy
               Policy or our infrastructure compliance, please escalate to our
               Data Protection Officer.
             </p>
             <a
               href="mailto:privacy@bloodonate.org"
-              className="relative z-10 inline-flex items-center font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+              className="relative z-10 inline-flex items-center font-semibold transition-colors duration-300 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
             >
               privacy@bloodonate.org
             </a>

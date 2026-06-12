@@ -1,28 +1,50 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <meta
-      name="description"
-      content="Bloodonate: A secure, multi-tenant emergency blood donation directory connecting hospitals with verified donors."
-    />
-    <meta name="theme-color" content="#e11d48" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 
-    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
-    <link rel="preconnect" href="https://api.bloodonate.org" crossorigin />
+  <meta name="description"
+    content="Bloodonate: A secure, multi-tenant emergency blood donation directory connecting hospitals with verified donors." />
 
-    <title>Bloodonate | Multi-Tenant Blood Bank System</title>
-  </head>
+  <!-- Dynamic theme colors for mobile browsers/PWAs -->
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)" />
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+  <link rel="preconnect" href="https://api.bloodonate.org" crossorigin />
+
+  <title>Bloodonate | Multi-Tenant Blood Bank System</title>
+
+  <!-- 
+      Anti-FOUC Script (Flash of Unstyled Content) 
+      Applies the saved theme to the HTML tag instantly before React boots up.
+    -->
+  <script>
+    (function () {
+      try {
+        var savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          // Default to light as per client requirements
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {
+        console.warn('Theme initialization failed', e);
+      }
+    })();
+  </script>
+</head>
+
+<body
+  class="bg-slate-50 text-slate-900 dark:bg-[#020617] dark:text-slate-200 transition-colors duration-300 antialiased">
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
