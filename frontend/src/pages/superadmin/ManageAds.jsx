@@ -47,7 +47,7 @@ export default function ManageAds() {
   const [extendMonths, setExtendMonths] = useState("1");
 
   const apiBase = import.meta.env.PROD
-    ? import.meta.env.VITE_API_BASE_URL || "https://api.navaf.duckdns.org/api"
+    ? import.meta.env.VITE_API_BASE_URL || "https://api.bloodonate.org/api"
     : "http://localhost:8000/api";
   const baseURL = apiBase.replace(/\/api\/?$/, "");
 

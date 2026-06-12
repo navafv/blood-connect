@@ -79,7 +79,7 @@ export function AdBanner({ className = "" }) {
             </div>
 
             {/* Title / Call to Action */}
-            <div className="absolute bottom-8 left-6 right-6">
+            {/* <div className="absolute bottom-8 left-6 right-6">
               <h3 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg truncate">
                 {ad.title}
               </h3>
@@ -87,7 +87,7 @@ export function AdBanner({ className = "" }) {
               <p className="text-sm text-slate-300 font-medium mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                 Click to learn more &rarr;
               </p>
-            </div>
+            </div> */}
           </a>
         );
       })}
