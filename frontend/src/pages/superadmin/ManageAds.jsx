@@ -433,7 +433,7 @@ export default function ManageAds() {
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Banner Upload */}
+            {/* 1. Banner Upload (Landscape) */}
             <div className="space-y-1">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
                 <span>
@@ -452,18 +452,18 @@ export default function ManageAds() {
               </p>
               <div
                 onClick={() => bannerInputRef.current?.click()}
-                className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer relative overflow-hidden h-36 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-rose-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-rose-500/50"
+                className="border-2 border-dashed rounded-xl p-2 text-center cursor-pointer relative overflow-hidden h-36 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-rose-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-rose-500/50 transition-all"
               >
                 {bannerPreview ? (
                   <>
                     <img
                       src={bannerPreview}
-                      alt="Banner"
-                      className="absolute inset-0 w-full h-full object-cover opacity-80"
+                      alt="Banner Preview"
+                      className="absolute inset-0 w-full h-full object-contain p-2"
                     />
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/40 dark:bg-black/50 backdrop-blur-sm transition-all">
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm transition-all">
                       <span className="text-xs font-bold flex items-center text-slate-900 dark:text-white">
-                        <Edit className="h-3 w-3 mr-1" /> Replace Landscape
+                        <Edit className="h-4 w-4 mr-1.5" /> Replace Landscape
                       </span>
                     </div>
                   </>
@@ -485,7 +485,7 @@ export default function ManageAds() {
               />
             </div>
 
-            {/* Portrait Upload */}
+            {/* 2. Portrait Upload (Vertical) */}
             <div className="space-y-1">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
                 <span>Portrait Image</span>
@@ -503,31 +503,35 @@ export default function ManageAds() {
                 </span>{" "}
                 (Max 5MB)
               </p>
-              <div
-                onClick={() => portraitInputRef.current?.click()}
-                className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer relative overflow-hidden h-36 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-blue-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-blue-500/50"
-              >
-                {portraitPreview ? (
-                  <>
-                    <img
-                      src={portraitPreview}
-                      alt="Portrait"
-                      className="absolute inset-0 w-full h-full object-contain opacity-80"
-                    />
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/40 dark:bg-black/50 backdrop-blur-sm transition-all">
-                      <span className="text-xs font-bold flex items-center text-slate-900 dark:text-white">
-                        <Edit className="h-3 w-3 mr-1" /> Replace Portrait
+
+              {/* Flex container to center the strict vertical box */}
+              <div className="flex w-full justify-center lg:justify-start">
+                <div
+                  onClick={() => portraitInputRef.current?.click()}
+                  className="border-2 border-dashed rounded-xl p-2 text-center cursor-pointer relative overflow-hidden h-36 w-24 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-blue-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-blue-500/50 transition-all"
+                >
+                  {portraitPreview ? (
+                    <>
+                      <img
+                        src={portraitPreview}
+                        alt="Portrait Preview"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm transition-all text-center">
+                        <span className="text-[10px] leading-tight font-bold flex flex-col items-center text-slate-900 dark:text-white">
+                          <Edit className="h-4 w-4 mb-1" /> Replace
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="h-6 w-6 mb-2 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                      <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 leading-tight">
+                        Upload Vertical
                       </span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="h-8 w-8 mb-2 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      Upload Vertical Image (Optional)
-                    </span>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
               <input
                 type="file"
@@ -539,7 +543,7 @@ export default function ManageAds() {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 pt-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Campaign Title <span className="text-rose-500">*</span>
             </label>

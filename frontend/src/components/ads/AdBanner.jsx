@@ -20,6 +20,13 @@ export function AdBanner({ className = "", format = "banner" }) {
     },
   });
 
+  // --- Initialize with a Random Ad ---
+  useEffect(() => {
+    if (ads.length > 0) {
+      setCurrentIndex(Math.floor(Math.random() * ads.length));
+    }
+  }, [ads.length]);
+
   // --- Impression Tracking Engine ---
   useEffect(() => {
     if (ads.length > 0 && ads[currentIndex]) {
@@ -33,13 +40,23 @@ export function AdBanner({ className = "", format = "banner" }) {
     }
   }, [currentIndex, ads]);
 
-  // --- Carousel Engine (Auto-advance) ---
+  // --- Carousel Engine (Random 10-Second Auto-advance) ---
   useEffect(() => {
+    // Stop timer if there's only 1 ad or user is hovering
     if (ads.length <= 1 || isPaused) return;
 
     timerRef.current = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-    }, 6000);
+      setCurrentIndex((prevIndex) => {
+        let nextIndex;
+        // Keep picking a random number until it's different from the current ad
+        // This ensures the ad actually changes every 10 seconds
+        do {
+          nextIndex = Math.floor(Math.random() * ads.length);
+        } while (nextIndex === prevIndex);
+
+        return nextIndex;
+      });
+    }, 10000); // 10,000 ms = 10 Seconds
 
     return () => clearInterval(timerRef.current);
   }, [ads.length, isPaused]);
@@ -94,7 +111,8 @@ export function AdBanner({ className = "", format = "banner" }) {
             <img
               src={imageSrc}
               alt={ad.title}
-              className={`w-full h-full object-cover transition-transform duration-6000 ease-linear ${
+              // Changed duration to exactly match the 10-second timer for a seamless zoom
+              className={`w-full h-full object-cover transition-transform duration-[10000ms] ease-linear ${
                 isActive ? "scale-105" : "scale-100"
               }`}
               loading="lazy"

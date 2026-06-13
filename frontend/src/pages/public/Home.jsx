@@ -12,7 +12,7 @@ import {
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { AdBanner } from "../../components/ads/AdBanner";
-import { Badge } from '../../components/ui/Badge'
+import { Badge } from "../../components/ui/Badge";
 
 export default function Home() {
   const features = [
@@ -92,7 +92,7 @@ export default function Home() {
       </Helmet>
 
       <div className="flex flex-col min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 overflow-hidden">
-        {/* --- Hero Composition (Split Layout with Portrait Ad) --- */}
+        {/* --- Hero Composition --- */}
         <section className="relative px-4 pt-24 pb-20 md:pt-32 md:pb-24 lg:pt-32 lg:pb-32 overflow-hidden border-b border-transparent dark:border-slate-800/50">
           <div
             className="absolute top-0 left-1/4 w-[800px] h-[500px] bg-rose-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000 transition-colors dark:bg-rose-600/15"
@@ -145,25 +145,34 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Right Column: Visual Bento Box & Portrait Ad */}
-              <div className="relative flex justify-center lg:justify-end items-center gap-4 sm:gap-6 animate-in fade-in slide-in-from-right-8 duration-1000 delay-200 mt-8 lg:mt-0">
+              {/* Right Column: Visual Bento Box & Dynamic Ad */}
+              <div className="relative flex flex-col lg:flex-row justify-center lg:justify-end items-center gap-4 sm:gap-6 animate-in fade-in slide-in-from-right-8 duration-1000 delay-200 mt-8 lg:mt-0 w-full lg:w-auto">
                 {/* Visual Column 1: Client Images */}
-                <div className="flex flex-col gap-4 sm:gap-6 w-1/2 max-w-[280px]">
+                <div className="flex flex-row lg:flex-col gap-4 sm:gap-6 w-full lg:w-1/2 lg:max-w-[280px]">
                   <img
                     src="/Donor_holding_a_blood_drop.jpg"
                     alt="Donor holding a blood drop"
-                    className="rounded-3xl object-cover h-48 sm:h-64 w-full shadow-2xl border-4 border-white/60 dark:border-slate-800/60 transition-transform duration-500 hover:scale-[1.02]"
+                    className="rounded-3xl object-cover h-40 sm:h-56 lg:h-64 w-1/2 lg:w-full shadow-2xl border-4 border-white/60 dark:border-slate-800/60 transition-transform duration-500 hover:scale-[1.02]"
                   />
                   <img
                     src="/Blood_Donation_Process.jpg"
                     alt="Blood Donation Process"
-                    className="rounded-3xl object-cover h-56 sm:h-[320px] w-full shadow-2xl border-4 border-white/60 dark:border-slate-800/60 transition-transform duration-500 hover:scale-[1.02]"
+                    className="rounded-3xl object-cover h-40 sm:h-56 lg:h-[320px] w-1/2 lg:w-full shadow-2xl border-4 border-white/60 dark:border-slate-800/60 transition-transform duration-500 hover:scale-[1.02]"
                   />
                 </div>
 
-                {/* Visual Column 2: Sponsor Portrait Ad */}
-                <div className="flex flex-col gap-4 sm:gap-6 w-1/2 max-w-[280px] pt-24 sm:pt-45">
-                  <div className="rounded-3xl shadow-2xl overflow-hidden border-4 border-white/60 dark:border-slate-800/60 bg-slate-100 dark:bg-slate-900 relative h-[220px] sm:h-[420px] transition-transform duration-500 hover:-translate-y-2">
+                {/* Visual Column 2: Sponsor Ads (Responsive Formatting) */}
+                <div className="flex flex-col gap-4 sm:gap-6 w-full lg:w-1/2 lg:max-w-[280px] lg:pt-24">
+                  {/* Mobile/Tablet Landscape Ad */}
+                  <div className="block lg:hidden rounded-3xl shadow-xl overflow-hidden border-4 border-white/60 dark:border-slate-800/60 bg-slate-100 dark:bg-slate-900 relative transition-transform duration-500 hover:-translate-y-1">
+                    <AdBanner
+                      format="banner"
+                      className="!h-32 sm:!h-48 !w-full !rounded-none !border-0 !shadow-none"
+                    />
+                  </div>
+
+                  {/* Desktop Portrait Ad */}
+                  <div className="hidden lg:block rounded-3xl shadow-2xl overflow-hidden border-4 border-white/60 dark:border-slate-800/60 bg-slate-100 dark:bg-slate-900 relative h-[420px] transition-transform duration-500 hover:-translate-y-2">
                     <AdBanner
                       format="portrait"
                       className="!h-full !w-full !rounded-none !border-0 !shadow-none"
