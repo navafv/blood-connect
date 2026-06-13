@@ -8,9 +8,12 @@ import {
   Users,
   ArrowRight,
   Globe2,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
+import { AdBanner } from "../../components/ads/AdBanner";
 
 export default function AboutUs() {
   const values = [
@@ -37,6 +40,50 @@ export default function AboutUs() {
       title: "Community Driven",
       description:
         "We empower local hospitals, blood banks, private clinics, and NGOs by giving them the digital infrastructure to manage their invaluable donor registries.",
+    },
+  ];
+
+  // Dummy Team Data (Replace with your actual team members)
+  const teamMembers = [
+    {
+      name: "David Martinez",
+      role: "Founder & CEO",
+      bio: "Tech entrepreneur dedicated to using software architecture to solve critical healthcare logistics challenges.",
+      initials: "DM",
+      image: null,
+      social: "#",
+      phone: "tel:+123456789",
+      email: "mailto:david@bloodonate.org",
+    },
+    {
+      name: "Dr. Sarah Chen",
+      role: "Chief Medical Officer",
+      bio: "Former hematology director with 15+ years of experience in blood bank management and clinical protocols.",
+      initials: "SC",
+      image: null,
+      social: "#",
+      phone: "tel:+123456789",
+      email: "mailto:sarah@bloodonate.org",
+    },
+    {
+      name: "James Wilson",
+      role: "Lead Systems Engineer",
+      bio: "Architect behind Bloodonate's secure, multi-tenant proxy routing and real-time availability algorithms.",
+      initials: "JW",
+      image: null,
+      social: "#",
+      phone: "tel:+123456789",
+      email: "mailto:james@bloodonate.org",
+    },
+    {
+      name: "Aisha Patel",
+      role: "Head of Operations",
+      bio: "Specializes in NGO partnerships and scaling community-driven healthcare initiatives across emerging markets.",
+      initials: "AP",
+      image: null,
+      social: "#",
+      phone: "tel:+123456789",
+      email: "mailto:aisha@bloodonate.org",
     },
   ];
 
@@ -76,10 +123,10 @@ export default function AboutUs() {
 
       <div className="flex flex-col min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 overflow-hidden">
         {/* --- Hero Composition --- */}
-        <section className="relative px-4 pt-24 pb-20 md:pt-32 md:pb-32 text-center">
+        <section className="relative px-4 pt-24 pb-20 md:pt-32 md:pb-32 text-center border-b border-transparent dark:border-slate-800/50">
           {/* Ambient Gradient Mesh */}
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-125 bg-rose-500/10 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 dark:bg-rose-600/10"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-rose-500/10 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 dark:bg-rose-600/10"
             aria-hidden="true"
           />
 
@@ -94,7 +141,7 @@ export default function AboutUs() {
 
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight mb-8 leading-tight transition-colors duration-300 text-slate-900 dark:text-white">
               Bridging the gap between <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-linear-to-r transition-colors duration-300 from-rose-500 to-rose-700 dark:from-rose-400 dark:to-rose-600">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r transition-colors duration-300 from-rose-500 to-rose-700 dark:from-rose-400 dark:to-rose-600">
                 compassion and urgency.
               </span>
             </h1>
@@ -108,7 +155,7 @@ export default function AboutUs() {
         </section>
 
         {/* --- Architectural Rationale & Market Positioning --- */}
-        <section className="py-24 border-y relative transition-colors duration-300 bg-slate-100/50 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/50">
+        <section className="py-24 border-b relative transition-colors duration-300 bg-slate-100/50 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/50">
           <div className="container mx-auto max-w-6xl px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
               {/* Proposition Narrative */}
@@ -157,7 +204,7 @@ export default function AboutUs() {
               {/* Impact Visualization Widget */}
               <div className="relative lg:pl-10">
                 <div
-                  className="absolute inset-0 rounded-[3rem] blur-3xl transition-colors duration-300 bg-linear-to-tr from-rose-500/10 via-transparent to-blue-500/10 dark:from-rose-600/20 dark:to-blue-600/20"
+                  className="absolute inset-0 rounded-[3rem] blur-3xl transition-colors duration-300 bg-gradient-to-tr from-rose-500/10 via-transparent to-blue-500/10 dark:from-rose-600/20 dark:to-blue-600/20"
                   aria-hidden="true"
                 />
 
@@ -172,7 +219,7 @@ export default function AboutUs() {
                         120+
                       </p>
                     </div>
-                    <div className="w-full h-px transition-colors duration-300 bg-linear-to-r from-slate-200 to-transparent dark:from-slate-800" />
+                    <div className="w-full h-px transition-colors duration-300 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-800" />
 
                     <div className="group">
                       <p className="text-sm font-semibold uppercase tracking-wider mb-2 transition-colors duration-300 text-slate-500 dark:text-slate-400">
@@ -182,13 +229,13 @@ export default function AboutUs() {
                         45,000+
                       </p>
                     </div>
-                    <div className="w-full h-px transition-colors duration-300 bg-linear-to-r from-slate-200 to-transparent dark:from-slate-800" />
+                    <div className="w-full h-px transition-colors duration-300 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-800" />
 
                     <div className="group">
                       <p className="text-sm font-semibold uppercase tracking-wider mb-2 transition-colors duration-300 text-slate-500 dark:text-slate-400">
                         Lives Impacted (Est.)
                       </p>
-                      <p className="text-5xl font-black text-transparent bg-clip-text bg-linear-to-r tracking-tight transition-colors duration-300 from-rose-500 to-rose-700 dark:from-rose-400 dark:to-rose-600">
+                      <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r tracking-tight transition-colors duration-300 from-rose-500 to-rose-700 dark:from-rose-400 dark:to-rose-600">
                         12,500+
                       </p>
                     </div>
@@ -200,9 +247,9 @@ export default function AboutUs() {
         </section>
 
         {/* --- Core Values Grid --- */}
-        <section className="py-32 transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
+        <section className="py-24 border-b transition-colors duration-300 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800/50">
           <div className="container mx-auto max-w-6xl px-4">
-            <div className="text-center mb-20">
+            <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-6 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                 Our Core Values
               </h2>
@@ -220,7 +267,7 @@ export default function AboutUs() {
                     key={index}
                     className="group transition-all duration-500 backdrop-blur-sm hover:-translate-y-1 hover:shadow-xl bg-white/60 border-slate-200 hover:border-rose-300 hover:shadow-rose-100 dark:bg-slate-900/40 dark:border-slate-800/60 dark:hover:bg-slate-900/80 dark:hover:border-slate-700 dark:hover:shadow-2xl dark:hover:shadow-rose-900/10"
                   >
-                    <CardContent className="p-10">
+                    <CardContent className="p-8 md:p-10">
                       <div className="h-14 w-14 rounded-xl flex items-center justify-center mb-8 transition-all duration-300 border bg-slate-50 border-slate-200 group-hover:bg-rose-50 group-hover:border-rose-200 dark:bg-slate-950 dark:border-slate-800 dark:group-hover:bg-rose-500/10 dark:group-hover:border-rose-500/20">
                         <Icon
                           className="h-7 w-7 transition-colors duration-300 text-slate-500 group-hover:text-rose-600 dark:text-slate-400 dark:group-hover:text-rose-400"
@@ -241,9 +288,93 @@ export default function AboutUs() {
           </div>
         </section>
 
+        {/* --- INJECTED: Inter-Section Advertisement Divider --- */}
+        <section className="py-12 border-b transition-colors duration-300 bg-slate-100/30 border-slate-200 dark:bg-slate-900/10 dark:border-slate-800/50">
+          <div className="container mx-auto max-w-5xl px-4">
+            <AdBanner format="banner" />
+          </div>
+        </section>
+
+        {/* --- Leadership Team Section --- */}
+        <section className="py-24 transition-colors duration-300 bg-slate-100/50 dark:bg-slate-900/20">
+          <div className="container mx-auto max-w-6xl px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
+                Leadership Team
+              </h2>
+              <p className="text-lg max-w-2xl mx-auto leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                Meet the engineers, doctors, and operators driving the
+                Bloodonate mission forward.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {teamMembers.map((member, index) => (
+                <Card
+                  key={index}
+                  className="group overflow-hidden transition-all duration-500 bg-white/60 border-slate-200 hover:-translate-y-1 hover:shadow-lg dark:bg-slate-900/40 dark:border-slate-800/60 dark:hover:border-slate-700"
+                >
+                  <CardContent className="p-8 flex flex-col items-center text-center">
+                    {/* Avatar */}
+                    <div className="h-24 w-24 rounded-full mb-6 overflow-hidden border-4 border-white dark:border-slate-800 shadow-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
+                      {member.image ? (
+                        <img
+                          src={member.image}
+                          alt={member.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl font-black text-slate-400 dark:text-slate-500 tracking-tighter">
+                          {member.initials}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Details */}
+                    <h3 className="text-xl font-bold mb-1 transition-colors duration-300 text-slate-900 dark:text-white">
+                      {member.name}
+                    </h3>
+                    <p className="text-xs font-bold uppercase tracking-wider mb-4 transition-colors duration-300 text-rose-600 dark:text-rose-500">
+                      {member.role}
+                    </p>
+                    <p className="text-sm leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400 mb-6">
+                      {member.bio}
+                    </p>
+
+                    {/* Socials / Contact */}
+                    <div className="mt-auto flex items-center justify-center gap-4">
+                      <a
+                        href={member.social}
+                        className="p-2 rounded-full transition-colors duration-300 bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:bg-blue-500/10 dark:hover:text-blue-400"
+                        aria-label={`${member.name} Profile`}
+                      >
+                        <Globe2 className="h-4 w-4" />
+                      </a>
+                      <a
+                        href={member.phone}
+                        className="p-2 rounded-full transition-colors duration-300 bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                        aria-label={`Email ${member.name}`}
+                      >
+                        <Phone className="h-4 w-4" />
+                      </a>
+                      <a
+                        href={member.email}
+                        className="p-2 rounded-full transition-colors duration-300 bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                        aria-label={`Email ${member.name}`}
+                      >
+                        <Mail className="h-4 w-4" />
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* --- Conversion Boundary --- */}
         <section className="py-32 relative overflow-hidden border-t transition-colors duration-300 border-slate-200 dark:border-slate-800/50">
-          <div className="absolute inset-0 bg-linear-to-t transition-colors duration-300 from-rose-50 to-transparent dark:from-rose-950/20" />
+          <div className="absolute inset-0 bg-gradient-to-t transition-colors duration-300 from-rose-50 to-transparent dark:from-rose-950/20" />
           <div className="container mx-auto max-w-4xl px-4 relative z-10 text-center">
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
               Join the Initiative

@@ -15,6 +15,7 @@ import {
 import api from "../../lib/axios";
 import { DonorCard } from "../../components/donors/DonorCard";
 import { Button } from "../../components/ui/Button";
+import { AdBanner } from "../../components/ads/AdBanner";
 
 // --- Cloudinary URL Optimizer ---
 // Dynamically injects format=auto and quality=auto to reduce 5MB images to ~50kb WebP
@@ -47,7 +48,8 @@ export default function OrganizationProfile() {
       const res = await api.get(
         `/public/donors/search/?organization=${org.id}`,
       );
-      return res.data.results || res.data;
+      // SAFEGUARD: Ensure we always return an array even if the API shape changes
+      return res.data.results || (Array.isArray(res.data) ? res.data : []);
     },
     enabled: !!org?.id, // Only execute once the Organization ID is resolved
   });
@@ -107,6 +109,9 @@ export default function OrganizationProfile() {
   const optimizedBanner = optimizeCloudinaryUrl(org.banner_image, 1920);
   const optimizedLogo = optimizeCloudinaryUrl(org.logo, 400);
 
+  // SAFEGUARD: SSR safe location resolution
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+
   // --- JSON-LD Structured Data for Google Rich Snippets ---
   const structuredData = {
     "@context": "https://schema.org",
@@ -139,13 +144,13 @@ export default function OrganizationProfile() {
         <meta name="description" content={pageDescription} />
 
         {/* Canonical URL to prevent duplicate content penalties */}
-        <link rel="canonical" href={window.location.href} />
+        <link rel="canonical" href={currentUrl} />
 
         {/* Open Graph / Facebook / LinkedIn */}
         <meta property="og:type" content="profile" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={window.location.href} />
+        <meta property="og:url" content={currentUrl} />
         {optimizedBanner && (
           <meta property="og:image" content={optimizedBanner} />
         )}
@@ -166,7 +171,7 @@ export default function OrganizationProfile() {
 
       <div className="min-h-screen transition-colors duration-300 bg-slate-50 dark:bg-slate-950 pb-24">
         {/* --- Dynamic Hero Banner --- */}
-        <div className="relative h-75 md:h-100 w-full border-b overflow-hidden animate-in fade-in duration-700 transition-colors bg-slate-200 border-slate-300 dark:bg-slate-900 dark:border-slate-800">
+        <div className="relative h-[300px] md:h-[400px] w-full border-b overflow-hidden animate-in fade-in duration-700 transition-colors bg-slate-200 border-slate-300 dark:bg-slate-900 dark:border-slate-800">
           {optimizedBanner ? (
             <img
               src={optimizedBanner}
@@ -175,7 +180,7 @@ export default function OrganizationProfile() {
               className="w-full h-full object-cover opacity-60 dark:opacity-50 scale-105 transition-opacity duration-300"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center transition-colors duration-300 bg-linear-to-br from-slate-200 via-slate-300 to-slate-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+            <div className="absolute inset-0 flex items-center justify-center transition-colors duration-300 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
               <Building2
                 className="h-32 w-32 opacity-20 transition-colors duration-300 text-slate-600 dark:text-slate-950 dark:opacity-50"
                 aria-hidden="true"
@@ -184,12 +189,12 @@ export default function OrganizationProfile() {
           )}
 
           {/* Vignette Overlay - Perfectly blends into the body background color */}
-          <div className="absolute inset-0 bg-linear-to-t transition-colors duration-300 from-slate-50 via-slate-50/40 to-transparent dark:from-slate-950 dark:via-slate-950/40" />
+          <div className="absolute inset-0 bg-gradient-to-t transition-colors duration-300 from-slate-50 via-slate-50/40 to-transparent dark:from-slate-950 dark:via-slate-950/40" />
         </div>
 
         {/* --- Profile Header --- */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
-          <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-8 -mt-22 md:-mt-44 mb-8">
+          <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-8 -mt-[88px] md:-mt-[176px] mb-8">
             {/* Institutional Logo Profile Picture */}
             <div className="relative shrink-0 animate-in zoom-in-90 duration-500 delay-100">
               {optimizedLogo ? (
@@ -211,7 +216,7 @@ export default function OrganizationProfile() {
             {/* Title & Badges */}
             <div className="animate-in slide-in-from-left-8 duration-700 delay-100 pb-2 md:pb-4 flex-1">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider mb-3 transition-colors duration-300 bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400">
-                Verified {org.org_type.replace("_", " ")}
+                Verified {org?.org_type?.replace("_", " ") || "ORGANIZATION"}
               </div>
               <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-3 transition-colors duration-300 text-slate-900 dark:text-white">
                 {org.name}
@@ -231,8 +236,9 @@ export default function OrganizationProfile() {
 
         {/* --- Main Content Grid --- */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Left Column: Institutional Details */}
+          {/* Left Column: Institutional Details & Ad Sidebar */}
           <div className="lg:col-span-1 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            {/* Contact Details Card */}
             <section className="border rounded-3xl p-8 backdrop-blur-xl shadow-lg transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-2xl">
               <h2 className="text-lg font-bold mb-6 flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
                 <Phone
@@ -281,6 +287,7 @@ export default function OrganizationProfile() {
               </address>
             </section>
 
+            {/* About Us Card */}
             <section className="border rounded-3xl p-8 backdrop-blur-xl shadow-lg transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-2xl">
               <h2 className="text-lg font-bold mb-4 transition-colors duration-300 text-slate-900 dark:text-white">
                 About Us
@@ -289,6 +296,22 @@ export default function OrganizationProfile() {
                 {org.description ||
                   "Committed to saving lives through secure, community-driven blood donation management."}
               </p>
+            </section>
+
+            {/* --- INJECTED: Sidebar Portrait Ad Placement --- */}
+            {/* The sticky class ensures the ad follows the user if the donor list is long */}
+            <section className="sticky top-6 hidden lg:block transition-all duration-500 hover:-translate-y-1">
+              <div className="rounded-3xl shadow-xl overflow-hidden border-4 border-white/60 dark:border-slate-800/60 bg-slate-100 dark:bg-slate-900 relative h-[560px]">
+                <AdBanner
+                  format="portrait"
+                  className="!h-full !w-full !rounded-none !border-0 !shadow-none"
+                />
+              </div>
+            </section>
+
+            {/* Mobile-only Ad placement (Displays as a banner instead of portrait on small screens) */}
+            <section className="block lg:hidden py-4">
+              <AdBanner format="banner" />
             </section>
           </div>
 
@@ -321,9 +344,9 @@ export default function OrganizationProfile() {
                 </p>
               </div>
             ) : donorData && donorData.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="flex flex-col gap-4">
                 {donorData.map((donor) => (
-                  <DonorCard key={donor.id} donor={donor} />
+                  <DonorCard key={donor.id} donor={donor} viewMode="list" />
                 ))}
               </div>
             ) : (
@@ -349,4 +372,3 @@ export default function OrganizationProfile() {
     </>
   );
 }
-  

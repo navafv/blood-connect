@@ -18,7 +18,7 @@ from ..models import (
 )
 from ..serializers import (
     MasterCountrySerializer, MasterDistrictSerializer, MasterStateSerializer, OrganizationSerializer, DonorSerializer, AdvertisementSerializer, 
-    PaymentTransactionSerializer, SystemLogSerializer, 
+    PaymentTransactionSerializer, SystemLogSerializer, PublicDonorSearchSerializer,
     TenantSupportTicketSerializer, ContactMessageSerializer
 )
 from .public_views import StandardResultsSetPagination
@@ -131,6 +131,21 @@ class SuperAdminOrganizationListView(generics.ListAPIView):
     queryset = Organization.objects.select_related(
         'country', 'state', 'district'
     ).order_by('-created_at')
+
+class SuperAdminOrganizationDetailView(generics.RetrieveAPIView):
+    serializer_class = OrganizationSerializer
+    permission_classes = [IsSuperAdmin]
+    queryset = Organization.objects.select_related('country', 'state', 'district')
+
+class SuperAdminOrganizationDonorsView(generics.ListAPIView):
+    serializer_class = PublicDonorSearchSerializer
+    permission_classes = [IsSuperAdmin]
+    
+    def get_queryset(self):
+        org_id = self.kwargs.get('pk')
+        return Donor.objects.filter(organization_id=org_id).select_related(
+            'country', 'state', 'district'
+        ).order_by('-created_at')
 
 class SuperAdminOrganizationStatusUpdateView(APIView):
     permission_classes = [IsSuperAdmin]

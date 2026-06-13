@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -14,7 +14,9 @@ import {
   EyeOff,
   CheckCircle2,
   Phone,
-  Upload,
+  UploadCloud,
+  Edit,
+  ShieldCheck, // Added for the consent section
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -25,20 +27,22 @@ import api from "../../lib/axios";
 
 export default function RegisterOrg() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   // UI State
   const [status, setStatus] = useState("idle");
   const [showPassword, setShowPassword] = useState(false);
+  const [logoPreview, setLogoPreview] = useState(null);
 
   // Location Data
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
   const [districts, setDistricts] = useState([]);
 
-  // Form Data with new Contact Phone, Address, and Logo
+  // Form Data
   const [formData, setFormData] = useState({
     orgName: "",
-    orgType: "HOSPITAL",
+    orgType: "",
     contactName: "",
     email: "",
     contact_phone: "",
@@ -48,6 +52,7 @@ export default function RegisterOrg() {
     state_id: "",
     district_id: "",
     is_searchable: true,
+    consent_agreed: false, // NEW: Privacy & Consent state
     logo: null,
   });
 
@@ -69,7 +74,6 @@ export default function RegisterOrg() {
         toast.error("Unable to load country data");
       }
     };
-
     fetchCountries();
   }, []);
 
@@ -81,14 +85,12 @@ export default function RegisterOrg() {
       state_id: "",
       district_id: "",
     });
-
     setStates([]);
     setDistricts([]);
 
     if (val) {
       try {
         const response = await api.get(`/locations/states/?country=${val}`);
-
         setStates(response.data);
       } catch (err) {
         toast.error("Unable to load states");
@@ -103,13 +105,11 @@ export default function RegisterOrg() {
       state_id: val,
       district_id: "",
     });
-
     setDistricts([]);
 
     if (val) {
       try {
         const response = await api.get(`/locations/districts/?state=${val}`);
-
         setDistricts(response.data);
       } catch (err) {
         toast.error("Unable to load districts");
@@ -117,26 +117,43 @@ export default function RegisterOrg() {
     }
   };
 
-  // Input Change (Modified to handle Files)
+  // Input Change
   const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
 
-    if (type === "file") {
-      setFormData({
-        ...formData,
-        [name]: files[0],
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: type === "checkbox" ? checked : value,
-      });
+  // File Change with Preview
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, logo: file });
+      setLogoPreview(URL.createObjectURL(file));
     }
   };
 
   // Submit via FormData for Image Upload support
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.orgType) {
+      toast.error("Please select an Organization Type.");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      toast.error("Password must be at least 8 characters long.");
+      return;
+    }
+
+    // NEW: Enforce Consent Verification
+    if (!formData.consent_agreed) {
+      toast.error("You must agree to the Terms of Service and Privacy Policy.");
+      return;
+    }
 
     setStatus("loading");
 
@@ -152,6 +169,8 @@ export default function RegisterOrg() {
     payload.append("state_id", formData.state_id);
     payload.append("district_id", formData.district_id);
     payload.append("is_searchable", formData.is_searchable);
+    // Include consent in payload for audit logs if your backend requires it
+    payload.append("consent_agreed", formData.consent_agreed);
 
     if (formData.logo) {
       payload.append("logo", formData.logo);
@@ -163,7 +182,6 @@ export default function RegisterOrg() {
       });
 
       setStatus("success");
-
       toast.success("Organization registered successfully");
 
       setTimeout(() => {
@@ -173,7 +191,6 @@ export default function RegisterOrg() {
       }, 2500);
     } catch (err) {
       setStatus("idle");
-
       toast.error(
         err.response?.data?.error || "Unable to complete registration",
       );
@@ -184,11 +201,11 @@ export default function RegisterOrg() {
     <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       {/* Ambient Background */}
       <div
-        className="absolute top-[-10%] right-[-5%] w-120 h-120 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
+        className="absolute top-[-10%] right-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-10%] left-[-5%] w-120 h-120 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
+        className="absolute bottom-[-10%] left-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
         aria-hidden="true"
       />
 
@@ -235,228 +252,295 @@ export default function RegisterOrg() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-10">
-              {/* Organization Info */}
+              {/* --- Organization Info --- */}
               <div className="space-y-6">
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
                     <Building2 className="h-4 w-4 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
                     Organization Information
                   </h2>
-
                   <p className="mt-2 text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Enter your organization details and administrator
                     information.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-6">
                   {/* Org Name */}
-                  <div className="md:col-span-2 relative group">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
-
-                    <Input
-                      name="orgName"
-                      placeholder="Organization Name"
-                      required
-                      value={formData.orgName}
-                      onChange={handleChange}
-                      disabled={status === "loading"}
-                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
-                    />
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Organization Name *
+                    </label>
+                    <div className="relative group">
+                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
+                      <Input
+                        name="orgName"
+                        placeholder="e.g. City General Hospital"
+                        required
+                        value={formData.orgName}
+                        onChange={handleChange}
+                        disabled={status === "loading"}
+                        className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
+                      />
+                    </div>
                   </div>
 
                   {/* Org Type */}
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Organization Type *
+                    </label>
                     <SearchableSelect
                       value={formData.orgType}
                       onChange={(val) =>
                         handleChange({
-                          target: {
-                            name: "orgType",
-                            value: val,
-                          },
+                          target: { name: "orgType", value: val },
                         })
                       }
                       options={orgTypeOptions}
-                      placeholder="Select Organization Type"
+                      placeholder="Select your facility type"
                       required
                     />
                   </div>
 
                   {/* Contact Name */}
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
-
-                    <Input
-                      name="contactName"
-                      placeholder="Administrator Name"
-                      required
-                      value={formData.contactName}
-                      onChange={handleChange}
-                      disabled={status === "loading"}
-                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
-                    />
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Administrator Name *
+                    </label>
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
+                      <Input
+                        name="contactName"
+                        placeholder="e.g. Jane Doe"
+                        required
+                        value={formData.contactName}
+                        onChange={handleChange}
+                        disabled={status === "loading"}
+                        className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
+                      />
+                    </div>
                   </div>
 
                   {/* Contact Phone */}
-                  <div className="relative group">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
-
-                    <Input
-                      name="contact_phone"
-                      placeholder="Contact Phone Number"
-                      required
-                      value={formData.contact_phone}
-                      onChange={handleChange}
-                      disabled={status === "loading"}
-                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
-                    />
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Contact Phone Number *
+                    </label>
+                    <div className="relative group">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
+                      <Input
+                        name="contact_phone"
+                        type="tel"
+                        placeholder="+919876543210"
+                        required
+                        value={formData.contact_phone}
+                        onChange={handleChange}
+                        disabled={status === "loading"}
+                        className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
+                      />
+                    </div>
                   </div>
 
                   {/* Email */}
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
-
-                    <Input
-                      type="email"
-                      name="email"
-                      placeholder="Official Email Address"
-                      required
-                      value={formData.email}
-                      onChange={handleChange}
-                      disabled={status === "loading"}
-                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
-                    />
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Official Email Address *
+                    </label>
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
+                      <Input
+                        type="email"
+                        name="email"
+                        placeholder="admin@hospital.com"
+                        required
+                        value={formData.email}
+                        onChange={handleChange}
+                        disabled={status === "loading"}
+                        className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
+                      />
+                    </div>
                   </div>
 
                   {/* Password */}
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
-
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      placeholder="Create Password"
-                      required
-                      value={formData.password}
-                      onChange={handleChange}
-                      disabled={status === "loading"}
-                      className="pl-12 pr-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-300 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
-                    </button>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Account Password *
+                    </label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        placeholder="••••••••"
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        disabled={status === "loading"}
+                        className="pl-12 pr-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-300 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                      Must be at least 8 characters long.
+                    </p>
                   </div>
 
                   {/* Address Line */}
-                  <div className="md:col-span-2 relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
-
-                    <Input
-                      name="address_line"
-                      placeholder="Complete Address Details"
-                      required
-                      value={formData.address_line}
-                      onChange={handleChange}
-                      disabled={status === "loading"}
-                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
-                    />
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Complete Street Address *
+                    </label>
+                    <div className="relative group">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
+                      <Input
+                        name="address_line"
+                        placeholder="123 Health Ave, Building B"
+                        required
+                        value={formData.address_line}
+                        onChange={handleChange}
+                        disabled={status === "loading"}
+                        className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20"
+                      />
+                    </div>
                   </div>
 
-                  {/* Logo Upload */}
-                  <div className="md:col-span-2 relative group">
-                    <Upload className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
-
-                    <Input
+                  {/* Modern Logo Upload Zone */}
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Organization Logo (Optional)
+                    </label>
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all duration-300 relative overflow-hidden h-36 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:bg-slate-100 hover:border-rose-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:bg-slate-900 dark:hover:border-rose-500/50`}
+                    >
+                      {logoPreview ? (
+                        <>
+                          <img
+                            src={logoPreview}
+                            alt="Logo Preview"
+                            className="h-20 w-20 rounded-lg object-cover shadow-md z-10 group-hover:scale-105 transition-transform duration-300 bg-white"
+                          />
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px] bg-white/60 dark:bg-slate-950/60 z-20">
+                            <span className="text-sm font-bold flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
+                              <Edit className="h-4 w-4" /> Change Image
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud className="h-8 w-8 mb-2 transition-colors duration-300 text-slate-400 group-hover:text-rose-600 dark:text-slate-500 dark:group-hover:text-rose-500" />
+                          <span className="text-sm font-medium transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                            Click to browse or drop an image
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                      Accepted formats: Square PNG or JPG. Max size: 2MB.
+                    </p>
+                    <input
                       type="file"
                       name="logo"
                       accept="image/*"
-                      onChange={handleChange}
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
                       disabled={status === "loading"}
-                      className="pl-12 h-12 transition-all duration-300 focus:ring-rose-500/20 text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 dark:file:bg-rose-500/10 dark:file:text-rose-500 dark:hover:file:bg-rose-500/20"
+                      className="hidden"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Location */}
+              {/* --- Location --- */}
               <div className="space-y-6 border-t pt-8 transition-colors duration-300 border-slate-200 dark:border-slate-800">
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
                     <MapPin className="h-4 w-4 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
                     Location Information
                   </h2>
-
                   <p className="mt-2 text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
-                    Select the region where your organization operates.
+                    Select the exact region where your organization operates.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  {/* Country */}
-                  <SearchableSelect
-                    value={formData.country_id}
-                    onChange={handleCountryChange}
-                    options={countries.map((c) => ({
-                      label: c.name,
-                      value: c.id.toString(),
-                    }))}
-                    placeholder="Select Country"
-                    required
-                  />
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      Country *
+                    </label>
+                    <SearchableSelect
+                      value={formData.country_id}
+                      onChange={handleCountryChange}
+                      options={countries.map((c) => ({
+                        label: c.name,
+                        value: c.id.toString(),
+                      }))}
+                      placeholder="Select Country"
+                      required
+                    />
+                  </div>
 
-                  {/* State */}
-                  <SearchableSelect
-                    value={formData.state_id}
-                    onChange={handleStateChange}
-                    options={states.map((s) => ({
-                      label: s.name,
-                      value: s.id.toString(),
-                    }))}
-                    placeholder="Select State"
-                    disabled={!formData.country_id}
-                    required
-                  />
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      State / Province *
+                    </label>
+                    <SearchableSelect
+                      value={formData.state_id}
+                      onChange={handleStateChange}
+                      options={states.map((s) => ({
+                        label: s.name,
+                        value: s.id.toString(),
+                      }))}
+                      placeholder="Select State"
+                      disabled={!formData.country_id}
+                      required
+                    />
+                  </div>
 
-                  {/* District */}
-                  <SearchableSelect
-                    value={formData.district_id}
-                    onChange={(val) =>
-                      handleChange({
-                        target: {
-                          name: "district_id",
-                          value: val,
-                        },
-                      })
-                    }
-                    options={districts.map((d) => ({
-                      label: d.name,
-                      value: d.id.toString(),
-                    }))}
-                    placeholder="Select District"
-                    disabled={!formData.state_id}
-                    required
-                  />
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      District / City *
+                    </label>
+                    <SearchableSelect
+                      value={formData.district_id}
+                      onChange={(val) =>
+                        handleChange({
+                          target: {
+                            name: "district_id",
+                            value: val,
+                          },
+                        })
+                      }
+                      options={districts.map((d) => ({
+                        label: d.name,
+                        value: d.id.toString(),
+                      }))}
+                      placeholder="Select District"
+                      disabled={!formData.state_id}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Public Listing */}
+              {/* --- Public Listing --- */}
               <div className="space-y-5 border-t pt-8 transition-colors duration-300 border-slate-200 dark:border-slate-800">
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
                     <Globe className="h-4 w-4 transition-colors duration-300 text-blue-600 dark:text-blue-500" />
                     Public Directory
                   </h2>
-
                   <p className="mt-2 text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Allow your organization to appear in public donor search
                     results.
@@ -472,12 +556,10 @@ export default function RegisterOrg() {
                     disabled={status === "loading"}
                     className="mt-1 h-5 w-5 rounded transition-colors duration-300 border-slate-300 bg-white text-rose-600 focus:ring-rose-500 dark:border-slate-600 dark:bg-slate-950 dark:text-rose-500"
                   />
-
                   <div>
                     <span className="block font-medium transition-colors duration-300 text-slate-900 dark:text-white">
                       Enable Public Visibility
                     </span>
-
                     <span className="block mt-1 text-sm leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Your organization and available donors may appear in
                       emergency donor searches while protecting personal donor
@@ -487,12 +569,45 @@ export default function RegisterOrg() {
                 </label>
               </div>
 
-              {/* Submit */}
+              {/* --- Privacy & Consent --- */}
               <div className="pt-2">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    name="consent_agreed"
+                    required
+                    checked={formData.consent_agreed}
+                    onChange={handleChange}
+                    disabled={status === "loading"}
+                    className="mt-0.5 h-4 w-4 rounded transition-colors duration-300 border-slate-300 bg-white text-rose-600 focus:ring-rose-500 dark:border-slate-600 dark:bg-slate-950 dark:text-rose-500"
+                  />
+                  <span className="text-sm leading-relaxed transition-colors duration-300 text-slate-600 group-hover:text-slate-800 dark:text-slate-400 dark:group-hover:text-slate-300">
+                    I acknowledge that I have read and agree to the{" "}
+                    <Link
+                      to="/terms-of-service"
+                      className="font-semibold transition-colors duration-300 text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 underline underline-offset-2"
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      to="/privacy-policy"
+                      className="font-semibold transition-colors duration-300 text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 underline underline-offset-2"
+                    >
+                      Privacy Policy
+                    </Link>
+                    , and I consent to the processing of this organization's
+                    data.
+                  </span>
+                </label>
+              </div>
+
+              {/* Submit */}
+              <div className="pt-4 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800">
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={status === "loading"}
+                  disabled={status === "loading" || !formData.consent_agreed}
                   className="w-full py-6 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all gap-2 dark:shadow-lg dark:hover:shadow-rose-500/20"
                 >
                   {status === "loading" ? (

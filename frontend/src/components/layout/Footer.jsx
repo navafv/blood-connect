@@ -50,13 +50,13 @@ export function Footer() {
               Donor Guidelines
             </Link>
             <Link
-              to="/privacy"
+              to="/privacy-policy"
               className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             >
               Privacy Policy
             </Link>
             <Link
-              to="/terms"
+              to="/terms-of-service"
               className="hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             >
               Terms of Service

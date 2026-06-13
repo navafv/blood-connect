@@ -2,10 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../lib/axios";
 
-export function AdBanner({ className = "" }) {
+// NEW PROP: format can be "banner" (default) or "portrait"
+export function AdBanner({ className = "", format = "banner" }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef(null);
+
+  // Ref to track which ad IDs have already counted a view in this session to prevent spam
+  const viewedAds = useRef(new Set());
 
   // --- Data Fetching ---
   const { data: ads = [], isLoading } = useQuery({
@@ -16,9 +20,21 @@ export function AdBanner({ className = "" }) {
     },
   });
 
+  // --- Impression Tracking Engine ---
+  useEffect(() => {
+    if (ads.length > 0 && ads[currentIndex]) {
+      const currentAdId = ads[currentIndex].id;
+
+      // Only track the view once per ad per component mount
+      if (!viewedAds.current.has(currentAdId)) {
+        api.post(`/public/ads/${currentAdId}/view/`).catch(() => {});
+        viewedAds.current.add(currentAdId);
+      }
+    }
+  }, [currentIndex, ads]);
+
   // --- Carousel Engine (Auto-advance) ---
   useEffect(() => {
-    // Only run the timer if there are multiple ads and the user isn't hovering
     if (ads.length <= 1 || isPaused) return;
 
     timerRef.current = setInterval(() => {
@@ -36,15 +52,31 @@ export function AdBanner({ className = "" }) {
     : "http://localhost:8000/api";
   const baseURL = apiBase.replace(/\/api\/?$/, "");
 
+  // Determine sizing based on format prop
+  const sizeClasses =
+    format === "portrait"
+      ? "h-96 sm:h-[450px] md:h-[500px]" // Tall for sidebars or hero sections
+      : "h-38 sm:h-64 md:h-80"; // Wide for horizontal inserts
+
   return (
     <div
-      className={`relative w-full h-48 sm:h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl border transition-colors duration-300 bg-slate-50 border-slate-200 dark:border-slate-800 dark:bg-slate-950 group ${className}`}
+      className={`relative w-full ${sizeClasses} rounded-2xl overflow-hidden shadow-xl border transition-colors duration-300 bg-slate-50 border-slate-200 dark:border-slate-800 dark:bg-slate-950 group ${className}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Ad Layers */}
       {ads.map((ad, index) => {
         const isActive = index === currentIndex;
+
+        // Image Selection Logic: If format is portrait, use portrait_image if available. Otherwise fallback to banner.
+        let displayImage = ad.banner_image;
+        if (format === "portrait" && ad.portrait_image) {
+          displayImage = ad.portrait_image;
+        }
+
+        const imageSrc = displayImage?.startsWith("http")
+          ? displayImage
+          : `${baseURL}${displayImage}`;
 
         return (
           <a
@@ -60,9 +92,7 @@ export function AdBanner({ className = "" }) {
           >
             {/* Background Image */}
             <img
-              src={
-                ad.image.startsWith("http") ? ad.image : `${baseURL}${ad.image}`
-              }
+              src={imageSrc}
               alt={ad.title}
               className={`w-full h-full object-cover transition-transform duration-6000 ease-linear ${
                 isActive ? "scale-105" : "scale-100"
@@ -70,24 +100,13 @@ export function AdBanner({ className = "" }) {
               loading="lazy"
             />
 
-            {/* Dark Gradient Overlay for Text/Dots Readability (remains dark to contrast images) */}
-            <div className="absolute inset-0 bg-linear-to-t from-slate-950/90 via-slate-900/20 to-transparent transition-opacity duration-300" />
+            {/* Dark Gradient Overlay for Text/Dots Readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent transition-opacity duration-300" />
 
             {/* Sponsored Badge */}
             <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-bold text-white/90 uppercase tracking-widest border border-white/10 shadow-lg">
               Sponsored
             </div>
-
-            {/* Title / Call to Action */}
-            {/* <div className="absolute bottom-8 left-6 right-6">
-              <h3 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg truncate">
-                {ad.title}
-              </h3>
-
-              <p className="text-sm text-slate-300 font-medium mt-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                Click to learn more &rarr;
-              </p>
-            </div> */}
           </a>
         );
       })}

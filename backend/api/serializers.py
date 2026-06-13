@@ -183,8 +183,8 @@ class AdvertisementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Advertisement
-        fields = ['id', 'title', 'image', 'target_link', 'is_active', 'clicks', 'created_at', 'expires_at', 'is_expired']
-        read_only_fields = ['clicks', 'created_at', 'expires_at', 'is_expired']
+        fields = ['id', 'title', 'banner_image', 'portrait_image', 'target_link', 'is_active', 'clicks', 'views', 'created_at', 'expires_at', 'is_expired']
+        read_only_fields = ['clicks', 'views', 'created_at', 'expires_at', 'is_expired']
 
 
 # ==========================================

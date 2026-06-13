@@ -50,6 +50,9 @@ const GlobalDashboard = lazy(
 const ManageOrganizations = lazy(
   () => import("./pages/superadmin/ManageOrganizations"),
 );
+const OrganizationDetail = lazy(
+  () => import("./pages/superadmin/OrganizationDetail"),
+);
 const ManageLocations = lazy(
   () => import("./pages/superadmin/ManageLocations"),
 );
@@ -96,8 +99,8 @@ function App() {
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/guidelines" element={<DonorGuidelines />} />
                 <Route path="/contact" element={<ContactUs />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route
                   path="/hospital/:slug"
                   element={<OrganizationProfile />}
@@ -137,6 +140,10 @@ function App() {
                   <Route
                     path="organizations"
                     element={<ManageOrganizations />}
+                  />
+                  <Route
+                    path="organizations/:id"
+                    element={<OrganizationDetail />}
                   />
                   <Route path="locations" element={<ManageLocations />} />
                   <Route path="ads" element={<ManageAds />} />

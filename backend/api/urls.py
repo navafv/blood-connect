@@ -3,19 +3,20 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     LogoutView,
+    Setup2FAView,
+    Toggle2FAView,
     CurrentUserView,
+    Verify2FALoginView,
     VerifyEmailOTPView,
     ResendEmailOTPView,
+    SecuritySettingsView,
     CookieTokenRefreshView,
     RegisterOrganizationView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
     CookieTokenObtainPairView,
-    Verify2FALoginView,
-    SecuritySettingsView,
-    Setup2FAView,
-    Toggle2FAView,
     AdClickRedirectView,
+    AdViewTrackingView,
     MasterStateListView,
     MasterCountryListView,
     PublicDonorSearchView,
@@ -24,16 +25,16 @@ from .views import (
     ContactMessageCreateView,
     PublicOrganizationDetailView,
     LogDonationView,
-    TenantPaymentView, 
+    TenantPaymentView,
     TenantDonorViewSet,
     TenantOrganizationView,
     TenantDashboardStatsView,
     TenantDonorBulkUploadView,
     TenantSupportTicketViewSet,
     SystemCronWebhookView,
-    SuperAdminStateViewSet, 
-    SuperAdminPaymentViewSet, 
-    SuperAdminCountryViewSet, 
+    SuperAdminStateViewSet,
+    SuperAdminPaymentViewSet,
+    SuperAdminCountryViewSet,
     SuperAdminDistrictViewSet,
     SuperAdminSystemLogListView,
     SuperAdminDashboardStatsView,
@@ -42,7 +43,9 @@ from .views import (
     SuperAdminArchivedDonorViewSet,
     SuperAdminSupportTicketViewSet,
     SuperAdminContactMessageViewSet,
-    SuperAdminExtendSubscriptionView, 
+    SuperAdminExtendSubscriptionView,
+    SuperAdminOrganizationDetailView,
+    SuperAdminOrganizationDonorsView,
     SuperAdminOrganizationStatusUpdateView,
 )
 
@@ -55,12 +58,12 @@ router.register(r'tenant/support-tickets', TenantSupportTicketViewSet, basename=
 # SuperAdmin Routes
 router.register(r'superadmin/ads', SuperAdminAdvertisementViewSet, basename='superadmin-ads')
 router.register(r'superadmin/payments', SuperAdminPaymentViewSet, basename='superadmin-payments')
+router.register(r'superadmin/locations/states', SuperAdminStateViewSet, basename='superadmin-states')
 router.register(r'superadmin/messages', SuperAdminContactMessageViewSet, basename='superadmin-messages')
+router.register(r'superadmin/locations/countries', SuperAdminCountryViewSet, basename='superadmin-countries')
+router.register(r'superadmin/locations/districts', SuperAdminDistrictViewSet, basename='superadmin-districts')
 router.register(r'superadmin/archived-donors', SuperAdminArchivedDonorViewSet, basename='superadmin-archived-donors')
 router.register(r'superadmin/support-tickets', SuperAdminSupportTicketViewSet, basename='superadmin-support-tickets')
-router.register(r'superadmin/locations/countries', SuperAdminCountryViewSet, basename='superadmin-countries')
-router.register(r'superadmin/locations/states', SuperAdminStateViewSet, basename='superadmin-states')
-router.register(r'superadmin/locations/districts', SuperAdminDistrictViewSet, basename='superadmin-districts')
 
 
 urlpatterns = [
@@ -69,27 +72,29 @@ urlpatterns = [
     # Endpoints restricted to 'SUPER_ADMIN' role.
     # ==========================================
     path('superadmin/logs/', SuperAdminSystemLogListView.as_view(), name='superadmin-logs'),
+    path('superadmin/system/cron-webhook/', SystemCronWebhookView.as_view(), name='system-cron-webhook'),
     path('superadmin/organizations/', SuperAdminOrganizationListView.as_view(), name='superadmin-org-list'),
     path('superadmin/dashboard-stats/', SuperAdminDashboardStatsView.as_view(), name='superadmin-dashboard-stats'),
+    path('superadmin/organizations/<int:pk>/', SuperAdminOrganizationDetailView.as_view(), name='superadmin-org-detail'),
+    path('superadmin/organizations/<int:pk>/donors/', SuperAdminOrganizationDonorsView.as_view(), name='superadmin-org-donors'),
     path('superadmin/organizations/<int:pk>/status/', SuperAdminOrganizationStatusUpdateView.as_view(), name='superadmin-org-status'),
     path('superadmin/organizations/<int:pk>/extend-subscription/', SuperAdminExtendSubscriptionView.as_view(), name='superadmin-extend-sub'),
-    path('superadmin/system/cron-webhook/', SystemCronWebhookView.as_view(), name='system-cron-webhook'),
     
     # ==========================================
     # AUTHENTICATION & IDENTITY
     # JWT issuance, invalidation, and credential recovery.
     # ==========================================
-    path('auth/me/', CurrentUserView.as_view(), name='current-user'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
-    path('auth/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
-    path('auth/resend-otp/', ResendEmailOTPView.as_view(), name='resend_otp'),
-    path('auth/verify-email/', VerifyEmailOTPView.as_view(), name='verify_email'),
-    path('auth/register/', RegisterOrganizationView.as_view(), name='register-org'),
-    path('auth/login/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('auth/login/2fa/', Verify2FALoginView.as_view(), name='login-2fa'),
-    path('auth/security/', SecuritySettingsView.as_view(), name='security-settings'),
+    path('auth/me/', CurrentUserView.as_view(), name='current-user'),
     path('auth/2fa/setup/', Setup2FAView.as_view(), name='2fa-setup'),
     path('auth/2fa/toggle/', Toggle2FAView.as_view(), name='2fa-toggle'),
+    path('auth/login/2fa/', Verify2FALoginView.as_view(), name='login-2fa'),
+    path('auth/resend-otp/', ResendEmailOTPView.as_view(), name='resend_otp'),
+    path('auth/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('auth/verify-email/', VerifyEmailOTPView.as_view(), name='verify_email'),
+    path('auth/register/', RegisterOrganizationView.as_view(), name='register-org'),
+    path('auth/security/', SecuritySettingsView.as_view(), name='security-settings'),
+    path('auth/login/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/password-reset-request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 
@@ -105,10 +110,11 @@ urlpatterns = [
     # PUBLIC DIRECTORY BOUNDARY
     # Rate-limited endpoints for unauthenticated public traffic.
     # ==========================================
-    path('public/advertisements/', ActiveAdvertisementView.as_view(), name='active-ads'),
     path('public/contact/', ContactMessageCreateView.as_view(), name='public-contact'),
-    path('public/donors/search/', PublicDonorSearchView.as_view(), name='public-donor-search'),
+    path('public/advertisements/', ActiveAdvertisementView.as_view(), name='active-ads'),
     path('public/ads/<int:pk>/click/', AdClickRedirectView.as_view(), name='public-ad-click'),
+    path('public/ads/<int:pk>/view/', AdViewTrackingView.as_view(), name='public-ad-view'),
+    path('public/donors/search/', PublicDonorSearchView.as_view(), name='public-donor-search'),
     path('public/organizations/<slug:slug>/', PublicOrganizationDetailView.as_view(), name='public-org-detail'),
 
     # ==========================================

@@ -372,11 +372,13 @@ class DonationRecord(models.Model):
 
 class Advertisement(models.Model):
     title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to='advertisements/', help_text="Upload the banner image")
+    banner_image = models.ImageField(upload_to='advertisements/banners/', help_text="Landscape banner image")
+    portrait_image = models.ImageField(upload_to='advertisements/portraits/', blank=True, null=True, help_text="Portrait/Square image for home pages")
     target_link = models.URLField()
     
     is_active = models.BooleanField(default=True)
     clicks = models.PositiveIntegerField(default=0)
+    views = models.PositiveIntegerField(default=0)
     
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()

@@ -142,11 +142,11 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       {/* Ambient Background */}
       <div
-        className="absolute top-[-10%] right-[-5%] w-100 md:w-150 h-112.5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
+        className="absolute top-[-10%] right-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-10%] left-[-5%] w-100 md:w-150 h-112.5 rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
+        className="absolute bottom-[-10%] left-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-blue-500/10 dark:bg-blue-600/10"
         aria-hidden="true"
       />
 
@@ -284,7 +284,7 @@ export default function Login() {
             >
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
-                  Verification Code
+                  6-Digit Verification Code
                 </label>
 
                 <Input
@@ -297,7 +297,7 @@ export default function Login() {
                     setOtpCode(e.target.value.replace(/\D/g, ""))
                   }
                   placeholder="000000"
-                  className="h-16 text-center text-3xl tracking-[0.5em] font-mono focus:border-blue-500 focus:ring-blue-500/20"
+                  className="h-16 text-center text-3xl tracking-[0.5em] font-mono transition-all duration-300 focus:border-blue-500 focus:ring-blue-500/20"
                 />
               </div>
 

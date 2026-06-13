@@ -1,5 +1,6 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.pagination import PageNumberPagination
 from django.http import HttpResponseRedirect
@@ -92,6 +93,14 @@ class ContactMessageCreateView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [AnonRateThrottle]
 
+class AdViewTrackingView(APIView):
+    """Silent endpoint to increment ad impressions"""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, pk):
+        # Using F() avoids race conditions when multiple users view at the same time
+        Advertisement.objects.filter(pk=pk).update(views=F('views') + 1)
+        return Response({'status': 'view recorded'}, status=status.HTTP_200_OK)
 
 class AdClickRedirectView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -102,7 +111,6 @@ class AdClickRedirectView(APIView):
         Advertisement.objects.filter(pk=pk).update(clicks=F('clicks') + 1)
         
         return HttpResponseRedirect(redirect_to=ad.target_link)
-    
 
 class PublicOrganizationDetailView(generics.RetrieveAPIView):
     serializer_class = OrganizationSerializer
