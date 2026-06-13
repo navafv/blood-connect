@@ -1,29 +1,20 @@
 import React from "react";
 import {
   Phone,
-  Copy,
   MapPin,
   Building2,
   CalendarClock,
   ShieldCheck,
-  Ban,
-  Droplet,
   MessageCircle,
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
-import { toast } from "react-hot-toast";
 
 export function DonorCard({ donor, viewMode = "list" }) {
-  const handleCopyPhone = () => {
-    navigator.clipboard.writeText(donor.organization_contact);
-    toast.success("Facility number copied!", { icon: "📋" });
-  };
-
-  // WhatsApp formatting
-  const cleanPhone = donor.organization_contact?.replace(/[^0-9]/g, "");
+  // WhatsApp formatting routed to the DONOR's phone number
+  const cleanPhone = donor.phone_number?.replace(/[^0-9]/g, "");
   const waMessage = encodeURIComponent(
-    `Urgent query regarding the ${donor.blood_group} donor listed on Bloodonate.`,
+    `Hello ${donor.full_name}, I am reaching out via Bloodonate regarding an urgent ${donor.blood_group} blood requirement. Are you currently available to donate?`,
   );
 
   // Status rendering based purely on backend flags
@@ -64,7 +55,7 @@ export function DonorCard({ donor, viewMode = "list" }) {
             </div>
             <div className="flex flex-col">
               <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-tight transition-colors dark:text-white">
-                {donor.anonymous_label}
+                {donor.full_name}
               </h3>
               <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mt-1 dark:text-slate-400">
                 <span className="capitalize">
@@ -115,7 +106,7 @@ export function DonorCard({ donor, viewMode = "list" }) {
               WhatsApp
             </a>
             <a
-              href={`tel:${donor.organization_contact}`}
+              href={`tel:${donor.phone_number}`}
               className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md hover:-translate-y-0.5"
             >
               <Phone className="h-4 w-4" />
@@ -136,7 +127,7 @@ export function DonorCard({ donor, viewMode = "list" }) {
         <div className="flex justify-between items-start mb-5 gap-4">
           <div>
             <h3 className="text-xl font-bold text-slate-900 tracking-tight mb-1 transition-colors dark:text-white">
-              {donor.anonymous_label}
+              {donor.full_name}
             </h3>
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
               <span className="capitalize">
@@ -179,29 +170,21 @@ export function DonorCard({ donor, viewMode = "list" }) {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-2 pt-2">
               <a
                 href={`https://wa.me/${cleanPhone}?text=${waMessage}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-md hover:-translate-y-0.5"
+                className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-md hover:-translate-y-0.5"
               >
-                <MessageCircle className="h-4 w-4" /> WhatsApp Facility
+                <MessageCircle className="h-4 w-4" /> WhatsApp
               </a>
-              <div className="flex gap-2">
-                <a
-                  href={`tel:${donor.organization_contact}`}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-md hover:-translate-y-0.5"
-                >
-                  <Phone className="h-4 w-4" /> Call
-                </a>
-                <button
-                  onClick={handleCopyPhone}
-                  className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 py-3 rounded-xl text-sm font-bold transition-all shadow-sm border border-slate-200 dark:bg-slate-800 dark:text-white dark:border-slate-700"
-                >
-                  <Copy className="h-4 w-4 text-slate-400" /> Copy
-                </button>
-              </div>
+              <a
+                href={`tel:${donor.phone_number}`}
+                className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-md hover:-translate-y-0.5"
+              >
+                <Phone className="h-4 w-4" /> Call
+              </a>
             </div>
           </div>
         </div>

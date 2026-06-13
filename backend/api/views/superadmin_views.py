@@ -14,12 +14,12 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from ..tasks import send_async_email
 from ..models import (
     MasterCountry, MasterDistrict, MasterState, Organization, Donor, Advertisement, PaymentTransaction, 
-    SystemLog, TenantSupportTicket, TicketReply, ContactMessage
+    SystemLog, TenantSupportTicket, TicketReply, ContactMessage, HeroImage
 )
 from ..serializers import (
     MasterCountrySerializer, MasterDistrictSerializer, MasterStateSerializer, OrganizationSerializer, DonorSerializer, AdvertisementSerializer, 
     PaymentTransactionSerializer, SystemLogSerializer, PublicDonorSearchSerializer,
-    TenantSupportTicketSerializer, ContactMessageSerializer
+    TenantSupportTicketSerializer, ContactMessageSerializer, HeroImageSerializer
 )
 from .public_views import StandardResultsSetPagination
 
@@ -423,6 +423,19 @@ class SuperAdminAdvertisementViewSet(viewsets.ModelViewSet):
         ad.is_active = not ad.is_active
         ad.save()
         return Response({'message': 'Status updated', 'is_active': ad.is_active}, status=status.HTTP_200_OK)
+
+class SuperAdminHeroImageViewSet(viewsets.ModelViewSet):
+    queryset = HeroImage.objects.all().order_by('order', '-created_at')
+    serializer_class = HeroImageSerializer
+    permission_classes = [IsSuperAdmin]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    @action(detail=True, methods=['post'])
+    def toggle(self, request, pk=None):
+        hero = self.get_object()
+        hero.is_active = not hero.is_active
+        hero.save()
+        return Response({'message': 'Hero Image status updated', 'is_active': hero.is_active}, status=status.HTTP_200_OK)
 
 class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
     queryset = ContactMessage.objects.all().order_by('-created_at')

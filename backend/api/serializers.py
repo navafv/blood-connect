@@ -4,7 +4,8 @@ from django.db import transaction
 from .models import (
     ContactMessage, MasterCountry, MasterState, MasterDistrict,
     CustomUser, Organization, Donor, DonationRecord, Advertisement, 
-    PaymentTransaction, SystemLog, TenantSupportTicket, TicketReply
+    PaymentTransaction, SystemLog, TenantSupportTicket, TicketReply,
+    HeroImage
 )
 
 # ==========================================
@@ -153,7 +154,7 @@ class PublicDonorSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Donor
         fields = [
-            'id', 'anonymous_label', 'blood_group', 'gender', 
+            'id', 'full_name', 'phone_number', 'anonymous_label', 'blood_group', 'gender', 
             'organization_name', 'organization_contact',
             'country_name', 'state_name', 'district_name', 
             'last_donation_date', 'is_available_now'
@@ -175,7 +176,7 @@ class DonationRecordSerializer(serializers.ModelSerializer):
 
 
 # ==========================================
-# 5. ADVERTISEMENT SERIALIZER
+# 5. ADVERTISEMENT & HERO IMAGES SERIALIZERS
 # ==========================================
 
 class AdvertisementSerializer(serializers.ModelSerializer):
@@ -183,8 +184,17 @@ class AdvertisementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Advertisement
-        fields = ['id', 'title', 'banner_image', 'portrait_image', 'target_link', 'is_active', 'clicks', 'views', 'created_at', 'expires_at', 'is_expired']
+        fields = [
+            'id', 'title', 'banner_image', 'portrait_image', 'hero_image', 
+            'target_link', 'is_active', 'show_on_hero', 'clicks', 'views', 
+            'created_at', 'expires_at', 'is_expired'
+        ]
         read_only_fields = ['clicks', 'views', 'created_at', 'expires_at', 'is_expired']
+
+class HeroImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HeroImage
+        fields = '__all__'
 
 
 # ==========================================

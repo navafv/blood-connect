@@ -10,10 +10,6 @@ from .models import Donor
 logger = logging.getLogger(__name__)
 
 def send_async_email(subject, plain_message, recipient_list, html_message=None):
-    """
-    Spawns a background thread with an exponential backoff retry loop.
-    This guarantees high delivery rates without needing a Redis queue.
-    """
     def send_email_thread():
         max_retries = 3
         backoff_multiplier = 2

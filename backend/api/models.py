@@ -373,10 +373,12 @@ class DonationRecord(models.Model):
 class Advertisement(models.Model):
     title = models.CharField(max_length=255)
     banner_image = models.ImageField(upload_to='advertisements/banners/', help_text="Landscape banner image")
-    portrait_image = models.ImageField(upload_to='advertisements/portraits/', blank=True, null=True, help_text="Portrait/Square image for home pages")
+    portrait_image = models.ImageField(upload_to='advertisements/portraits/', blank=True, null=True, help_text="Portrait image for home pages")
+    hero_image = models.ImageField(upload_to='advertisements/hero/', blank=True, null=True, help_text='Landscape hero image for homepage slide')
     target_link = models.URLField()
     
     is_active = models.BooleanField(default=True)
+    show_on_hero = models.BooleanField(default=False, help_text="Check to randomly include this ad as the last slide in the Home Page Hero section.")
     clicks = models.PositiveIntegerField(default=0)
     views = models.PositiveIntegerField(default=0)
     
@@ -480,3 +482,20 @@ class TicketReply(models.Model):
     sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+# ==========================================
+# 11. HOME PAGE HERO IMAGES (Super Admin)
+# ==========================================
+
+class HeroImage(models.Model):
+    image = models.ImageField(upload_to='hero_images/', help_text="Image to display in the Home Page Hero Slider")
+    alt_text = models.CharField(max_length=255, blank=True, help_text="Optional description for accessibility/SEO")
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first in the slide order")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', '-created_at']
+
+    def __str__(self):
+        return f"Hero Image {self.id} (Order: {self.order})"

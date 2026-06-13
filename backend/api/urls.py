@@ -20,6 +20,7 @@ from .views import (
     MasterStateListView,
     MasterCountryListView,
     PublicDonorSearchView,
+    PublicHeroContentView,
     MasterDistrictListView,
     ActiveAdvertisementView,
     ContactMessageCreateView,
@@ -36,6 +37,7 @@ from .views import (
     SuperAdminPaymentViewSet,
     SuperAdminCountryViewSet,
     SuperAdminDistrictViewSet,
+    SuperAdminHeroImageViewSet,
     SuperAdminSystemLogListView,
     SuperAdminDashboardStatsView,
     SuperAdminOrganizationListView,
@@ -60,6 +62,7 @@ router.register(r'superadmin/ads', SuperAdminAdvertisementViewSet, basename='sup
 router.register(r'superadmin/payments', SuperAdminPaymentViewSet, basename='superadmin-payments')
 router.register(r'superadmin/locations/states', SuperAdminStateViewSet, basename='superadmin-states')
 router.register(r'superadmin/messages', SuperAdminContactMessageViewSet, basename='superadmin-messages')
+router.register(r'superadmin/hero-images', SuperAdminHeroImageViewSet, basename='superadmin-hero-images')
 router.register(r'superadmin/locations/countries', SuperAdminCountryViewSet, basename='superadmin-countries')
 router.register(r'superadmin/locations/districts', SuperAdminDistrictViewSet, basename='superadmin-districts')
 router.register(r'superadmin/archived-donors', SuperAdminArchivedDonorViewSet, basename='superadmin-archived-donors')
@@ -112,6 +115,7 @@ urlpatterns = [
     # ==========================================
     path('public/contact/', ContactMessageCreateView.as_view(), name='public-contact'),
     path('public/advertisements/', ActiveAdvertisementView.as_view(), name='active-ads'),
+    path('public/hero-content/', PublicHeroContentView.as_view(), name='public-hero-content'),
     path('public/ads/<int:pk>/click/', AdClickRedirectView.as_view(), name='public-ad-click'),
     path('public/ads/<int:pk>/view/', AdViewTrackingView.as_view(), name='public-ad-view'),
     path('public/donors/search/', PublicDonorSearchView.as_view(), name='public-donor-search'),

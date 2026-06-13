@@ -23,7 +23,7 @@ export function Navbar() {
       aria-label="Main Navigation"
       className="sticky top-0 z-50 w-full border-b transition-all duration-300 bg-white/80 border-slate-200 shadow-sm backdrop-blur-xl dark:bg-slate-900/70 dark:border-slate-800/80"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[10vh]">
         <div className="flex h-16 sm:h-20 items-center justify-between">
           {/* Brand Identity */}
           <Link

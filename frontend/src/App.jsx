@@ -57,6 +57,9 @@ const ManageLocations = lazy(
   () => import("./pages/superadmin/ManageLocations"),
 );
 const ManageAds = lazy(() => import("./pages/superadmin/ManageAds"));
+const ManageHeroImages = lazy(
+  () => import("./pages/superadmin/ManageHeroImages"),
+); // NEW: Hero Images Page
 const ManageMessages = lazy(() => import("./pages/superadmin/ManageMessages"));
 const SupportTickets = lazy(() => import("./pages/superadmin/SupportTickets"));
 const ManageArchivedDonors = lazy(
@@ -147,6 +150,11 @@ function App() {
                   />
                   <Route path="locations" element={<ManageLocations />} />
                   <Route path="ads" element={<ManageAds />} />
+                  <Route
+                    path="hero-images"
+                    element={<ManageHeroImages />}
+                  />{" "}
+                  {/* NEW: Route Registration */}
                   <Route path="messages" element={<ManageMessages />} />
                   <Route path="support" element={<SupportTickets />} />
                   <Route path="archives" element={<ManageArchivedDonors />} />

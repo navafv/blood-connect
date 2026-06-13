@@ -19,6 +19,7 @@ import {
   Activity,
   Sun,
   Moon,
+  MonitorPlay, // NEW: Imported icon for Hero Images
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "../ui/Button";
@@ -70,6 +71,11 @@ export function SuperAdminLayout() {
       icon: MapPin,
     },
     { name: "Advertisement Manager", path: "/superadmin/ads", icon: Megaphone },
+    {
+      name: "Hero Image Slider",
+      path: "/superadmin/hero-images",
+      icon: MonitorPlay,
+    }, // NEW LINK ADDED
     { name: "Support Inbox", path: "/superadmin/messages", icon: Mail },
     {
       name: "Tenant Support Tickets",

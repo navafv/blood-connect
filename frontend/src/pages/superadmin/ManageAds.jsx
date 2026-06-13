@@ -9,7 +9,6 @@ import {
   ExternalLink,
   MousePointerClick,
   Calendar,
-  UploadCloud,
   Play,
   Pause,
   Clock,
@@ -18,10 +17,14 @@ import {
   RefreshCw,
   Eye,
   Image as ImageIcon,
+  MonitorPlay,
+  ArrowLeft,
+  Settings,
+  ImagePlus,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import { Card } from "../../components/ui/Card";
+import { Card, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
@@ -33,22 +36,29 @@ export default function ManageAds() {
   const queryClient = useQueryClient();
   const bannerInputRef = useRef(null);
   const portraitInputRef = useRef(null);
+  const heroInputRef = useRef(null);
 
   // --- UI Transition States ---
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  // 'table' | 'form'
+  const [viewState, setViewState] = useState("table");
   const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null);
 
   // --- Payload States ---
   const [bannerPreview, setBannerPreview] = useState(null);
   const [portraitPreview, setPortraitPreview] = useState(null);
+  const [heroPreview, setHeroPreview] = useState(null);
+
   const [formData, setFormData] = useState({
     title: "",
     target_link: "",
     duration_months: "1",
     banner_image: null,
     portrait_image: null,
+    hero_image: null,
+    show_on_hero: false,
   });
+
   const [extendMonths, setExtendMonths] = useState("1");
 
   const apiBase = import.meta.env.PROD
@@ -76,11 +86,14 @@ export default function ManageAds() {
       const payload = new FormData();
       payload.append("title", formData.title);
       payload.append("target_link", formData.target_link);
+      payload.append("show_on_hero", formData.show_on_hero);
 
       if (formData.banner_image)
         payload.append("banner_image", formData.banner_image);
       if (formData.portrait_image)
         payload.append("portrait_image", formData.portrait_image);
+      if (formData.hero_image)
+        payload.append("hero_image", formData.hero_image);
 
       if (selectedAd) {
         return api.patch(`/superadmin/ads/${selectedAd.id}/`, payload, {
@@ -95,7 +108,7 @@ export default function ManageAds() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["superadmin-ads"] });
-      closeFormModal();
+      closeForm();
       toast.success(selectedAd ? "Campaign updated." : "Campaign launched.");
     },
     onError: (err) => {
@@ -135,7 +148,7 @@ export default function ManageAds() {
   });
 
   // --- Action Handlers ---
-  const openCreateModal = () => {
+  const openCreateForm = () => {
     setSelectedAd(null);
     setFormData({
       title: "",
@@ -143,21 +156,29 @@ export default function ManageAds() {
       duration_months: "1",
       banner_image: null,
       portrait_image: null,
+      hero_image: null,
+      show_on_hero: false,
     });
     setBannerPreview(null);
     setPortraitPreview(null);
+    setHeroPreview(null);
+
     if (bannerInputRef.current) bannerInputRef.current.value = "";
     if (portraitInputRef.current) portraitInputRef.current.value = "";
-    setIsFormModalOpen(true);
+    if (heroInputRef.current) heroInputRef.current.value = "";
+
+    setViewState("form");
   };
 
-  const openEditModal = (ad) => {
+  const openEditForm = (ad) => {
     setSelectedAd(ad);
     setFormData({
       title: ad.title,
       target_link: ad.target_link,
+      show_on_hero: ad.show_on_hero || false,
       banner_image: null,
       portrait_image: null,
+      hero_image: null,
     });
 
     setBannerPreview(
@@ -167,6 +188,7 @@ export default function ManageAds() {
           : `${baseURL}${ad.banner_image}`
         : null,
     );
+
     setPortraitPreview(
       ad.portrait_image
         ? ad.portrait_image.startsWith("http")
@@ -175,18 +197,30 @@ export default function ManageAds() {
         : null,
     );
 
+    setHeroPreview(
+      ad.hero_image
+        ? ad.hero_image.startsWith("http")
+          ? ad.hero_image
+          : `${baseURL}${ad.hero_image}`
+        : null,
+    );
+
     if (bannerInputRef.current) bannerInputRef.current.value = "";
     if (portraitInputRef.current) portraitInputRef.current.value = "";
-    setIsFormModalOpen(true);
+    if (heroInputRef.current) heroInputRef.current.value = "";
+
+    setViewState("form");
   };
 
-  const closeFormModal = () => {
-    setIsFormModalOpen(false);
+  const closeForm = () => {
+    setViewState("table");
     setSelectedAd(null);
     if (bannerPreview && !bannerPreview.startsWith("http"))
       URL.revokeObjectURL(bannerPreview);
     if (portraitPreview && !portraitPreview.startsWith("http"))
       URL.revokeObjectURL(portraitPreview);
+    if (heroPreview && !heroPreview.startsWith("http"))
+      URL.revokeObjectURL(heroPreview);
   };
 
   const handleImageChange = (e, type) => {
@@ -195,9 +229,12 @@ export default function ManageAds() {
       if (type === "banner") {
         setFormData({ ...formData, banner_image: file });
         setBannerPreview(URL.createObjectURL(file));
-      } else {
+      } else if (type === "portrait") {
         setFormData({ ...formData, portrait_image: file });
         setPortraitPreview(URL.createObjectURL(file));
+      } else if (type === "hero") {
+        setFormData({ ...formData, hero_image: file });
+        setHeroPreview(URL.createObjectURL(file));
       }
     }
   };
@@ -210,6 +247,338 @@ export default function ManageAds() {
     });
   };
 
+  // ============================================================================
+  // RENDER: FORM VIEW (FULL PAGE)
+  // ============================================================================
+  if (viewState === "form") {
+    return (
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-right-8 duration-500 pb-24 transition-colors bg-slate-50 dark:bg-slate-950">
+        {/* Form Header */}
+        <div className="flex items-center gap-4 border-b pb-6 border-slate-200 dark:border-slate-800/80">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={closeForm}
+            className="shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {selectedAd ? "Edit Campaign Assets" : "Launch New Campaign"}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Upload media formats and configure targeting.
+            </p>
+          </div>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveMutation.mutate();
+          }}
+          className="space-y-8"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* LEFT COLUMN: SETTINGS (4 columns wide on large screens) */}
+            <div className="lg:col-span-5 space-y-6">
+              <Card className="border-slate-200 dark:border-slate-800 shadow-lg">
+                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                    <Settings className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-slate-900 dark:text-white">
+                    Campaign Details
+                  </h3>
+                </div>
+                <CardContent className="p-6 space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                      Campaign Title <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      required
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      placeholder="e.g., Summer Blood Drive 2026"
+                      className="bg-slate-50 dark:bg-slate-950/50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                      Target URL (On Click){" "}
+                      <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      required
+                      type="url"
+                      value={formData.target_link}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          target_link: e.target.value,
+                        })
+                      }
+                      placeholder="https://sponsor-website.com"
+                      className="bg-slate-50 dark:bg-slate-950/50"
+                    />
+                  </div>
+
+                  {!selectedAd && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                        Initial Time Period{" "}
+                        <span className="text-rose-500">*</span>
+                      </label>
+                      <Select
+                        value={formData.duration_months}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            duration_months: e.target.value,
+                          })
+                        }
+                        className="bg-slate-50 dark:bg-slate-950/50"
+                      >
+                        <option value="1">1 Month</option>
+                        <option value="3">3 Months</option>
+                        <option value="6">6 Months</option>
+                        <option value="12">1 Year</option>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-purple-50/50 border border-purple-100 dark:bg-purple-500/5 dark:border-purple-500/10">
+                      <input
+                        type="checkbox"
+                        id="show_on_hero"
+                        checked={formData.show_on_hero}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            show_on_hero: e.target.checked,
+                          })
+                        }
+                        className="mt-1 h-5 w-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-800 dark:checked:bg-purple-500"
+                      />
+                      <label
+                        htmlFor="show_on_hero"
+                        className="text-sm font-medium text-slate-800 dark:text-slate-200 cursor-pointer flex-1"
+                      >
+                        Show on Public Hero Slider
+                        <p className="text-[11px] font-normal text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                          Requires a Hi-Res Hero image upload. This will inject
+                          the ad into the main page carousel rotation.
+                        </p>
+                      </label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* RIGHT COLUMN: MEDIA UPLOADS (7 columns wide) */}
+            <div className="lg:col-span-7 space-y-6">
+              <Card className="border-slate-200 dark:border-slate-800 shadow-lg">
+                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                    <ImagePlus className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-slate-900 dark:text-white">
+                    Media Assets
+                  </h3>
+                </div>
+
+                <CardContent className="p-6 space-y-8">
+                  {/* Banner & Portrait Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    {/* Banner */}
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
+                        <span>
+                          Standard Banner{" "}
+                          <span className="text-rose-500">*</span>
+                        </span>
+                        <Badge variant="outline" className="text-[9px]">
+                          Landscape
+                        </Badge>
+                      </label>
+                      <div
+                        onClick={() => bannerInputRef.current?.click()}
+                        className="border-2 border-dashed rounded-xl p-2 text-center cursor-pointer relative overflow-hidden h-40 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-rose-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-rose-500/50 transition-all"
+                      >
+                        {bannerPreview ? (
+                          <>
+                            <img
+                              src={bannerPreview}
+                              alt="Preview"
+                              className="absolute inset-0 w-full h-full object-contain p-2"
+                            />
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/70 dark:bg-black/70 backdrop-blur-sm transition-all">
+                              <span className="text-xs font-bold flex items-center text-slate-900 dark:text-white">
+                                <Edit className="h-4 w-4 mr-1.5" /> Replace
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="h-8 w-8 mb-2 text-slate-400 group-hover:text-rose-500 transition-colors" />
+                            <span className="text-[11px] font-medium text-slate-500">
+                              1200 × 400px (Max 5MB)
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        ref={bannerInputRef}
+                        onChange={(e) => handleImageChange(e, "banner")}
+                      />
+                    </div>
+
+                    {/* Portrait */}
+                    <div className="sm:col-span-1 space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
+                        <span>Sidebar</span>
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20"
+                        >
+                          Portrait
+                        </Badge>
+                      </label>
+                      <div className="flex justify-center">
+                        <div
+                          onClick={() => portraitInputRef.current?.click()}
+                          className="border-2 border-dashed rounded-xl p-2 text-center cursor-pointer relative overflow-hidden h-40 w-full sm:w-32 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-blue-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-blue-500/50 transition-all"
+                        >
+                          {portraitPreview ? (
+                            <>
+                              <img
+                                src={portraitPreview}
+                                alt="Preview"
+                                className="absolute inset-0 w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/70 dark:bg-black/70 backdrop-blur-sm transition-all text-center">
+                                <span className="text-[10px] leading-tight font-bold flex flex-col items-center text-slate-900 dark:text-white">
+                                  <Edit className="h-4 w-4 mb-1" /> Replace
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <ImageIcon className="h-6 w-6 mb-2 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                              <span className="text-[10px] font-medium text-slate-500 leading-tight">
+                                800 × 1200px
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        ref={portraitInputRef}
+                        onChange={(e) => handleImageChange(e, "portrait")}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Hero Upload (Full Width) */}
+                  <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
+                      <span>Hero Slider Background (Optional)</span>
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20"
+                      >
+                        Hi-Res Landscape
+                      </Badge>
+                    </label>
+                    <div
+                      onClick={() => heroInputRef.current?.click()}
+                      className="border-2 border-dashed rounded-xl p-2 text-center cursor-pointer relative overflow-hidden h-48 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-purple-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-purple-500/50 transition-all"
+                    >
+                      {heroPreview ? (
+                        <>
+                          <img
+                            src={heroPreview}
+                            alt="Hero Preview"
+                            className="absolute inset-0 w-full h-full object-cover opacity-90"
+                          />
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/70 dark:bg-black/70 backdrop-blur-sm transition-all">
+                            <span className="text-xs font-bold flex items-center text-slate-900 dark:text-white">
+                              <Edit className="h-4 w-4 mr-1.5" /> Replace Hero
+                              Banner
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <MonitorPlay className="h-10 w-10 mb-3 text-slate-400 group-hover:text-purple-500 transition-colors" />
+                          <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                            Upload 1920 × 1080px Image
+                          </span>
+                          <span className="text-xs text-slate-500 mt-1">
+                            Required if "Show on Public Hero Slider" is checked.
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={heroInputRef}
+                      onChange={(e) => handleImageChange(e, "hero")}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Form Actions Footer */}
+          <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-200 dark:border-slate-800">
+            <Button type="button" variant="ghost" size="lg" onClick={closeForm}>
+              Discard Changes
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="min-w-[200px] shadow-lg"
+              disabled={
+                saveMutation.isPending ||
+                (!selectedAd && !formData.banner_image)
+              }
+            >
+              {saveMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Saving
+                  Assets...
+                </>
+              ) : (
+                "Save & Publish Campaign"
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // RENDER: TABLE VIEW (DEFAULT)
+  // ============================================================================
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
@@ -228,7 +597,7 @@ export default function ManageAds() {
         <Button
           variant="primary"
           className="gap-2 shadow-md"
-          onClick={openCreateModal}
+          onClick={openCreateForm}
         >
           <Plus className="h-4 w-4" /> Create Campaign
         </Button>
@@ -293,15 +662,21 @@ export default function ManageAds() {
                           />
                         </div>
                         <div className="h-12 w-20 shrink-0 rounded-lg overflow-hidden border shadow-sm transition-colors duration-300 bg-slate-100 border-slate-200 dark:bg-slate-950 dark:border-slate-700/50 relative">
-                          <img
-                            src={
-                              ad.portrait_image?.startsWith("http")
-                                ? ad.portrait_image
-                                : `${baseURL}${ad.portrait_image}`
-                            }
-                            alt={ad.title}
-                            className="h-full w-full object-cover"
-                          />
+                          {ad.portrait_image ? (
+                            <img
+                              src={
+                                ad.portrait_image?.startsWith("http")
+                                  ? ad.portrait_image
+                                  : `${baseURL}${ad.portrait_image}`
+                              }
+                              alt={ad.title}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-[8px] text-slate-400 font-bold uppercase">
+                              No Portrait
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="font-bold text-sm transition-colors duration-300 text-slate-900 dark:text-white">
@@ -315,6 +690,12 @@ export default function ManageAds() {
                           >
                             Target URL <ExternalLink className="h-3 w-3" />
                           </a>
+
+                          {ad.show_on_hero && (
+                            <div className="mt-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20">
+                              <MonitorPlay className="h-3 w-3" /> Hero Slider Ad
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -393,7 +774,7 @@ export default function ManageAds() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => openEditModal(ad)}
+                          onClick={() => openEditForm(ad)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -418,214 +799,7 @@ export default function ManageAds() {
         </div>
       </Card>
 
-      {/* --- CREATE / EDIT MODAL --- */}
-      <Modal
-        isOpen={isFormModalOpen}
-        onClose={closeFormModal}
-        title={selectedAd ? "Edit Advertisement" : "Launch Campaign"}
-        size="2xl"
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            saveMutation.mutate();
-          }}
-          className="space-y-6"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 1. Banner Upload (Landscape) */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
-                <span>
-                  Banner Image <span className="text-rose-500">*</span>
-                </span>
-                <Badge variant="outline" className="text-[9px]">
-                  Landscape
-                </Badge>
-              </label>
-              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 pb-1">
-                Recommended:{" "}
-                <span className="font-mono text-slate-700 dark:text-slate-300">
-                  1200 × 400px
-                </span>{" "}
-                (Max 5MB)
-              </p>
-              <div
-                onClick={() => bannerInputRef.current?.click()}
-                className="border-2 border-dashed rounded-xl p-2 text-center cursor-pointer relative overflow-hidden h-36 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-rose-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-rose-500/50 transition-all"
-              >
-                {bannerPreview ? (
-                  <>
-                    <img
-                      src={bannerPreview}
-                      alt="Banner Preview"
-                      className="absolute inset-0 w-full h-full object-contain p-2"
-                    />
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm transition-all">
-                      <span className="text-xs font-bold flex items-center text-slate-900 dark:text-white">
-                        <Edit className="h-4 w-4 mr-1.5" /> Replace Landscape
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="h-8 w-8 mb-2 text-slate-400 group-hover:text-rose-500 transition-colors" />
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      Upload Landscape Banner
-                    </span>
-                  </>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={bannerInputRef}
-                onChange={(e) => handleImageChange(e, "banner")}
-              />
-            </div>
-
-            {/* 2. Portrait Upload (Vertical) */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
-                <span>Portrait Image</span>
-                <Badge
-                  variant="outline"
-                  className="text-[9px] bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20"
-                >
-                  Vertical
-                </Badge>
-              </label>
-              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 pb-1">
-                Recommended:{" "}
-                <span className="font-mono text-slate-700 dark:text-slate-300">
-                  800 × 1200px
-                </span>{" "}
-                (Max 5MB)
-              </p>
-
-              {/* Flex container to center the strict vertical box */}
-              <div className="flex w-full justify-center lg:justify-start">
-                <div
-                  onClick={() => portraitInputRef.current?.click()}
-                  className="border-2 border-dashed rounded-xl p-2 text-center cursor-pointer relative overflow-hidden h-36 w-24 flex flex-col items-center justify-center group bg-slate-50 border-slate-300 hover:border-blue-400 dark:bg-slate-950/50 dark:border-slate-700 dark:hover:border-blue-500/50 transition-all"
-                >
-                  {portraitPreview ? (
-                    <>
-                      <img
-                        src={portraitPreview}
-                        alt="Portrait Preview"
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center bg-white/60 dark:bg-black/60 backdrop-blur-sm transition-all text-center">
-                        <span className="text-[10px] leading-tight font-bold flex flex-col items-center text-slate-900 dark:text-white">
-                          <Edit className="h-4 w-4 mb-1" /> Replace
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="h-6 w-6 mb-2 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                      <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 leading-tight">
-                        Upload Vertical
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={portraitInputRef}
-                onChange={(e) => handleImageChange(e, "portrait")}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2 pt-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Campaign Title <span className="text-rose-500">*</span>
-            </label>
-            <Input
-              required
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              placeholder="e.g., Summer Blood Drive 2026"
-              className="bg-white dark:bg-slate-950/50 focus:ring-rose-500/20"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Target URL (On Click) <span className="text-rose-500">*</span>
-            </label>
-            <Input
-              required
-              type="url"
-              value={formData.target_link}
-              onChange={(e) =>
-                setFormData({ ...formData, target_link: e.target.value })
-              }
-              placeholder="https://sponsor-website.com"
-              className="bg-white dark:bg-slate-950/50 focus:ring-rose-500/20"
-            />
-          </div>
-
-          {!selectedAd && (
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Initial Time Period <span className="text-rose-500">*</span>
-              </label>
-              <Select
-                value={formData.duration_months}
-                onChange={(e) =>
-                  setFormData({ ...formData, duration_months: e.target.value })
-                }
-                className="bg-white dark:bg-slate-950/50 focus:ring-rose-500/20"
-              >
-                <option value="1">1 Month</option>
-                <option value="3">3 Months</option>
-                <option value="6">6 Months</option>
-                <option value="12">1 Year</option>
-              </Select>
-            </div>
-          )}
-
-          <div className="pt-6 border-t flex justify-end gap-3 border-slate-200 dark:border-slate-800">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={closeFormModal}
-              className="text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
-            >
-              Abort
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              className="min-w-40 shadow-md hover:shadow-lg transition-all dark:shadow-lg"
-              disabled={
-                saveMutation.isPending ||
-                (!selectedAd && !formData.banner_image)
-              }
-            >
-              {saveMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-                  Processing...
-                </>
-              ) : (
-                "Save Campaign"
-              )}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* --- EXTEND DURATION MODAL --- */}
+      {/* --- EXTEND DURATION MODAL (Kept as modal because it's tiny) --- */}
       <Modal
         isOpen={isExtendModalOpen}
         onClose={() => setIsExtendModalOpen(false)}

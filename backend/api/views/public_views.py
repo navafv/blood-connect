@@ -8,10 +8,10 @@ from django.shortcuts import get_object_or_404
 from django.db.models import F
 from django.utils import timezone
 
-from ..models import MasterCountry, MasterState, MasterDistrict, Donor, Advertisement, ContactMessage, Organization, DonationRecord
+from ..models import MasterCountry, MasterState, MasterDistrict, Donor, Advertisement, ContactMessage, Organization, DonationRecord, HeroImage
 from ..serializers import (
     MasterCountrySerializer, MasterStateSerializer, MasterDistrictSerializer,
-    DonorSerializer, AdvertisementSerializer, ContactMessageSerializer, OrganizationSerializer, PublicDonorSearchSerializer
+    AdvertisementSerializer, ContactMessageSerializer, OrganizationSerializer, PublicDonorSearchSerializer, HeroImageSerializer
 )
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -64,6 +64,7 @@ class PublicDonorSearchView(generics.ListAPIView):
         state = self.request.query_params.get('state')
         district = self.request.query_params.get('district')
         blood_group = self.request.query_params.get('blood_group')
+        organization_id = self.request.query_params.get('organization')
 
         # 3. Dynamically chain filters based on provided parameters
         if country:
@@ -74,6 +75,8 @@ class PublicDonorSearchView(generics.ListAPIView):
             queryset = queryset.filter(district__name__iexact=district)
         if blood_group:
             queryset = queryset.filter(blood_group__iexact=blood_group)
+        if organization_id:
+            queryset = queryset.filter(organization_id=organization_id)
 
         return queryset
 
@@ -87,6 +90,22 @@ class ActiveAdvertisementView(generics.ListAPIView):
             expires_at__gt=timezone.now()
         ).order_by('-created_at')
  
+class PublicHeroContentView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        hero_images = HeroImage.objects.filter(is_active=True).order_by('order', '-created_at')
+        hero_ads = Advertisement.objects.filter(
+            is_active=True, 
+            show_on_hero=True, 
+            expires_at__gt=timezone.now()
+        ).order_by('?') # Order randomly to easily pick one on the frontend if needed
+
+        return Response({
+            "hero_images": HeroImageSerializer(hero_images, many=True, context={'request': request}).data,
+            "hero_ads": AdvertisementSerializer(hero_ads, many=True, context={'request': request}).data
+        }, status=status.HTTP_200_OK)
+ 
 class ContactMessageCreateView(generics.CreateAPIView):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
@@ -94,7 +113,6 @@ class ContactMessageCreateView(generics.CreateAPIView):
     throttle_classes = [AnonRateThrottle]
 
 class AdViewTrackingView(APIView):
-    """Silent endpoint to increment ad impressions"""
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, pk):

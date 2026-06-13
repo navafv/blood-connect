@@ -1,5 +1,7 @@
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { useQuery } from "@tanstack/react-query";
 import {
   Search,
   Shield,
@@ -9,12 +11,66 @@ import {
   Activity,
   Building2,
 } from "lucide-react";
+
+import api from "../../lib/axios";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { AdBanner } from "../../components/ads/AdBanner";
 import { Badge } from "../../components/ui/Badge";
 
 export default function Home() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeAdIndex, setActiveAdIndex] = useState(0);
+  const viewedAds = useRef(new Set());
+
+  // --- 1. Fetch Dynamic Hero Content ---
+  const { data: heroData, isLoading } = useQuery({
+    queryKey: ["heroContent"],
+    queryFn: async () => {
+      const res = await api.get("/public/hero-content/");
+      return res.data;
+    },
+  });
+
+  const images = heroData?.hero_images || [];
+  const ads = heroData?.hero_ads || [];
+  const totalSlides = images.length + (ads.length > 0 ? 1 : 0);
+
+  const apiBase = import.meta.env.PROD
+    ? import.meta.env.VITE_API_BASE_URL || "https://api.bloodonate.org/api"
+    : "http://localhost:8000/api";
+  const baseURL = apiBase.replace(/\/api\/?$/, "");
+
+  // --- 2. Auto-Sliding & Random Ad Engine ---
+  useEffect(() => {
+    if (totalSlides <= 1) return;
+
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => {
+        const next = (prev + 1) % totalSlides;
+
+        // When we cycle back to the first slide, pick a NEW random ad for the end of this cycle
+        if (next === 0 && ads.length > 0) {
+          setActiveAdIndex(Math.floor(Math.random() * ads.length));
+        }
+        return next;
+      });
+    }, 6000); // 6 seconds per slide
+
+    return () => clearInterval(timer);
+  }, [totalSlides, ads.length]);
+
+  // --- 3. Impression Tracking for the Ad Slide ---
+  useEffect(() => {
+    if (currentSlide === images.length && ads.length > 0) {
+      const currentAdId = ads[activeAdIndex].id;
+      if (!viewedAds.current.has(currentAdId)) {
+        api.post(`/public/ads/${currentAdId}/view/`).catch(() => {});
+        viewedAds.current.add(currentAdId);
+      }
+    }
+  }, [currentSlide, images.length, ads, activeAdIndex]);
+
   const features = [
     {
       icon: Clock,
@@ -44,7 +100,6 @@ export default function Home() {
 
   return (
     <>
-      {/* SEO Configuration */}
       <Helmet>
         <title>Bloodonate | Find Blood Donors Instantly & Save Lives</title>
         <meta
@@ -56,7 +111,6 @@ export default function Home() {
           content="blood donation, find blood donor, blood registry, local blood donors, emergency blood search, donate blood, verified blood donors"
         />
 
-        {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta
           property="og:title"
@@ -72,7 +126,6 @@ export default function Home() {
           content="https://www.bloodonate.org/og-image.jpg"
         />
 
-        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
@@ -86,100 +139,144 @@ export default function Home() {
           name="twitter:image"
           content="https://www.bloodonate.org/twitter-image.jpg"
         />
-
-        {/* Canonical Link */}
         <link rel="canonical" href="https://www.bloodonate.org/" />
       </Helmet>
 
       <div className="flex flex-col min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 overflow-hidden">
-        {/* --- Hero Composition --- */}
-        <section className="relative px-4 pt-24 pb-20 md:pt-32 md:pb-24 lg:pt-32 lg:pb-32 overflow-hidden border-b border-transparent dark:border-slate-800/50">
-          <div
-            className="absolute top-0 left-1/4 w-[800px] h-[500px] bg-rose-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-3000 transition-colors dark:bg-rose-600/15"
-            aria-hidden="true"
-          />
-
-          <div className="container mx-auto max-w-7xl relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-              {/* Left Column: Copy & Actions */}
-              <div className="text-center lg:text-left animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium mb-8 shadow-sm transition-colors duration-300 bg-white border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400 dark:shadow-[0_0_15px_rgba(225,29,72,0.1)]">
-                  <HeartHandshake className="h-4 w-4" />
-                  <span>Connecting Donors with Those in Need</span>
-                </div>
-
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-8 leading-tight transition-colors duration-300 text-slate-900 dark:text-white">
-                  Find a Blood Donor. <br className="hidden lg:block" />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r transition-colors duration-300 from-rose-500 to-rose-700 dark:from-rose-400 dark:to-rose-600">
-                    Save a Life Today.
-                  </span>
-                </h1>
-
-                <p className="text-lg md:text-xl max-w-2xl mx-auto lg:mx-0 mb-12 leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
-                  A centralized, real-time registry maintained by trusted
-                  hospitals, blood banks, clinics, and NGOs. Find eligible blood
-                  donors in your area instantly.
-                </p>
-
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                  <Link to="/search" className="w-full sm:w-auto">
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      className="w-full text-base gap-2 px-8 py-6 rounded-full shadow-md hover:shadow-lg transition-all duration-300 dark:shadow-rose-glow dark:hover:shadow-rose-glow-lg"
-                    >
-                      <Search className="h-5 w-5" aria-hidden="true" />
-                      Find Donors Now
-                    </Button>
-                  </Link>
-                  <Link to="/register-org" className="w-full sm:w-auto">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="w-full text-base gap-2 px-8 py-6 rounded-full backdrop-blur-md transition-all duration-300 bg-white/50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:bg-slate-900/50 dark:border-slate-700 dark:hover:bg-slate-800 dark:text-slate-300 dark:hover:text-white"
-                    >
-                      Register Your Organization
-                      <ArrowRight className="h-5 w-5" aria-hidden="true" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Right Column: Visual Bento Box & Dynamic Ad */}
-              <div className="relative flex flex-col lg:flex-row justify-center lg:justify-end items-center gap-4 sm:gap-6 animate-in fade-in slide-in-from-right-8 duration-1000 delay-200 mt-8 lg:mt-0 w-full lg:w-auto">
-                {/* Visual Column 1: Client Images */}
-                <div className="flex flex-row lg:flex-col gap-4 sm:gap-6 w-full lg:w-1/2 lg:max-w-[280px]">
+        {/* ========================================================= */}
+        {/* SECTION 1: Full-Screen Edge-to-Edge Hero Carousel         */}
+        {/* ========================================================= */}
+        <section className="relative w-full h-[60vh] lg:h-[90vh] bg-slate-900 overflow-hidden group">
+          {isLoading ? (
+            <div className="absolute inset-0 animate-pulse bg-slate-800" />
+          ) : totalSlides === 0 ? (
+            <img
+              src="/Donor_holding_a_blood_drop.jpg"
+              alt="Fallback"
+              className="w-full h-full object-cover opacity-80"
+            />
+          ) : (
+            <>
+              {/* 1. Render Admin Uploaded Images */}
+              {images.map((img, idx) => (
+                <div
+                  key={img.id}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                    currentSlide === idx
+                      ? "opacity-100 z-10"
+                      : "opacity-0 z-0 pointer-events-none"
+                  }`}
+                >
                   <img
-                    src="/Donor_holding_a_blood_drop.jpg"
-                    alt="Donor holding a blood drop"
-                    className="rounded-3xl object-cover h-40 sm:h-56 lg:h-64 w-1/2 lg:w-full shadow-2xl border-4 border-white/60 dark:border-slate-800/60 transition-transform duration-500 hover:scale-[1.02]"
+                    src={`${img.image}`}
+                    alt={img.alt_text || "Hero visual"}
+                    fetchPriority={idx === 0 ? "high" : "auto"} // LCP Optimization
+                    className={`w-full h-full object-cover transition-transform duration-[6000ms] ease-linear ${
+                      currentSlide === idx ? "scale-105" : "scale-100"
+                    }`}
                   />
-                  <img
-                    src="/Blood_Donation_Process.jpg"
-                    alt="Blood Donation Process"
-                    className="rounded-3xl object-cover h-40 sm:h-56 lg:h-[320px] w-1/2 lg:w-full shadow-2xl border-4 border-white/60 dark:border-slate-800/60 transition-transform duration-500 hover:scale-[1.02]"
-                  />
+                  {/* Subtle overlay for depth */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />
                 </div>
+              ))}
 
-                {/* Visual Column 2: Sponsor Ads (Responsive Formatting) */}
-                <div className="flex flex-col gap-4 sm:gap-6 w-full lg:w-1/2 lg:max-w-[280px] lg:pt-24">
-                  {/* Mobile/Tablet Landscape Ad */}
-                  <div className="block lg:hidden rounded-3xl shadow-xl overflow-hidden border-4 border-white/60 dark:border-slate-800/60 bg-slate-100 dark:bg-slate-900 relative transition-transform duration-500 hover:-translate-y-1">
-                    <AdBanner
-                      format="banner"
-                      className="!h-32 sm:!h-48 !w-full !rounded-none !border-0 !shadow-none"
+              {/* 2. Render the Random Ad as the Last Slide */}
+              {ads.length > 0 && (
+                <div
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                    currentSlide === images.length
+                      ? "opacity-100 z-10"
+                      : "opacity-0 z-0 pointer-events-none"
+                  }`}
+                >
+                  <a
+                    href={`${baseURL}/api/public/ads/${ads[activeAdIndex].id}/click/`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full h-full"
+                  >
+                    <img
+                      src={`${ads[activeAdIndex].hero_image || ads[activeAdIndex].banner_image}`}
+                      alt={ads[activeAdIndex].title}
+                      className={`w-full h-full object-cover transition-transform duration-[6000ms] ease-linear ${
+                        currentSlide === images.length
+                          ? "scale-105"
+                          : "scale-100"
+                      }`}
                     />
-                  </div>
-
-                  {/* Desktop Portrait Ad */}
-                  <div className="hidden lg:block rounded-3xl shadow-2xl overflow-hidden border-4 border-white/60 dark:border-slate-800/60 bg-slate-100 dark:bg-slate-900 relative h-[420px] transition-transform duration-500 hover:-translate-y-2">
-                    <AdBanner
-                      format="portrait"
-                      className="!h-full !w-full !rounded-none !border-0 !shadow-none"
-                    />
-                  </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent transition-opacity duration-300" />
+                    <div className="absolute top-6 right-6 md:top-8 md:right-8 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded text-xs font-bold text-white/90 uppercase tracking-widest border border-white/10 shadow-lg z-20">
+                      Sponsored
+                    </div>
+                  </a>
                 </div>
-              </div>
+              )}
+
+              {/* 3. Carousel Navigation Dots */}
+              {totalSlides > 1 && (
+                <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3 z-20">
+                  {Array.from({ length: totalSlides }).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentSlide(idx)}
+                      aria-label={`Go to slide ${idx + 1}`}
+                      className={`h-2 rounded-full transition-all duration-500 ease-in-out shadow-sm ${
+                        currentSlide === idx
+                          ? "w-10 bg-rose-600 border border-rose-500"
+                          : "w-3 bg-white/60 hover:bg-white/90 border border-white/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
+        {/* ========================================================= */}
+        {/* SECTION 2: Text Hero & Call to Action (Below Slider)      */}
+        {/* ========================================================= */}
+        <section className="relative px-4 py-20 md:py-28 lg:py-32 overflow-hidden border-b border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-950">
+          <div className="container mx-auto max-w-4xl relative z-10 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full border text-sm font-medium mb-8 shadow-sm transition-colors duration-300 bg-slate-50 border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400 dark:shadow-[0_0_15px_rgba(225,29,72,0.1)]">
+              <HeartHandshake className="h-4 w-4" />
+              <span>Connecting Donors with Those in Need</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-8 leading-tight transition-colors duration-300 text-slate-900 dark:text-white">
+              Find a Blood Donor. <br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r transition-colors duration-300 from-rose-500 to-rose-700 dark:from-rose-400 dark:to-rose-600">
+                Save a Life Today.
+              </span>
+            </h1>
+
+            <p className="text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
+              A centralized, real-time registry maintained by trusted hospitals,
+              blood banks, clinics, and NGOs. Find eligible blood donors in your
+              area instantly.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/search" className="w-full sm:w-auto">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full text-base gap-2 px-8 py-6 rounded-full shadow-md hover:shadow-lg transition-all duration-300 dark:shadow-rose-glow dark:hover:shadow-rose-glow-lg"
+                >
+                  <Search className="h-5 w-5" aria-hidden="true" />
+                  Find Donors Now
+                </Button>
+              </Link>
+              <Link to="/register-org" className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full text-base gap-2 px-8 py-6 rounded-full backdrop-blur-md transition-all duration-300 bg-white/50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:bg-slate-900/50 dark:border-slate-700 dark:hover:bg-slate-800 dark:text-slate-300 dark:hover:text-white"
+                >
+                  Register Your Organization
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
@@ -198,7 +295,6 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              {/* Text Steps */}
               <div className="space-y-6 relative z-10">
                 {[
                   {
@@ -236,7 +332,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Visual Graphic */}
               <div className="relative flex justify-center items-center">
                 <div
                   className="absolute inset-0 bg-blue-500/10 blur-[80px] rounded-full dark:bg-blue-500/20"
@@ -252,7 +347,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* --- Value Proposition Grid (With Integrated Image) --- */}
+        {/* --- Value Proposition Grid --- */}
         <section className="py-24 bg-gradient-to-b transition-colors duration-300 from-slate-50 to-slate-100/50 dark:from-slate-950 dark:to-slate-900/20">
           <div className="container mx-auto max-w-7xl px-4">
             <div className="mb-16 text-center md:text-left md:flex md:items-end md:justify-between">
@@ -268,7 +363,6 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-              {/* Featured Image Card */}
               <div className="lg:col-span-5 relative rounded-3xl overflow-hidden shadow-xl border border-slate-200 dark:border-slate-800 min-h-[300px] sm:min-h-[400px] group">
                 <img
                   src="/Importance_of_Blood_Donation.jpg"
@@ -291,7 +385,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Features Grid */}
               <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {features.map((feature, index) => {
                   const Icon = feature.icon;
