@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Image as ImageIcon,
   Plus,
   Edit,
   Trash2,
@@ -9,7 +8,6 @@ import {
   Play,
   Pause,
   ServerCrash,
-  RefreshCw,
   ArrowLeft,
   Settings,
   ImagePlus,
@@ -23,17 +21,15 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/Badge";
 import api from "../../lib/axios";
+import { getImageUrl } from "../../lib/utils";
 
 export default function ManageHeroImages() {
   const queryClient = useQueryClient();
   const imageInputRef = useRef(null);
 
-  // --- UI Transition States ---
-  // 'table' | 'form'
   const [viewState, setViewState] = useState("table");
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // --- Payload States ---
   const [imagePreview, setImagePreview] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -42,12 +38,6 @@ export default function ManageHeroImages() {
     image: null,
   });
 
-  const apiBase = import.meta.env.PROD
-    ? import.meta.env.VITE_API_BASE_URL || "https://api.bloodonate.org/api"
-    : "http://localhost:8000/api";
-  const baseURL = apiBase.replace(/\/api\/?$/, "");
-
-  // --- Query Pipeline ---
   const {
     data: heroImages = [],
     isLoading,
@@ -61,14 +51,13 @@ export default function ManageHeroImages() {
     },
   });
 
-  // --- Mutation Pipelines ---
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = new FormData();
       payload.append("alt_text", formData.alt_text);
       payload.append("order", formData.order);
 
-      // Only append if it's a new file upload
+      // [FIX]: Ensure it's a file before appending
       if (formData.image instanceof File) {
         payload.append("image", formData.image);
       }
@@ -117,7 +106,6 @@ export default function ManageHeroImages() {
     },
   });
 
-  // --- Action Handlers ---
   const openCreateForm = () => {
     setSelectedImage(null);
     setFormData({
@@ -138,13 +126,8 @@ export default function ManageHeroImages() {
       image: null,
     });
 
-    setImagePreview(
-      img.image
-        ? img.image.startsWith("http")
-          ? img.image
-          : `${baseURL}${img.image}`
-        : null,
-    );
+    // [FIX]: Map correctly
+    setImagePreview(img.image ? getImageUrl(img.image) : null);
 
     if (imageInputRef.current) imageInputRef.current.value = "";
     setViewState("form");
@@ -153,7 +136,7 @@ export default function ManageHeroImages() {
   const closeForm = () => {
     setViewState("table");
     setSelectedImage(null);
-    if (imagePreview && !imagePreview.startsWith("http")) {
+    if (imagePreview && imagePreview.startsWith("blob:")) {
       URL.revokeObjectURL(imagePreview);
     }
   };
@@ -166,13 +149,9 @@ export default function ManageHeroImages() {
     }
   };
 
-  // ============================================================================
-  // RENDER: FORM VIEW (FULL PAGE)
-  // ============================================================================
   if (viewState === "form") {
     return (
       <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-right-8 duration-500 pb-24 transition-colors bg-slate-50 dark:bg-slate-950">
-        {/* Form Header */}
         <div className="flex items-center gap-4 border-b pb-6 border-slate-200 dark:border-slate-800/80">
           <Button
             variant="outline"
@@ -200,7 +179,6 @@ export default function ManageHeroImages() {
           className="space-y-8"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* LEFT COLUMN: UPLOAD */}
             <div className="space-y-6">
               <Card className="border-slate-200 dark:border-slate-800 shadow-lg h-full">
                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
@@ -272,7 +250,6 @@ export default function ManageHeroImages() {
               </Card>
             </div>
 
-            {/* RIGHT COLUMN: SETTINGS */}
             <div className="space-y-6">
               <Card className="border-slate-200 dark:border-slate-800 shadow-lg h-full">
                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
@@ -321,7 +298,6 @@ export default function ManageHeroImages() {
             </div>
           </div>
 
-          {/* Form Actions Footer */}
           <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-200 dark:border-slate-800">
             <Button type="button" variant="ghost" size="lg" onClick={closeForm}>
               Discard Changes
@@ -349,9 +325,6 @@ export default function ManageHeroImages() {
     );
   }
 
-  // ============================================================================
-  // RENDER: TABLE VIEW (DEFAULT)
-  // ============================================================================
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
@@ -402,9 +375,6 @@ export default function ManageHeroImages() {
                   <td colSpan="5" className="px-6 py-24 text-center">
                     <ServerCrash className="h-10 w-10 mx-auto mb-4 text-rose-600" />
                     <p className="mb-4 text-slate-600">Failed to fetch data.</p>
-                    <Button variant="outline" onClick={() => refetch()}>
-                      <RefreshCw className="h-4 w-4 mr-2" /> Retry
-                    </Button>
                   </td>
                 </tr>
               ) : heroImages.length === 0 ? (
@@ -425,11 +395,7 @@ export default function ManageHeroImages() {
                     <td className="px-6 py-4">
                       <div className="h-16 w-28 shrink-0 rounded-lg overflow-hidden border shadow-sm transition-colors duration-300 bg-slate-100 border-slate-200 dark:bg-slate-950 dark:border-slate-700/50">
                         <img
-                          src={
-                            img.image?.startsWith("http")
-                              ? img.image
-                              : `${baseURL}${img.image}`
-                          }
+                          src={getImageUrl(img.image)}
                           alt={img.alt_text || `Slide ${img.id}`}
                           className="h-full w-full object-cover"
                         />

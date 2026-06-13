@@ -251,7 +251,8 @@ class LogoutView(APIView):
 
 class RegisterOrganizationView(APIView):
     permission_classes = [permissions.AllowAny]
-    # Explicitly define Parsers to allow processing of multipart/form-data containing files
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'password_reset'
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request):

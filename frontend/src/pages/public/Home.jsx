@@ -7,24 +7,27 @@ import {
   Shield,
   Clock,
   HeartHandshake,
-  ArrowRight,
   Activity,
   Building2,
+  ArrowRight,
+  ChevronDown,
 } from "lucide-react";
 
 import api from "../../lib/axios";
+import { getImageUrl } from "../../lib/utils";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
 import { AdBanner } from "../../components/ads/AdBanner";
 import { Badge } from "../../components/ui/Badge";
 
 export default function Home() {
+  // --- Hero Slider State ---
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeAdIndex, setActiveAdIndex] = useState(0);
   const viewedAds = useRef(new Set());
 
   // --- 1. Fetch Dynamic Hero Content ---
-  const { data: heroData, isLoading } = useQuery({
+  const { data: heroData, isLoading: isHeroLoading } = useQuery({
     queryKey: ["heroContent"],
     queryFn: async () => {
       const res = await api.get("/public/hero-content/");
@@ -143,11 +146,8 @@ export default function Home() {
       </Helmet>
 
       <div className="flex flex-col min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 overflow-hidden">
-        {/* ========================================================= */}
-        {/* SECTION 1: Full-Screen Edge-to-Edge Hero Carousel         */}
-        {/* ========================================================= */}
-        <section className="relative w-full h-[60vh] lg:h-[90vh] bg-slate-900 overflow-hidden group">
-          {isLoading ? (
+        <section className="relative w-full h-[60vh] lg:h-[85vh] bg-slate-900 overflow-hidden group">
+          {isHeroLoading ? (
             <div className="absolute inset-0 animate-pulse bg-slate-800" />
           ) : totalSlides === 0 ? (
             <img
@@ -168,7 +168,7 @@ export default function Home() {
                   }`}
                 >
                   <img
-                    src={`${img.image}`}
+                    src={getImageUrl(img.image)}
                     alt={img.alt_text || "Hero visual"}
                     fetchPriority={idx === 0 ? "high" : "auto"} // LCP Optimization
                     className={`w-full h-full object-cover transition-transform duration-[6000ms] ease-linear ${
@@ -190,13 +190,18 @@ export default function Home() {
                   }`}
                 >
                   <a
-                    href={`${baseURL}/api/public/ads/${ads[activeAdIndex].id}/click/`}
+                    href={getImageUrl(
+                      `/api/public/ads/${ads[activeAdIndex].id}/click/`,
+                    )}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full h-full"
                   >
                     <img
-                      src={`${ads[activeAdIndex].hero_image || ads[activeAdIndex].banner_image}`}
+                      src={getImageUrl(
+                        ads[activeAdIndex].hero_image ||
+                          ads[activeAdIndex].banner_image,
+                      )}
                       alt={ads[activeAdIndex].title}
                       className={`w-full h-full object-cover transition-transform duration-[6000ms] ease-linear ${
                         currentSlide === images.length
@@ -233,9 +238,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* ========================================================= */}
-        {/* SECTION 2: Text Hero & Call to Action (Below Slider)      */}
-        {/* ========================================================= */}
         <section className="relative px-4 py-20 md:py-28 lg:py-32 overflow-hidden border-b border-slate-200 dark:border-slate-800/50 bg-white dark:bg-slate-950">
           <div className="container mx-auto max-w-4xl relative z-10 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full border text-sm font-medium mb-8 shadow-sm transition-colors duration-300 bg-slate-50 border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400 dark:shadow-[0_0_15px_rgba(225,29,72,0.1)]">

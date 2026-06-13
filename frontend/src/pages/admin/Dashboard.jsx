@@ -5,7 +5,6 @@ import {
   Users,
   Droplet,
   Activity,
-  AlertCircle,
   Plus,
   Clock,
   UserPlus,
@@ -13,6 +12,8 @@ import {
   RefreshCw,
   ServerCrash,
   LayoutDashboard,
+  AlarmClock,
+  TrendingUp,
 } from "lucide-react";
 import {
   BarChart,
@@ -35,8 +36,8 @@ import {
 import { Button } from "../../components/ui/Button";
 import api from "../../lib/axios";
 
-// Extracted out of Dashboard to prevent Recharts/React cascading render errors
-const CustomTooltip = ({ active, payload }) => {
+// Distribution Tooltip
+const DistributionTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 border-slate-200 dark:bg-slate-900/95 dark:border-slate-700 backdrop-blur-xl border p-4 rounded-xl shadow-2xl transition-colors duration-300">
@@ -56,10 +57,26 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+// --- [NEW] Trend Chart Tooltip ---
+const TrendTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 border-slate-200 dark:bg-slate-900/95 dark:border-slate-700 backdrop-blur-xl border p-4 rounded-xl shadow-2xl transition-colors duration-300">
+        <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 transition-colors duration-300">
+          {payload[0].payload.month}
+        </p>
+        <p className="text-blue-600 dark:text-blue-400 font-black flex items-center gap-2 text-lg tracking-tight transition-colors duration-300">
+          <TrendingUp className="h-5 w-5" /> {payload[0].value} Donations Logged
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  // --- Data Synchronization Pipeline ---
   const {
     data: stats,
     isLoading,
@@ -72,7 +89,6 @@ export default function Dashboard() {
       const response = await api.get("/tenant/dashboard-stats/");
       return response.data;
     },
-    // Failsafe: Dashboard data is critical, retry once before failing
     retry: 1,
   });
 
@@ -109,7 +125,6 @@ export default function Dashboard() {
     }
   };
 
-  // --- Fault Tolerance: Error State ---
   if (isError) {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center text-center animate-in fade-in duration-500">
@@ -133,7 +148,6 @@ export default function Dashboard() {
     );
   }
 
-  // --- Loading State ---
   if (isLoading) {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center text-slate-500 dark:text-slate-400 gap-4 transition-colors duration-300">
@@ -145,11 +159,15 @@ export default function Dashboard() {
     );
   }
 
-  const { overview, bloodGroupDistribution, recentActivity } = stats;
+  const {
+    overview,
+    bloodGroupDistribution,
+    monthlyDonationTrend,
+    recentActivity,
+  } = stats;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* --- Workspace Header --- */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-6 transition-colors duration-300">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 flex items-center gap-3 transition-colors duration-300">
@@ -197,7 +215,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* --- Key Performance Indicators (KPI) Matrix --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Card className="group bg-white/60 border-slate-200 hover:bg-slate-50 dark:bg-slate-900/40 dark:border-slate-800/60 dark:hover:bg-slate-900/60 transition-all duration-300 hover:-translate-y-1 overflow-hidden relative shadow-lg backdrop-blur-sm">
           <div
@@ -267,49 +284,108 @@ export default function Dashboard() {
           <CardContent className="p-6 flex items-center justify-between relative z-10">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 transition-colors duration-300">
-                Pending Action
+                Available this week
               </p>
               <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tight transition-colors duration-300">
-                {overview.pendingRequests}
+                {overview.availableThisWeek}
               </p>
             </div>
             <div className="h-14 w-14 rounded-2xl bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20 flex items-center justify-center border group-hover:scale-110 transition-all duration-300 shadow-inner">
-              <AlertCircle className="h-7 w-7 text-amber-600 dark:text-amber-500 transition-colors duration-300" />
+              <AlarmClock className="h-7 w-7 text-amber-600 dark:text-amber-500 transition-colors duration-300" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* --- Visualization & Telemetry --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60 backdrop-blur-xl shadow-xl flex flex-col transition-colors duration-300">
-          <CardHeader className="border-b border-slate-200 dark:border-slate-800/60 pb-5 transition-colors duration-300">
-            <CardTitle className="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 transition-colors duration-300">
-              <Activity className="h-5 w-5 text-rose-600 dark:text-rose-500 transition-colors duration-300" />{" "}
-              Active Inventory Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-8 flex-1 min-h-87.5">
-            {bloodGroupDistribution.length === 0 ? (
-              <div className="flex flex-col h-full items-center justify-center text-center animate-in fade-in">
-                <div className="h-16 w-16 bg-slate-100 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 border rounded-full flex items-center justify-center mb-4 shadow-inner transition-colors duration-300">
-                  <Droplet className="h-8 w-8 text-slate-400 dark:text-slate-500 transition-colors duration-300" />
+        {/* --- [NEW] Vertical Charts Stack --- */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          {/* Trend Chart */}
+          <Card className="bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60 backdrop-blur-xl shadow-xl flex flex-col transition-colors duration-300">
+            <CardHeader className="border-b border-slate-200 dark:border-slate-800/60 pb-5 transition-colors duration-300">
+              <CardTitle className="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 transition-colors duration-300">
+                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-500 transition-colors duration-300" />{" "}
+                6-Month Donation Trend
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-8 min-h-[280px]">
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                  data={monthlyDonationTrend}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    className="stroke-slate-200 dark:stroke-slate-800/50 transition-colors duration-300"
+                  />
+                  <XAxis
+                    dataKey="month"
+                    stroke="#64748b"
+                    tick={{ fill: "#64748b", fontSize: 13, fontWeight: 700 }}
+                    axisLine={false}
+                    tickLine={false}
+                    dy={10}
+                  />
+                  <YAxis
+                    stroke="#64748b"
+                    tick={{ fill: "#64748b", fontSize: 12, fontWeight: 500 }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                    dx={-10}
+                  />
+                  <Tooltip
+                    content={<TrendTooltip />}
+                    cursor={{
+                      className:
+                        "fill-slate-100 dark:fill-slate-800/50 transition-colors duration-300",
+                    }}
+                  />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                    {monthlyDonationTrend.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        className={`${
+                          entry.count > 0
+                            ? "fill-blue-600 dark:fill-blue-500"
+                            : "fill-slate-200 dark:fill-slate-800"
+                        } hover:opacity-80 transition-all cursor-pointer`}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Blood Group Distribution Chart */}
+          <Card className="bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60 backdrop-blur-xl shadow-xl flex flex-col transition-colors duration-300">
+            <CardHeader className="border-b border-slate-200 dark:border-slate-800/60 pb-5 transition-colors duration-300">
+              <CardTitle className="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 transition-colors duration-300">
+                <Activity className="h-5 w-5 text-rose-600 dark:text-rose-500 transition-colors duration-300" />{" "}
+                Active Inventory Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-8 min-h-[280px]">
+              {bloodGroupDistribution.length === 0 ? (
+                <div className="flex flex-col h-full items-center justify-center text-center animate-in fade-in py-12">
+                  <div className="h-16 w-16 bg-slate-100 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 border rounded-full flex items-center justify-center mb-4 shadow-inner transition-colors duration-300">
+                    <Droplet className="h-8 w-8 text-slate-400 dark:text-slate-500 transition-colors duration-300" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 transition-colors duration-300">
+                    Insufficient Data
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 transition-colors duration-300">
+                    Register donors to populate the distribution visualizer.
+                  </p>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 transition-colors duration-300">
-                  Insufficient Data
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 transition-colors duration-300">
-                  Register donors to populate the distribution visualizer.
-                </p>
-              </div>
-            ) : (
-              <div className="h-full w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
                   <BarChart
                     data={bloodGroupDistribution}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                   >
-                    {/* Using classNames instead of stroke so it adapts correctly to dark mode */}
                     <CartesianGrid
                       strokeDasharray="3 3"
                       vertical={false}
@@ -332,7 +408,7 @@ export default function Dashboard() {
                       dx={-10}
                     />
                     <Tooltip
-                      content={<CustomTooltip />}
+                      content={<DistributionTooltip />}
                       cursor={{
                         className:
                           "fill-slate-100 dark:fill-slate-800/50 transition-colors duration-300",
@@ -342,7 +418,6 @@ export default function Dashboard() {
                       {bloodGroupDistribution.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
-                          // Using tailwind fill classes allows instant theme toggling without prop hacking
                           className={`${
                             entry.count > 0
                               ? "fill-rose-600 dark:fill-rose-500"
@@ -353,22 +428,23 @@ export default function Dashboard() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card className="bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60 backdrop-blur-xl shadow-xl flex flex-col transition-colors duration-300">
+        {/* --- Audit Log Column --- */}
+        <Card className="bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60 backdrop-blur-xl shadow-xl flex flex-col transition-colors duration-300 h-full">
           <CardHeader className="border-b border-slate-200 dark:border-slate-800/60 pb-5 transition-colors duration-300">
             <CardTitle className="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 transition-colors duration-300">
-              <Clock className="h-5 w-5 text-blue-600 dark:text-blue-500 transition-colors duration-300" />{" "}
+              <Clock className="h-5 w-5 text-emerald-600 dark:text-emerald-500 transition-colors duration-300" />{" "}
               Facility Audit Log
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 flex-1 flex flex-col">
             <div className="space-y-7 flex-1">
               {recentActivity.length === 0 ? (
-                <div className="flex flex-col h-full items-center justify-center text-center">
+                <div className="flex flex-col h-full items-center justify-center text-center py-20">
                   <p className="text-sm font-medium text-slate-500">
                     System idle.
                   </p>

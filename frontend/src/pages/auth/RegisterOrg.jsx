@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import zxcvbn from "zxcvbn";
 import {
   Building2,
   Mail,
@@ -16,7 +17,7 @@ import {
   Phone,
   UploadCloud,
   Edit,
-  ShieldCheck, // Added for the consent section
+  ShieldCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -52,9 +53,14 @@ export default function RegisterOrg() {
     state_id: "",
     district_id: "",
     is_searchable: true,
-    consent_agreed: false, // NEW: Privacy & Consent state
+    consent_agreed: false,
     logo: null,
   });
+
+  // --- Password Strength Calculation ---
+  const pwdResult = useMemo(() => {
+    return formData.password ? zxcvbn(formData.password) : null;
+  }, [formData.password]);
 
   // Organization Types
   const orgTypeOptions = [
@@ -149,7 +155,6 @@ export default function RegisterOrg() {
       return;
     }
 
-    // NEW: Enforce Consent Verification
     if (!formData.consent_agreed) {
       toast.error("You must agree to the Terms of Service and Privacy Policy.");
       return;
@@ -169,7 +174,6 @@ export default function RegisterOrg() {
     payload.append("state_id", formData.state_id);
     payload.append("district_id", formData.district_id);
     payload.append("is_searchable", formData.is_searchable);
-    // Include consent in payload for audit logs if your backend requires it
     payload.append("consent_agreed", formData.consent_agreed);
 
     if (formData.logo) {
@@ -362,7 +366,7 @@ export default function RegisterOrg() {
                     </div>
                   </div>
 
-                  {/* Password */}
+                  {/* Password & Strength Meter */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Account Password *
@@ -391,9 +395,59 @@ export default function RegisterOrg() {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs transition-colors duration-300 text-slate-500 dark:text-slate-400">
-                      Must be at least 8 characters long.
-                    </p>
+
+                    {/* --- Visual Password Strength Meter --- */}
+                    {!formData.password ? (
+                      <p className="text-xs transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                        Must be at least 8 characters long.
+                      </p>
+                    ) : (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex gap-1 h-1.5 w-full">
+                          {[0, 1, 2, 3].map((index) => {
+                            let bgColor = "bg-slate-200 dark:bg-slate-700";
+                            if (pwdResult && pwdResult.score >= index) {
+                              if (pwdResult.score === 0) bgColor = "bg-red-500";
+                              else if (pwdResult.score === 1)
+                                bgColor = "bg-orange-500";
+                              else if (pwdResult.score === 2)
+                                bgColor = "bg-amber-500";
+                              else if (pwdResult.score === 3)
+                                bgColor = "bg-emerald-400";
+                              else bgColor = "bg-emerald-600";
+                            }
+                            return (
+                              <div
+                                key={index}
+                                className={`h-full flex-1 rounded-full transition-colors duration-300 ${bgColor}`}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between items-start text-[11px]">
+                          <span
+                            className={`font-bold transition-colors ${
+                              pwdResult.score <= 1
+                                ? "text-red-500"
+                                : pwdResult.score === 2
+                                  ? "text-amber-500"
+                                  : "text-emerald-600 dark:text-emerald-400"
+                            }`}
+                          >
+                            {pwdResult.score === 0 && "Very Weak"}
+                            {pwdResult.score === 1 && "Weak"}
+                            {pwdResult.score === 2 && "Fair"}
+                            {pwdResult.score === 3 && "Good"}
+                            {pwdResult.score === 4 && "Strong"}
+                          </span>
+                          {pwdResult.feedback.warning && (
+                            <span className="text-red-500 max-w-[70%] text-right leading-tight">
+                              {pwdResult.feedback.warning}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Address Line */}

@@ -70,6 +70,10 @@ export default function SearchDonors() {
   // --- AUTOMATIC FETCHING EFFECT ---
   useEffect(() => {
     if (selectedCountry) {
+      // [FIX]: Reset pagination explicitly so new filters don't try to load old offsets
+      setNextPageUrl(null);
+      setPrevPageUrl(null);
+
       const delayDebounceFn = setTimeout(() => {
         fetchDonors();
       }, 300);
@@ -227,7 +231,6 @@ export default function SearchDonors() {
       </Helmet>
 
       <div className="min-h-screen transition-colors duration-300 bg-slate-50 dark:bg-slate-950 flex flex-col pb-24">
-        {/* Header */}
         <section className="pt-12 pb-16 px-4 relative overflow-hidden bg-white/40 border-b border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80">
           <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] bg-rose-500/10 pointer-events-none dark:bg-rose-600/10" />
           <div className="container mx-auto max-w-4xl text-center relative z-10 animate-in fade-in duration-500">
@@ -241,7 +244,6 @@ export default function SearchDonors() {
           </div>
         </section>
 
-        {/* Input Matrix */}
         <div className="container mx-auto max-w-5xl px-4 -mt-10 relative z-20">
           <Card className="backdrop-blur-xl overflow-visible bg-white/90 border-slate-200 shadow-xl dark:bg-slate-900/80 dark:border-slate-800">
             <CardContent className="p-6 md:p-8">
@@ -265,7 +267,6 @@ export default function SearchDonors() {
                 </Button>
               </div>
 
-              {/* Matrix acts dynamically */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
                 <div className="space-y-2 relative z-50">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
@@ -330,12 +331,10 @@ export default function SearchDonors() {
           </Card>
         </div>
 
-        {/* --- Primary Gateway Ad Placement --- */}
         <div className="container mx-auto max-w-5xl px-4 mt-8">
           <AdBanner format="banner" />
         </div>
 
-        {/* Results Surface */}
         <div className="container mx-auto max-w-5xl px-4 mt-12 min-h-[400px]">
           {!hasSearched ? (
             <div className="flex flex-col items-center justify-center text-center py-24 animate-in fade-in duration-700">
@@ -349,7 +348,6 @@ export default function SearchDonors() {
               </p>
             </div>
           ) : isSearching ? (
-            // SKELETON LOADERS
             <div className="space-y-8">
               <div className="flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-4">
                 <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
@@ -414,14 +412,12 @@ export default function SearchDonors() {
                 ))}
               </div>
 
-              {/* --- Secondary End-of-Journey Ad Placement --- */}
               {results.length > 3 && (
                 <div className="mt-10 mb-4 animate-in fade-in duration-700">
                   <AdBanner format="banner" />
                 </div>
               )}
 
-              {/* Pagination Controls */}
               {totalCount > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between mt-10 border-t pt-6 gap-4 border-slate-200 dark:border-slate-800/80">
                   <span className="text-sm font-medium text-slate-600 dark:text-slate-400">

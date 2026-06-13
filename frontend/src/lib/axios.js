@@ -1,6 +1,22 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
+// --- Helper function to extract the CSRF token from browser cookies ---
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 const api = axios.create({
   baseURL: import.meta.env.PROD
     ? import.meta.env.VITE_API_BASE_URL || "https://api.bloodonate.org/api"
@@ -10,6 +26,23 @@ const api = axios.create({
   },
   withCredentials: true,
 });
+
+// --- Request Interceptor (CSRF Protection) ---
+api.interceptors.request.use(
+  (config) => {
+    // Only attach CSRF token for unsafe HTTP methods
+    if (["post", "put", "patch", "delete"].includes(config.method)) {
+      const csrfToken = getCookie("csrftoken");
+      if (csrfToken) {
+        config.headers["X-CSRFToken"] = csrfToken;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
 
 // --- Concurrency / Race Condition Variables ---
 let isRefreshing = false;

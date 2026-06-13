@@ -450,8 +450,11 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
         if not reply_text:
             return Response({"error": "Reply text is required."}, status=status.HTTP_400_BAD_REQUEST)
         
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://www.bloodonate.org')
+        contact_url = f"{frontend_url}/contact"
+        
         subject = f"Re: {message.subject} - Bloodonate Support"
-        plain_message = f"Hello {message.name},\n\n{reply_text}\n\nBest regards,\nThe Bloodonate Team"
+        plain_message = f"Hello {message.name},\n\n{reply_text}\n\nBest regards,\nThe Bloodonate Team\n\n*** PLEASE DO NOT REPLY TO THIS EMAIL ***\nTo send another message, please visit our contact page at: {contact_url}"
         
         html_message = f"""
         <!doctype html>
@@ -539,6 +542,15 @@ class SuperAdminContactMessageViewSet(viewsets.ModelViewSet):
                                         Best regards,<br />
                                         <strong>Bloodonate Support Team</strong>
                                     </p>
+                                    
+                                    <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin-top: 32px; text-align: center;">
+                                        <p style="margin: 0; color: #64748b; font-size: 13px; font-weight: bold; text-transform: uppercase;">
+                                            Please do not reply to this email
+                                        </p>
+                                        <p style="margin: 8px 0 0; color: #94a3b8; font-size: 12px;">
+                                            This inbox is not monitored. To send us another message, please visit the <a href="{contact_url}" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Contact Us</a> page.
+                                        </p>
+                                    </div>
 
                                     <hr style="
                                     border: none;

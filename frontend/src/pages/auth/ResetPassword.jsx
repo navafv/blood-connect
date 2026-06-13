@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import zxcvbn from "zxcvbn";
 import {
   Droplet,
   Lock,
@@ -49,10 +50,14 @@ export default function ResetPassword() {
     }
   }, [uid, token]);
 
+  // --- Password Strength Calculation ---
+  const pwdResult = useMemo(() => {
+    return formData.password ? zxcvbn(formData.password) : null;
+  }, [formData.password]);
+
   // Input Change
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -84,7 +89,6 @@ export default function ResetPassword() {
       });
 
       setStatus("success");
-
       toast.success("Password updated successfully");
 
       setTimeout(() => {
@@ -92,9 +96,7 @@ export default function ResetPassword() {
       }, 3000);
     } catch (err) {
       console.error("Reset Error:", err);
-
       setStatus("idle");
-
       toast.error(
         err.response?.data?.error ||
           err.response?.data?.detail ||
@@ -231,7 +233,7 @@ export default function ResetPassword() {
               {/* Form */}
               <CardContent className="pt-8 px-8 pb-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Password */}
+                  {/* Password & Strength Meter */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       New Password
@@ -264,6 +266,59 @@ export default function ResetPassword() {
                         )}
                       </button>
                     </div>
+
+                    {/* --- Visual Password Strength Meter --- */}
+                    {!formData.password ? (
+                      <p className="text-xs transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                        Must be at least 8 characters long.
+                      </p>
+                    ) : (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex gap-1 h-1.5 w-full">
+                          {[0, 1, 2, 3].map((index) => {
+                            let bgColor = "bg-slate-200 dark:bg-slate-700";
+                            if (pwdResult && pwdResult.score >= index) {
+                              if (pwdResult.score === 0) bgColor = "bg-red-500";
+                              else if (pwdResult.score === 1)
+                                bgColor = "bg-orange-500";
+                              else if (pwdResult.score === 2)
+                                bgColor = "bg-amber-500";
+                              else if (pwdResult.score === 3)
+                                bgColor = "bg-emerald-400";
+                              else bgColor = "bg-emerald-600";
+                            }
+                            return (
+                              <div
+                                key={index}
+                                className={`h-full flex-1 rounded-full transition-colors duration-300 ${bgColor}`}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between items-start text-[11px]">
+                          <span
+                            className={`font-bold transition-colors ${
+                              pwdResult.score <= 1
+                                ? "text-red-500"
+                                : pwdResult.score === 2
+                                  ? "text-amber-500"
+                                  : "text-emerald-600 dark:text-emerald-400"
+                            }`}
+                          >
+                            {pwdResult.score === 0 && "Very Weak"}
+                            {pwdResult.score === 1 && "Weak"}
+                            {pwdResult.score === 2 && "Fair"}
+                            {pwdResult.score === 3 && "Good"}
+                            {pwdResult.score === 4 && "Strong"}
+                          </span>
+                          {pwdResult.feedback.warning && (
+                            <span className="text-red-500 max-w-[70%] text-right leading-tight">
+                              {pwdResult.feedback.warning}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Confirm Password */}

@@ -59,13 +59,13 @@ class OrganizationSerializer(serializers.ModelSerializer):
             'id', 'slug', 'name', 'org_type', 'contact_email', 'contact_phone', 
             'description', 'country', 'country_name', 'state', 'state_name', 
             'district', 'district_name', 'address_line', 'logo', 'banner_image',
+            'google_map_link',
             'is_paid', 'is_searchable', 'subscription_expires_at', 'has_active_subscription', 
             'status', 'created_at', 'is_email_verified'
         ]
         read_only_fields = ['status', 'is_paid', 'subscription_expires_at', 'created_at']
 
     def get_is_email_verified(self, obj):
-        # Fetch the ORG_ADMIN for this organization to check their email verification status
         admin = CustomUser.objects.filter(organization=obj, role='ORG_ADMIN').first()
         return admin.is_email_verified if admin else False
 

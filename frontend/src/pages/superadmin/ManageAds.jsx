@@ -29,8 +29,8 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 import { Badge } from "../../components/ui/Badge";
-import { Modal } from "../../components/ui/Modal";
 import api from "../../lib/axios";
+import { getImageUrl } from "../../lib/utils";
 
 export default function ManageAds() {
   const queryClient = useQueryClient();
@@ -38,13 +38,10 @@ export default function ManageAds() {
   const portraitInputRef = useRef(null);
   const heroInputRef = useRef(null);
 
-  // --- UI Transition States ---
-  // 'table' | 'form'
   const [viewState, setViewState] = useState("table");
   const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [selectedAd, setSelectedAd] = useState(null);
 
-  // --- Payload States ---
   const [bannerPreview, setBannerPreview] = useState(null);
   const [portraitPreview, setPortraitPreview] = useState(null);
   const [heroPreview, setHeroPreview] = useState(null);
@@ -61,12 +58,6 @@ export default function ManageAds() {
 
   const [extendMonths, setExtendMonths] = useState("1");
 
-  const apiBase = import.meta.env.PROD
-    ? import.meta.env.VITE_API_BASE_URL || "https://api.bloodonate.org/api"
-    : "http://localhost:8000/api";
-  const baseURL = apiBase.replace(/\/api\/?$/, "");
-
-  // --- Query Pipeline ---
   const {
     data: ads = [],
     isLoading,
@@ -80,7 +71,6 @@ export default function ManageAds() {
     },
   });
 
-  // --- Mutation Pipelines ---
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = new FormData();
@@ -88,11 +78,12 @@ export default function ManageAds() {
       payload.append("target_link", formData.target_link);
       payload.append("show_on_hero", formData.show_on_hero);
 
-      if (formData.banner_image)
+      // [FIX]: Ensure we only send actual File objects, not raw URLs
+      if (formData.banner_image instanceof File)
         payload.append("banner_image", formData.banner_image);
-      if (formData.portrait_image)
+      if (formData.portrait_image instanceof File)
         payload.append("portrait_image", formData.portrait_image);
-      if (formData.hero_image)
+      if (formData.hero_image instanceof File)
         payload.append("hero_image", formData.hero_image);
 
       if (selectedAd) {
@@ -147,7 +138,6 @@ export default function ManageAds() {
     },
   });
 
-  // --- Action Handlers ---
   const openCreateForm = () => {
     setSelectedAd(null);
     setFormData({
@@ -181,29 +171,12 @@ export default function ManageAds() {
       hero_image: null,
     });
 
-    setBannerPreview(
-      ad.banner_image
-        ? ad.banner_image.startsWith("http")
-          ? ad.banner_image
-          : `${baseURL}${ad.banner_image}`
-        : null,
-    );
-
+    // [FIX]: Cleanly map image URLs
+    setBannerPreview(ad.banner_image ? getImageUrl(ad.banner_image) : null);
     setPortraitPreview(
-      ad.portrait_image
-        ? ad.portrait_image.startsWith("http")
-          ? ad.portrait_image
-          : `${baseURL}${ad.portrait_image}`
-        : null,
+      ad.portrait_image ? getImageUrl(ad.portrait_image) : null,
     );
-
-    setHeroPreview(
-      ad.hero_image
-        ? ad.hero_image.startsWith("http")
-          ? ad.hero_image
-          : `${baseURL}${ad.hero_image}`
-        : null,
-    );
+    setHeroPreview(ad.hero_image ? getImageUrl(ad.hero_image) : null);
 
     if (bannerInputRef.current) bannerInputRef.current.value = "";
     if (portraitInputRef.current) portraitInputRef.current.value = "";
@@ -215,11 +188,13 @@ export default function ManageAds() {
   const closeForm = () => {
     setViewState("table");
     setSelectedAd(null);
-    if (bannerPreview && !bannerPreview.startsWith("http"))
+
+    // Safety cleanup to avoid memory leaks
+    if (bannerPreview && bannerPreview.startsWith("blob:"))
       URL.revokeObjectURL(bannerPreview);
-    if (portraitPreview && !portraitPreview.startsWith("http"))
+    if (portraitPreview && portraitPreview.startsWith("blob:"))
       URL.revokeObjectURL(portraitPreview);
-    if (heroPreview && !heroPreview.startsWith("http"))
+    if (heroPreview && heroPreview.startsWith("blob:"))
       URL.revokeObjectURL(heroPreview);
   };
 
@@ -247,13 +222,9 @@ export default function ManageAds() {
     });
   };
 
-  // ============================================================================
-  // RENDER: FORM VIEW (FULL PAGE)
-  // ============================================================================
   if (viewState === "form") {
     return (
       <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-right-8 duration-500 pb-24 transition-colors bg-slate-50 dark:bg-slate-950">
-        {/* Form Header */}
         <div className="flex items-center gap-4 border-b pb-6 border-slate-200 dark:border-slate-800/80">
           <Button
             variant="outline"
@@ -281,7 +252,6 @@ export default function ManageAds() {
           className="space-y-8"
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* LEFT COLUMN: SETTINGS (4 columns wide on large screens) */}
             <div className="lg:col-span-5 space-y-6">
               <Card className="border-slate-200 dark:border-slate-800 shadow-lg">
                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
@@ -382,7 +352,6 @@ export default function ManageAds() {
               </Card>
             </div>
 
-            {/* RIGHT COLUMN: MEDIA UPLOADS (7 columns wide) */}
             <div className="lg:col-span-7 space-y-6">
               <Card className="border-slate-200 dark:border-slate-800 shadow-lg">
                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
@@ -395,9 +364,7 @@ export default function ManageAds() {
                 </div>
 
                 <CardContent className="p-6 space-y-8">
-                  {/* Banner & Portrait Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    {/* Banner */}
                     <div className="sm:col-span-2 space-y-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
                         <span>
@@ -443,7 +410,6 @@ export default function ManageAds() {
                       />
                     </div>
 
-                    {/* Portrait */}
                     <div className="sm:col-span-1 space-y-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
                         <span>Sidebar</span>
@@ -492,7 +458,6 @@ export default function ManageAds() {
                     </div>
                   </div>
 
-                  {/* Hero Upload (Full Width) */}
                   <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center justify-between">
                       <span>Hero Slider Background (Optional)</span>
@@ -546,7 +511,6 @@ export default function ManageAds() {
             </div>
           </div>
 
-          {/* Form Actions Footer */}
           <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-200 dark:border-slate-800">
             <Button type="button" variant="ghost" size="lg" onClick={closeForm}>
               Discard Changes
@@ -576,9 +540,6 @@ export default function ManageAds() {
     );
   }
 
-  // ============================================================================
-  // RENDER: TABLE VIEW (DEFAULT)
-  // ============================================================================
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
@@ -630,9 +591,6 @@ export default function ManageAds() {
                   <td colSpan="5" className="px-6 py-24 text-center">
                     <ServerCrash className="h-10 w-10 mx-auto mb-4 text-rose-600" />
                     <p className="mb-4 text-slate-600">Telemetry Failure</p>
-                    <Button variant="outline" onClick={() => refetch()}>
-                      <RefreshCw className="h-4 w-4 mr-2" /> Retry
-                    </Button>
                   </td>
                 </tr>
               ) : ads.length === 0 ? (
@@ -652,11 +610,7 @@ export default function ManageAds() {
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-20 shrink-0 rounded-lg overflow-hidden border shadow-sm transition-colors duration-300 bg-slate-100 border-slate-200 dark:bg-slate-950 dark:border-slate-700/50 relative">
                           <img
-                            src={
-                              ad.banner_image?.startsWith("http")
-                                ? ad.banner_image
-                                : `${baseURL}${ad.banner_image}`
-                            }
+                            src={getImageUrl(ad.banner_image)}
                             alt={ad.title}
                             className="h-full w-full object-cover"
                           />
@@ -664,11 +618,7 @@ export default function ManageAds() {
                         <div className="h-12 w-20 shrink-0 rounded-lg overflow-hidden border shadow-sm transition-colors duration-300 bg-slate-100 border-slate-200 dark:bg-slate-950 dark:border-slate-700/50 relative">
                           {ad.portrait_image ? (
                             <img
-                              src={
-                                ad.portrait_image?.startsWith("http")
-                                  ? ad.portrait_image
-                                  : `${baseURL}${ad.portrait_image}`
-                              }
+                              src={getImageUrl(ad.portrait_image)}
                               alt={ad.title}
                               className="h-full w-full object-cover"
                             />
@@ -799,50 +749,48 @@ export default function ManageAds() {
         </div>
       </Card>
 
-      {/* --- EXTEND DURATION MODAL (Kept as modal because it's tiny) --- */}
-      <Modal
-        isOpen={isExtendModalOpen}
-        onClose={() => setIsExtendModalOpen(false)}
-        title="Extend Campaign"
-      >
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Add Time to Campaign
-            </label>
-            <Select
-              value={extendMonths}
-              onChange={(e) => setExtendMonths(e.target.value)}
-              className="bg-white dark:bg-slate-950/50"
-            >
-              <option value="1">+ 1 Month</option>
-              <option value="3">+ 3 Months</option>
-              <option value="6">+ 6 Months</option>
-              <option value="12">+ 1 Year</option>
-            </Select>
-          </div>
-          <div className="pt-4 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsExtendModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => extendMutation.mutate()}
-              disabled={extendMutation.isPending}
-            >
-              {extendMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                "Extend Ad"
-              )}
-            </Button>
+      {/* --- EXTEND DURATION MODAL --- */}
+      {isExtendModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold mb-4 dark:text-white">
+              Extend Campaign
+            </h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Add Time
+                </label>
+                <Select
+                  value={extendMonths}
+                  onChange={(e) => setExtendMonths(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-950"
+                >
+                  <option value="1">+ 1 Month</option>
+                  <option value="3">+ 3 Months</option>
+                  <option value="6">+ 6 Months</option>
+                  <option value="12">+ 1 Year</option>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsExtendModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => extendMutation.mutate()}
+                  disabled={extendMutation.isPending}
+                >
+                  {extendMutation.isPending ? "Updating..." : "Extend Ad"}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-      </Modal>
+      )}
     </div>
   );
 }

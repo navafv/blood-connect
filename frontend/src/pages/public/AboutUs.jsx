@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -10,6 +11,9 @@ import {
   Globe2,
   Mail,
   Phone,
+  Activity,
+  Building2,
+  Clock,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent } from "../../components/ui/Card";
@@ -119,6 +123,23 @@ export default function AboutUs() {
         />
 
         <link rel="canonical" href="https://www.bloodonate.org/about" />
+
+        {/* Ticker Animation Styles */}
+        <style>
+          {`
+            @keyframes ticker-scroll {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .animate-ticker {
+              animation: ticker-scroll 30s linear infinite;
+              will-change: transform;
+            }
+            .animate-ticker:hover {
+              animation-play-state: paused;
+            }
+          `}
+        </style>
       </Helmet>
 
       <div className="flex flex-col min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950 overflow-hidden">
@@ -153,6 +174,40 @@ export default function AboutUs() {
             </p>
           </div>
         </section>
+
+        {/* --- INJECTED: Live Platform Impact Ticker --- */}
+        <div className="w-full bg-rose-600 text-white overflow-hidden py-3 border-y border-rose-700 shadow-inner relative z-20">
+          <div className="flex whitespace-nowrap animate-ticker w-max">
+            {/* The array is duplicated to create a seamless infinite scrolling loop */}
+            {[...Array(2)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-around gap-12 px-6"
+              >
+                <span className="flex items-center gap-2 font-bold tracking-wide">
+                  <Heart className="h-4 w-4" /> 1,240 Active Donors
+                </span>
+                <span className="opacity-50">•</span>
+                <span className="flex items-center gap-2 font-bold tracking-wide">
+                  <Activity className="h-4 w-4" /> 45 Donations this week
+                </span>
+                <span className="opacity-50">•</span>
+                <span className="flex items-center gap-2 font-bold tracking-wide">
+                  <Building2 className="h-4 w-4" /> 120+ Partner Hospitals
+                </span>
+                <span className="opacity-50">•</span>
+                <span className="flex items-center gap-2 font-bold tracking-wide">
+                  <Droplet className="h-4 w-4" /> 12,500+ Lives Impacted
+                </span>
+                <span className="opacity-50">•</span>
+                <span className="flex items-center gap-2 font-bold tracking-wide">
+                  <Clock className="h-4 w-4" /> 24/7 Real-Time Availability
+                </span>
+                <span className="opacity-50">•</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* --- Architectural Rationale & Market Positioning --- */}
         <section className="py-24 border-b relative transition-colors duration-300 bg-slate-100/50 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/50">

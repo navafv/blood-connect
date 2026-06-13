@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Clock,
   Filter,
+  FileDown, // <-- Added for export icon
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -32,31 +33,28 @@ import {
 import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
 import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select"; // Ensure this is imported!
+import { Select } from "../../components/ui/Select";
 import { DonorFilters } from "../../components/donors/DonorFilters";
 import api from "../../lib/axios";
 
 export default function ManageDonors() {
   const queryClient = useQueryClient();
 
-  // --- Filtering & Bulk Upload State ---
   const [activeFilters, setActiveFilters] = useState({
     bloodGroup: "",
     searchQuery: "",
   });
 
-  // NEW: Status Filter State
   const [statusFilter, setStatusFilter] = useState("AVAILABLE");
+  const [isExporting, setIsExporting] = useState(false); // <-- Export Loading State
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadResult, setUploadResult] = useState(null);
 
-  // --- Edit Donor State ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDonor, setEditingDonor] = useState(null);
 
-  // --- Donation Logging State ---
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [donorToLog, setDonorToLog] = useState(null);
   const [donationLogData, setDonationLogData] = useState({
@@ -65,7 +63,6 @@ export default function ManageDonors() {
     clinical_notes: "",
   });
 
-  // --- Query Pipeline: Fetch Registry ---
   const {
     data: donors = [],
     isLoading,
@@ -80,7 +77,40 @@ export default function ManageDonors() {
     },
   });
 
-  // --- Mutation: Log Clinical Donation ---
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    const toastId = toast.loading("Generating secure CSV export...");
+    try {
+      const response = await api.get("/tenant/donors/export/", {
+        responseType: "blob", // Important for downloading files!
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      // Extract filename from header if possible, otherwise fallback
+      const contentDisposition = response.headers["content-disposition"];
+      let fileName = "donor_registry.csv";
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (fileNameMatch.length === 2) fileName = fileNameMatch[1];
+      }
+
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      toast.success("CSV export downloaded successfully.", { id: toastId });
+    } catch (err) {
+      toast.error("Failed to export registry. Please try again.", {
+        id: toastId,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const logDonationMutation = useMutation({
     mutationFn: async (payload) => {
       const response = await api.post(
@@ -99,7 +129,6 @@ export default function ManageDonors() {
     onError: (err) => toast.error("Failed to log donation record."),
   });
 
-  // --- Mutation Pipeline: Edit Record ---
   const editMutation = useMutation({
     mutationFn: async (updatedData) => {
       const response = await api.patch(
@@ -124,7 +153,6 @@ export default function ManageDonors() {
     },
   });
 
-  // --- Mutation Pipeline: Archive Record ---
   const deleteMutation = useMutation({
     mutationFn: async (id) => await api.delete(`/tenant/donors/${id}/`),
 
@@ -154,7 +182,6 @@ export default function ManageDonors() {
     },
   });
 
-  // --- Mutation Pipeline: Bulk Ingest ---
   const uploadMutation = useMutation({
     mutationFn: async (formData) => {
       const response = await api.post("/tenant/donors/bulk-upload/", formData, {
@@ -184,7 +211,6 @@ export default function ManageDonors() {
     },
   });
 
-  // --- Action Handlers ---
   const handleEditChange = (e) => {
     const { name, value, type, checked } = e.target;
     setEditingDonor((prev) => ({
@@ -245,9 +271,7 @@ export default function ManageDonors() {
     toast("Template downloaded.", { icon: "📥" });
   };
 
-  // --- Client-Side Search & Filter Engine ---
   const filteredDonors = donors.filter((donor) => {
-    // 1. Apply Status Filter
     if (statusFilter === "AVAILABLE" && !donor.is_available_now) return false;
     if (
       statusFilter === "RESTING" &&
@@ -257,12 +281,10 @@ export default function ManageDonors() {
     if (statusFilter === "DEFERRED" && !donor.is_permanently_deferred)
       return false;
 
-    // 2. Apply Blood Group Filter
     const matchesBloodGroup = activeFilters.bloodGroup
       ? donor.blood_group === activeFilters.bloodGroup
       : true;
 
-    // 3. Apply Text Search
     const searchLower = activeFilters.searchQuery?.toLowerCase() || "";
     const matchesSearch = searchLower
       ? donor.full_name.toLowerCase().includes(searchLower) ||
@@ -274,7 +296,6 @@ export default function ManageDonors() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* --- Workspace Header --- */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-6 transition-colors duration-300">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
@@ -288,7 +309,22 @@ export default function ManageDonors() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+          <Button
+            variant="outline"
+            className="gap-2 w-full sm:w-auto transition-colors duration-300 text-slate-700 border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:bg-slate-800 dark:text-slate-300"
+            onClick={handleExportCSV}
+            disabled={isExporting || donors.length === 0}
+            title="Download full registry as CSV"
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4" />
+            )}
+            Export CSV
+          </Button>
+
           <Button
             variant="outline"
             className="gap-2 w-full sm:w-auto transition-colors duration-300 text-slate-700 border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:bg-slate-800 dark:text-slate-300"
@@ -307,7 +343,6 @@ export default function ManageDonors() {
         </div>
       </div>
 
-      {/* --- High-Level Analytics Matrix --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
         <Card className="shadow-md transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60">
           <CardContent className="p-5 flex items-center gap-5">
@@ -362,7 +397,6 @@ export default function ManageDonors() {
         </Card>
       </div>
 
-      {/* --- Primary Data Table Area --- */}
       <Card className="backdrop-blur-xl shadow-xl transition-colors duration-300 bg-white/80 border-slate-200 dark:border-slate-800/80 dark:bg-slate-900/60 dark:shadow-2xl">
         <CardHeader className="border-b pb-5 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
@@ -370,7 +404,6 @@ export default function ManageDonors() {
               Active Registry
             </CardTitle>
 
-            {/* Status Filter Dropdown */}
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 transition-colors duration-300 text-slate-500" />
               <select
@@ -496,7 +529,6 @@ export default function ManageDonors() {
                           </span>
                         </td>
 
-                        {/* DYNAMIC BADGE */}
                         <td className="px-6 py-4">
                           {donor.is_available_now ? (
                             <Badge variant="success">Available</Badge>
@@ -631,7 +663,6 @@ export default function ManageDonors() {
 
                     <div className="flex items-center justify-between pt-3 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
                       <div>
-                        {/* DYNAMIC BADGE MOBILE */}
                         {donor.is_available_now ? (
                           <Badge variant="success">Available</Badge>
                         ) : donor.is_permanently_deferred ? (
@@ -761,7 +792,7 @@ export default function ManageDonors() {
                   type="date"
                   className="h-11 transition-colors duration-300 bg-white dark:bg-slate-950/50"
                   value={donationLogData.donation_date}
-                  max={new Date().toISOString().split("T")[0]} // Prevent future dates
+                  max={new Date().toISOString().split("T")[0]}
                   onChange={(e) =>
                     setDonationLogData({
                       ...donationLogData,

@@ -92,6 +92,7 @@ class Organization(models.Model):
     state = models.ForeignKey(MasterState, on_delete=models.PROTECT)
     district = models.ForeignKey(MasterDistrict, on_delete=models.PROTECT)
     address_line = models.TextField()
+    google_map_link = models.TextField(blank=True, null=True, help_text="Google Maps Embed URL or iframe code")
 
     # Mini-Website Image Fields
     logo = models.ImageField(upload_to='organization/logos/', blank=True, null=True, help_text="Square logo for dashboard & public profile")
@@ -256,7 +257,7 @@ class Donor(models.Model):
     )
 
     # Multi-Tenant Link
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='donors')
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name='donors', help_text="Protected to prevent accidental hard-deletion of medical records if an Org is deleted.")
     
     # Personal Info
     full_name = models.CharField(max_length=255)

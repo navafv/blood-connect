@@ -13,6 +13,7 @@ import {
   FileText,
   ImagePlus,
   Link as LinkIcon,
+  Map, // <-- [NEW] Added Map Icon
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -30,14 +31,12 @@ export default function ProfileSettings() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
 
-  // --- Form & Asset State ---
   const [formData, setFormData] = useState({});
   const [fileData, setFileData] = useState({
     logo: null,
     banner_image: null,
   });
 
-  // --- Query Pipeline: Fetch Tenant Profile ---
   const {
     data: orgData,
     isLoading,
@@ -48,7 +47,6 @@ export default function ProfileSettings() {
     queryFn: async () => (await api.get("/tenant/organization/")).data,
   });
 
-  // Hydrate local form state when data resolves or edit mode is toggled
   useEffect(() => {
     if (orgData && !isEditing) {
       setFormData({
@@ -58,13 +56,12 @@ export default function ProfileSettings() {
         contact_phone: orgData.contact_phone || "",
         address_line: orgData.address_line || "",
         description: orgData.description || "",
+        google_map_link: orgData.google_map_link || "", // <-- [NEW]
       });
-      // Flush pending file uploads when cancelling edit mode
       setFileData({ logo: null, banner_image: null });
     }
   }, [orgData, isEditing]);
 
-  // Enforce URL-safe slug formatting dynamically
   const handleSlugChange = (e) =>
     setFormData({
       ...formData,
@@ -77,14 +74,12 @@ export default function ProfileSettings() {
   const handleFileChange = (e) =>
     setFileData({ ...fileData, [e.target.name]: e.target.files[0] });
 
-  // --- Mutation Pipeline: Commit Updates ---
   const updateMutation = useMutation({
     mutationFn: async (payload) =>
       api.patch("/tenant/organization/", payload, {
         headers: { "Content-Type": "multipart/form-data" },
       }),
     onSuccess: () => {
-      // FIX: Strict object syntax for React Query v5
       queryClient.invalidateQueries({ queryKey: ["tenant-org-profile"] });
       setIsEditing(false);
       toast.success("Organization profile updated.");
@@ -97,7 +92,6 @@ export default function ProfileSettings() {
     e.preventDefault();
     const payload = new FormData();
 
-    // FIX: Safe Append to prevent literal "null" strings being saved in DB
     Object.keys(formData).forEach((key) => {
       const val = formData[key];
       if (val !== null && val !== undefined && val !== "") {
@@ -114,7 +108,6 @@ export default function ProfileSettings() {
     updateMutation.mutate(payload);
   };
 
-  // --- UI Transition States ---
   if (isLoading)
     return (
       <div className="flex h-[60vh] items-center justify-center transition-colors duration-300">
@@ -147,7 +140,6 @@ export default function ProfileSettings() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300">
-      {/* --- Workspace Header --- */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
@@ -174,9 +166,6 @@ export default function ProfileSettings() {
 
       <div className="space-y-8">
         {isEditing ? (
-          /* =========================================
-             EDIT MODE
-             ========================================= */
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Module 1: Institutional Identity */}
             <Card className="backdrop-blur-xl shadow-lg transition-colors duration-300 bg-white/60 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 dark:shadow-xl">
@@ -272,6 +261,26 @@ export default function ProfileSettings() {
                     required
                   />
                 </div>
+
+                {/* --- [NEW] Map Embed Input --- */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    Google Maps Embed Link
+                  </label>
+                  <Input
+                    name="google_map_link"
+                    value={formData.google_map_link}
+                    onChange={handleChange}
+                    className="h-11 transition-colors duration-300 focus:ring-rose-500/20"
+                    placeholder="e.g., https://www.google.com/maps/embed?... OR paste the full <iframe> code"
+                  />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Go to Google Maps &rarr; Share &rarr; Embed a map. Paste the
+                    URL or iframe code here to show a map on your public
+                    profile.
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     Organization Bio
@@ -358,14 +367,11 @@ export default function ProfileSettings() {
             </div>
           </form>
         ) : (
-          /* =========================================
-             READ-ONLY MODE
-             ========================================= */
           <div className="space-y-6">
             <Card className="backdrop-blur-xl shadow-xl overflow-hidden relative transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80">
               {orgData.banner_image && (
                 <div className="absolute top-0 right-0 w-1/2 h-full opacity-30 dark:opacity-10 pointer-events-none">
-                  <div className="absolute inset-0 z-10 transition-colors duration-300 bg-linear-to-r from-white to-transparent dark:from-slate-900" />
+                  <div className="absolute inset-0 z-10 transition-colors duration-300 bg-gradient-to-r from-white to-transparent dark:from-slate-900" />
                   <img
                     src={orgData.banner_image}
                     alt="Cover"
@@ -374,7 +380,6 @@ export default function ProfileSettings() {
                 </div>
               )}
               <CardContent className="p-8 relative z-20">
-                {/* Logo & Name Header */}
                 <div className="flex items-center gap-6 mb-10 pb-8 border-b transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
                   {orgData.logo ? (
                     <img
@@ -447,6 +452,22 @@ export default function ProfileSettings() {
                         </p>
                       </div>
                     </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-xl flex items-center justify-center border shrink-0 transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/80 dark:border-slate-700">
+                        <Map className="h-6 w-6 transition-colors duration-300 text-slate-500 dark:text-slate-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider mb-1 transition-colors duration-300 text-slate-500 dark:text-slate-500">
+                          Google Maps Embed
+                        </p>
+                        <p className="font-medium transition-colors duration-300 text-slate-900 dark:text-white">
+                          {orgData.google_map_link
+                            ? "Configured & Active"
+                            : "Not Configured"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-start gap-4 h-full border-t md:border-t-0 md:border-l pt-8 md:pt-0 md:pl-10 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
@@ -457,7 +478,7 @@ export default function ProfileSettings() {
                       <p className="text-xs font-bold uppercase tracking-wider mb-2 transition-colors duration-300 text-slate-500 dark:text-slate-500">
                         Institutional Biography
                       </p>
-                      <p className="text-sm leading-relaxed transition-colors duration-300 text-slate-700 dark:text-slate-300">
+                      <p className="text-sm leading-relaxed transition-colors duration-300 text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                         {orgData.description || (
                           <span className="italic transition-colors duration-300 text-slate-500 dark:text-slate-600">
                             No organizational description provided.

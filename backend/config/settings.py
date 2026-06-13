@@ -193,6 +193,8 @@ CORS_ALLOW_CREDENTIALS = True
 csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000')
 CSRF_TRUSTED_ORIGINS = csrf_origins_env.split(',')
 
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -211,6 +213,7 @@ REST_FRAMEWORK = {
         'user': '1000/day',
         'login': '5/min',
         'otp': '5/min',
+        'registration': '3/hour',
         'password_reset': '3/hour',
         'password_reset_confirm': '3/hour',
     }

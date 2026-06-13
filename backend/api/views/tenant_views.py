@@ -1,6 +1,8 @@
 import csv
 import io
+import calendar # <-- Added for month names
 from datetime import datetime, timedelta
+from django.http import HttpResponse
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,6 +11,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from django.db import transaction
 from django.db.models import Count, Q, Prefetch, Max
+from django.db.models.functions import TruncMonth # <-- Added for 6-month aggregation
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 
@@ -27,7 +30,7 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
         user = self.request.user
         
         if user.role != 'ORG_ADMIN' or not getattr(user, 'organization', None):
-            return Donor.objects.none() # Return empty queryset safely instead of crashing
+            return Donor.objects.none() 
             
         return Donor.objects.get_for_tenant(
             user.organization
@@ -39,6 +42,39 @@ class TenantDonorViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.role == 'ORG_ADMIN' and getattr(user, 'organization', None):
             serializer.save(organization=user.organization)
+
+    @action(detail=False, methods=['get'], url_path='export')
+    def export_csv(self, request):
+        user = request.user
+        if user.role != 'ORG_ADMIN' or not getattr(user, 'organization', None):
+            return Response({"error": "Unauthorized."}, status=status.HTTP_403_FORBIDDEN)
+
+        donors = Donor.objects.get_for_tenant(
+            user.organization
+        ).with_availability_context()
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="donor_registry_{timezone.now().strftime("%Y%m%d")}.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Full Name', 'Phone Number', 'Blood Group', 'Gender', 'Date of Birth', 'Status', 'Last Donation'])
+
+        for donor in donors:
+            status_text = "Deferred" if donor.is_permanently_deferred else ("Available" if donor.is_available_now else "Resting")
+            last_don = donor.last_donation_date.strftime("%Y-%m-%d") if getattr(donor, 'last_donation_date', None) else "None"
+            
+            writer.writerow([
+                donor.full_name,
+                donor.phone_number,
+                donor.blood_group,
+                donor.get_gender_display(),
+                donor.date_of_birth.strftime("%Y-%m-%d") if donor.date_of_birth else "",
+                status_text,
+                last_don
+            ])
+
+        return response
+
 
 class TenantDonorBulkUploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -78,6 +114,9 @@ class TenantDonorBulkUploadView(APIView):
                     "error": f"Invalid CSV headers. Expected at least: {', '.join(expected_headers)}"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            existing_phones = set(Donor.objects.filter(organization=org).values_list('phone_number', flat=True))
+            seen_phones_in_csv = set()
+            
             donors_to_create = []
             donations_to_create = []
             errors = []
@@ -93,6 +132,12 @@ class TenantDonorBulkUploadView(APIView):
                         raise ValueError("Missing required text fields (name, phone, or blood group).")
                     if blood_group not in valid_blood_groups:
                         raise ValueError(f"Unrecognized blood group: '{blood_group}'")
+                        
+                    if phone_number in existing_phones:
+                        raise ValueError(f"Donor with phone '{phone_number}' already exists in your directory.")
+                    if phone_number in seen_phones_in_csv:
+                        raise ValueError(f"Duplicate phone '{phone_number}' found within this CSV file.")
+                    seen_phones_in_csv.add(phone_number)
                         
                     parsed_dob = parse_flexible_date(row.get('date_of_birth'))
                     if not parsed_dob:
@@ -112,7 +157,6 @@ class TenantDonorBulkUploadView(APIView):
                         blood_group=blood_group,
                         is_permanently_deferred=False,
                     )
-                    # Use a private attribute to pass the data temporarily 
                     donor._temp_last_donation = parsed_last_donation
                     donors_to_create.append(donor)
 
@@ -120,16 +164,13 @@ class TenantDonorBulkUploadView(APIView):
                     errors.append(f"Row {idx} skipped: {str(e)}")
 
             if donors_to_create:
-                # Bulk create donors
                 Donor.objects.bulk_create(donors_to_create, ignore_conflicts=True)
                 
-                # Fetch them back to get actual DB IDs for the related donation records
                 saved_donors = Donor.objects.filter(
                     organization=org, 
                     phone_number__in=[d.phone_number for d in donors_to_create]
                 )
                 
-                # Build the historical DonationRecords
                 phone_to_donor_map = {d.phone_number: d for d in saved_donors}
                 for temp_donor in donors_to_create:
                     if getattr(temp_donor, '_temp_last_donation', None):
@@ -170,34 +211,52 @@ class TenantDashboardStatsView(APIView):
             if not hasattr(user, 'organization') or not user.organization:
                 return Response({"error": "No organization linked."}, status=status.HTTP_400_BAD_REQUEST)
                 
-            # The query is perfectly isolated to the active tenant's organization!
             donors = Donor.objects.filter(organization=user.organization).annotate(
                 annotated_last_donation=Max('donation_records__donation_date')
             )
             
             today = timezone.now().date()
             thirty_days_ago = today - timedelta(days=30)
+            seven_days_from_now = today + timedelta(days=7)
             
+            male_threshold_now = today - timedelta(days=90)
+            female_threshold_now = today - timedelta(days=120)
+            male_threshold_future = seven_days_from_now - timedelta(days=90)
+            female_threshold_future = seven_days_from_now - timedelta(days=120)
+
             # 1. Total Donors
             total_donors = donors.count()
             
             # 2. Available Donors
-            male_threshold = today - timedelta(days=90)
-            female_threshold = today - timedelta(days=120)
-
             available_donors = donors.filter(
                 is_permanently_deferred=False
             ).filter(
                 Q(annotated_last_donation__isnull=True) |
-                Q(gender='M', annotated_last_donation__lte=male_threshold) |
-                Q(gender='F', annotated_last_donation__lte=female_threshold) |
-                Q(gender='O', annotated_last_donation__lte=female_threshold)
+                Q(gender='M', annotated_last_donation__lte=male_threshold_now) |
+                Q(gender='F', annotated_last_donation__lte=female_threshold_now) |
+                Q(gender='O', annotated_last_donation__lte=female_threshold_now)
+            ).count()
+            
+            # 3. Available *THIS WEEK*
+            donors_available_this_week = donors.filter(
+                is_permanently_deferred=False
+            ).filter(
+                ~Q(
+                    Q(annotated_last_donation__isnull=True) |
+                    Q(gender='M', annotated_last_donation__lte=male_threshold_now) |
+                    Q(gender='F', annotated_last_donation__lte=female_threshold_now) |
+                    Q(gender='O', annotated_last_donation__lte=female_threshold_now)
+                )
+            ).filter(
+                Q(gender='M', annotated_last_donation__lte=male_threshold_future) |
+                Q(gender='F', annotated_last_donation__lte=female_threshold_future) |
+                Q(gender='O', annotated_last_donation__lte=female_threshold_future)
             ).count()
                     
-            # 3. Donations this month
+            # 4. Donations this month
             recent_donations = donors.filter(annotated_last_donation__gte=thirty_days_ago).count()
             
-            # 4. Blood Group Distribution
+            # 5. Blood Group Distribution
             bg_counts = donors.values('blood_group').annotate(count=Count('blood_group')).order_by('blood_group')
             blood_distribution = [
                 {
@@ -205,8 +264,41 @@ class TenantDashboardStatsView(APIView):
                     "count": i.get('count', 0)
                 } for i in bg_counts
             ]
+
+            # --- [NEW] 6. 6-Month Donation Trend ---
+            trend_data = []
+            for i in range(5, -1, -1):
+                m = today.month - i
+                y = today.year
+                if m <= 0:
+                    m += 12
+                    y -= 1
+                trend_data.append({"month": calendar.month_abbr[m], "count": 0, "year": y, "m_num": m})
+
+            six_months_ago_limit = (today.replace(day=1) - timedelta(days=160)).replace(day=1)
+
+            donations_6m = DonationRecord.objects.filter(
+                organization=user.organization,
+                donation_date__gte=six_months_ago_limit
+            ).annotate(
+                month_trunc=TruncMonth('donation_date')
+            ).values('month_trunc').annotate(count=Count('id')).order_by('month_trunc')
+
+            # Map the aggregated counts back to our contiguous 6-month timeline
+            for d in donations_6m:
+                if not d['month_trunc']: continue
+                d_month = d['month_trunc'].month
+                d_year = d['month_trunc'].year
+                for t in trend_data:
+                    if t['m_num'] == d_month and t['year'] == d_year:
+                        t['count'] = d['count']
+
+            # Clean up timeline data for the frontend
+            for t in trend_data:
+                del t['year']
+                del t['m_num']
             
-            # 5. Recent Activity
+            # 7. Recent Activity
             recent_activity = []
             for d in donors.order_by('-created_at')[:5]:
                 safe_timestamp = d.created_at.isoformat() if getattr(d, 'created_at', None) else timezone.now().isoformat()
@@ -222,9 +314,10 @@ class TenantDashboardStatsView(APIView):
                     "totalDonors": total_donors,
                     "availableDonors": available_donors,
                     "donationsThisMonth": recent_donations,
-                    "pendingRequests": 0
+                    "availableThisWeek": donors_available_this_week
                 },
                 "bloodGroupDistribution": blood_distribution,
+                "monthlyDonationTrend": trend_data, # <-- NEW
                 "recentActivity": recent_activity
             }, status=status.HTTP_200_OK)
             
@@ -317,7 +410,7 @@ class TenantSupportTicketViewSet(viewsets.ModelViewSet):
             ticket.save()
             
         return Response({"message": "Reply sent successfully."})
-    
+
 class LogDonationView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -327,7 +420,6 @@ class LogDonationView(APIView):
         if user.role != 'ORG_ADMIN' or not getattr(user, 'organization', None):
             return Response({"error": "Unauthorized. Tenant administrators only."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Ensure the donor actually belongs to this hospital
         donor = get_object_or_404(Donor, id=donor_id, organization=user.organization)
         
         donation_type = request.data.get('donation_type', 'WHOLE_BLOOD')
@@ -337,7 +429,6 @@ class LogDonationView(APIView):
         if not donation_date:
             return Response({"error": "Donation date is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create the ledger record
         DonationRecord.objects.create(
             donor=donor,
             organization=user.organization,
