@@ -32,7 +32,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             access_token = response.data.get('access')
             refresh_token = response.data.get('refresh')
             
-            # Fetch user to assign role and check 2FA
             email = request.data.get('email') or request.data.get('username')
             user = CustomUser.objects.filter(email=email).first()
             actual_role = getattr(user, 'role', 'PUBLIC_USER') if user else 'PUBLIC_USER'
@@ -40,7 +39,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             if user and user.is_superuser:
                 actual_role = 'SUPER_ADMIN'
                 
-            # --- 2FA INTERCEPTION GATEWAY ---
             if user and getattr(user, 'is_2fa_enabled', False):
                 temp_token = dumps({'user_id': user.id}, salt='2fa-login')
                 return Response({
@@ -49,7 +47,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                     "message": "2FA verification required."
                 }, status=status.HTTP_200_OK)
             
-            # Reusable cookie kwargs (Safe Fallbacks applied)
             cookie_kwargs = {
                 'secure': settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE', False),
                 'httponly': settings.SIMPLE_JWT.get('AUTH_COOKIE_HTTP_ONLY', True),
@@ -57,11 +54,9 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                 'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             }
             
-            # Use max_age and convert timedelta to seconds
             access_max_age = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
             refresh_max_age = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
             
-            # Access Token Cookie
             response.set_cookie(
                 key=settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
                 value=access_token,
@@ -69,7 +64,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                 **cookie_kwargs
             )
             
-            # Refresh Token Cookie
             response.set_cookie(
                 key=settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'),
                 value=refresh_token,
@@ -77,7 +71,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                 **cookie_kwargs
             )
             
-            # Remove tokens from JSON body for security
             del response.data['access']
             del response.data['refresh']
             
@@ -172,7 +165,6 @@ class CookieTokenRefreshView(TokenRefreshView):
                 'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
             }
             
-            # Use max_age and convert timedelta to seconds
             access_max_age = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
             
             response.set_cookie(
@@ -218,7 +210,7 @@ class CurrentUserView(APIView):
             "email": user.email,
             "role": getattr(user, 'role', 'PUBLIC_USER'),
             "organization": org_data,
-            "is_email_verified": user.is_email_verified # Exposing to the frontend context
+            "is_email_verified": user.is_email_verified
         }, status=status.HTTP_200_OK)
     
 class LogoutView(APIView):
@@ -229,9 +221,8 @@ class LogoutView(APIView):
             refresh_token = request.COOKIES.get(settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'))
             if refresh_token:
                 token = RefreshToken(refresh_token)
-                if hasattr(token, 'blacklist'):
-                    token.blacklist()
-        except Exception as e:
+                token.blacklist()
+        except Exception:
             pass
 
         response = Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
@@ -273,11 +264,9 @@ class RegisterOrganizationView(APIView):
             
         try:
             with transaction.atomic():
-                # Form data usually converts booleans to strings, let's parse it safely
                 is_searchable_val = data.get('is_searchable', 'true')
                 is_searchable = str(is_searchable_val).lower() == 'true'
 
-                # 1. Create Organization with new fields
                 organization = Organization.objects.create(
                     name=data.get('orgName'),
                     org_type=data.get('orgType', 'NGO'),
@@ -291,12 +280,10 @@ class RegisterOrganizationView(APIView):
                     status='PENDING'
                 )
 
-                # Handle Logo Upload explicitly
                 if 'logo' in request.FILES:
                     organization.logo = request.FILES['logo']
                     organization.save()
 
-                # 2. Create the Admin User
                 otp_code = str(secrets.randbelow(900000) + 100000)
 
                 admin_user = CustomUser.objects.create_user(
@@ -309,7 +296,6 @@ class RegisterOrganizationView(APIView):
                     email_otp_expires_at=timezone.now() + timedelta(minutes=10)
                 )
 
-            # 3. Fire Email Notification
             subject = "Verify your Bloodonate Workspace"
             plain_message = f"Hello {data.get('contactName', '')},\n\nYour Bloodonate verification code is: {otp_code}.\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email."
             
@@ -863,7 +849,6 @@ class Setup2FAView(APIView):
     def post(self, request):
         user = request.user
         
-        # Guarantee a fresh secret is generated every setup attempt
         user.totp_secret = pyotp.random_base32()
         user.save()
 

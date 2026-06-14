@@ -20,6 +20,7 @@ import {
   Sun,
   Moon,
   Activity,
+  Clock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../lib/axios";
@@ -38,6 +39,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
     { name: "Manage Donors", path: "/admin/donors", icon: Users },
     { name: "Register Donor", path: "/admin/add-donor", icon: UserPlus },
     { name: "Support", path: "/admin/support", icon: LifeBuoy },
+    { name: "Audit Logs", path: "/admin/audit-logs", icon: Clock },
     { name: "Profile Settings", path: "/admin/settings", icon: Building2 },
     { name: "Account Settings", path: "/admin/settings/security", icon: Lock },
     {
@@ -108,7 +110,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
           <p className="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 transition-colors duration-300 text-slate-500 dark:text-slate-500">
             Operations
           </p>
-          {menuItems.slice(0, 4).map((item) => {
+          {menuItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
 
@@ -147,7 +149,7 @@ export function Sidebar({ isOpen, setIsOpen }) {
           <p className="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 transition-colors duration-300 text-slate-500 dark:text-slate-500">
             Management
           </p>
-          {menuItems.slice(4).map((item) => {
+          {menuItems.slice(5).map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
 

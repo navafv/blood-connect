@@ -57,7 +57,6 @@ export default function RegisterOrg() {
     logo: null,
   });
 
-  // --- Password Strength Calculation ---
   const pwdResult = useMemo(() => {
     return formData.password ? zxcvbn(formData.password) : null;
   }, [formData.password]);
@@ -141,7 +140,6 @@ export default function RegisterOrg() {
     }
   };
 
-  // Submit via FormData for Image Upload support
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -203,7 +201,6 @@ export default function RegisterOrg() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
-      {/* Ambient Background */}
       <div
         className="absolute top-[-10%] right-[-5%] w-[480px] h-[480px] rounded-full blur-[120px] pointer-events-none transition-colors duration-300 bg-rose-500/10 dark:bg-rose-600/15"
         aria-hidden="true"
@@ -213,9 +210,7 @@ export default function RegisterOrg() {
         aria-hidden="true"
       />
 
-      {/* Main Container */}
       <div className="w-full max-w-4xl relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        {/* Header */}
         <div className="flex flex-col items-center mb-8">
           <Link
             to="/"
@@ -223,18 +218,15 @@ export default function RegisterOrg() {
           >
             <Droplet className="h-8 w-8 transition-transform duration-300 group-hover:scale-110 text-rose-600 dark:text-rose-500" />
           </Link>
-
           <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-center transition-colors duration-300 text-slate-900 dark:text-white">
             Register Your Organization
           </h1>
-
           <p className="mt-3 text-sm text-center leading-relaxed max-w-2xl transition-colors duration-300 text-slate-600 dark:text-slate-400">
             Create a secure Bloodonate workspace to manage blood donors,
             emergency requests, and organization operations.
           </p>
         </div>
 
-        {/* Card */}
         <div className="backdrop-blur-xl border rounded-3xl shadow-xl px-6 sm:px-10 py-10 transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80 dark:shadow-2xl">
           {status === "success" ? (
             <div className="text-center py-12 animate-in fade-in zoom-in duration-500">
@@ -242,21 +234,17 @@ export default function RegisterOrg() {
                 <div className="absolute inset-0 rounded-full blur-md animate-pulse transition-colors duration-300 bg-emerald-200/50 dark:bg-emerald-500/20" />
                 <CheckCircle2 className="h-12 w-12 relative z-10 transition-colors duration-300 text-emerald-600 dark:text-emerald-500" />
               </div>
-
               <h3 className="text-3xl font-bold mb-3 transition-colors duration-300 text-slate-900 dark:text-white">
                 Registration Successful
               </h3>
-
               <p className="text-base max-w-md mx-auto leading-relaxed mb-8 transition-colors duration-300 text-slate-600 dark:text-slate-400">
                 Your organization account has been created successfully.
                 Redirecting you to email verification...
               </p>
-
               <Loader2 className="h-8 w-8 animate-spin mx-auto transition-colors duration-300 text-rose-600 dark:text-rose-500" />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-10">
-              {/* --- Organization Info --- */}
               <div className="space-y-6">
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
@@ -270,7 +258,6 @@ export default function RegisterOrg() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-6">
-                  {/* Org Name */}
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Organization Name *
@@ -289,7 +276,6 @@ export default function RegisterOrg() {
                     </div>
                   </div>
 
-                  {/* Org Type */}
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Organization Type *
@@ -307,7 +293,6 @@ export default function RegisterOrg() {
                     />
                   </div>
 
-                  {/* Contact Name */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Administrator Name *
@@ -326,7 +311,6 @@ export default function RegisterOrg() {
                     </div>
                   </div>
 
-                  {/* Contact Phone */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Contact Phone Number *
@@ -346,7 +330,6 @@ export default function RegisterOrg() {
                     </div>
                   </div>
 
-                  {/* Email */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Official Email Address *
@@ -366,7 +349,6 @@ export default function RegisterOrg() {
                     </div>
                   </div>
 
-                  {/* Password & Strength Meter */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Account Password *
@@ -396,18 +378,18 @@ export default function RegisterOrg() {
                       </button>
                     </div>
 
-                    {/* --- Visual Password Strength Meter --- */}
                     {!formData.password ? (
                       <p className="text-xs transition-colors duration-300 text-slate-500 dark:text-slate-400">
                         Must be at least 8 characters long.
                       </p>
                     ) : (
-                      <div className="space-y-1.5 pt-1">
+                      <div className="space-y-1.5 pt-1 animate-in fade-in duration-300">
                         <div className="flex gap-1 h-1.5 w-full">
                           {[0, 1, 2, 3].map((index) => {
                             let bgColor = "bg-slate-200 dark:bg-slate-700";
                             if (pwdResult && pwdResult.score >= index) {
-                              if (pwdResult.score === 0) bgColor = "bg-red-500";
+                              if (pwdResult.score === 0)
+                                bgColor = "bg-rose-500";
                               else if (pwdResult.score === 1)
                                 bgColor = "bg-orange-500";
                               else if (pwdResult.score === 2)
@@ -428,7 +410,7 @@ export default function RegisterOrg() {
                           <span
                             className={`font-bold transition-colors ${
                               pwdResult.score <= 1
-                                ? "text-red-500"
+                                ? "text-rose-500"
                                 : pwdResult.score === 2
                                   ? "text-amber-500"
                                   : "text-emerald-600 dark:text-emerald-400"
@@ -441,7 +423,7 @@ export default function RegisterOrg() {
                             {pwdResult.score === 4 && "Strong"}
                           </span>
                           {pwdResult.feedback.warning && (
-                            <span className="text-red-500 max-w-[70%] text-right leading-tight">
+                            <span className="text-rose-500 dark:text-rose-400 max-w-[70%] text-right leading-tight">
                               {pwdResult.feedback.warning}
                             </span>
                           )}
@@ -450,7 +432,6 @@ export default function RegisterOrg() {
                     )}
                   </div>
 
-                  {/* Address Line */}
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Complete Street Address *
@@ -469,7 +450,6 @@ export default function RegisterOrg() {
                     </div>
                   </div>
 
-                  {/* Modern Logo Upload Zone */}
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       Organization Logo (Optional)
@@ -516,7 +496,6 @@ export default function RegisterOrg() {
                 </div>
               </div>
 
-              {/* --- Location --- */}
               <div className="space-y-6 border-t pt-8 transition-colors duration-300 border-slate-200 dark:border-slate-800">
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
@@ -544,7 +523,6 @@ export default function RegisterOrg() {
                       required
                     />
                   </div>
-
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       State / Province *
@@ -561,7 +539,6 @@ export default function RegisterOrg() {
                       required
                     />
                   </div>
-
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider transition-colors duration-300 text-slate-600 dark:text-slate-400">
                       District / City *
@@ -588,7 +565,6 @@ export default function RegisterOrg() {
                 </div>
               </div>
 
-              {/* --- Public Listing --- */}
               <div className="space-y-5 border-t pt-8 transition-colors duration-300 border-slate-200 dark:border-slate-800">
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
@@ -623,7 +599,6 @@ export default function RegisterOrg() {
                 </label>
               </div>
 
-              {/* --- Privacy & Consent --- */}
               <div className="pt-2">
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <input
@@ -656,7 +631,6 @@ export default function RegisterOrg() {
                 </label>
               </div>
 
-              {/* Submit */}
               <div className="pt-4 border-t transition-colors duration-300 border-slate-200 dark:border-slate-800">
                 <Button
                   type="submit"
@@ -680,7 +654,6 @@ export default function RegisterOrg() {
             </form>
           )}
 
-          {/* Footer */}
           {status !== "success" && (
             <div className="mt-8 pt-6 border-t text-center transition-colors duration-300 border-slate-200 dark:border-slate-800">
               <p className="text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">

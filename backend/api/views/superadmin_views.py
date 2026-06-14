@@ -91,7 +91,6 @@ def send_subscription_activated_email(organization):
     except Exception as e:
         print(f"Failed to send subscription activation email: {e}")
 
-
 class IsSuperAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return bool(
@@ -164,7 +163,11 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         organization.status = new_status
         organization.save()
 
-        # Send email if newly activated
+        SystemLog.objects.create(
+            organization=organization, actor=request.user, level='WARNING',
+            source='SYSTEM_ADMIN', message=f"SuperAdmin updated organization status to {new_status}"
+        )
+
         if old_status != 'ACTIVE' and new_status == 'ACTIVE':
             self.send_approval_email(organization)
 
@@ -363,15 +366,12 @@ class SuperAdminSystemLogListView(generics.ListAPIView):
     def get_queryset(self):
         queryset = SystemLog.objects.all().order_by('-timestamp')
         
-        # 1. Extract query parameters from the frontend request
         search = self.request.query_params.get('search', None)
         level = self.request.query_params.get('level', None)
         
-        # 2. Apply Severity Filter
         if level and level != 'ALL':
             queryset = queryset.filter(level=level)
             
-        # 3. Apply Text Search (Source OR Message)
         if search:
             queryset = queryset.filter(
                 Q(source__icontains=search) | 
@@ -656,7 +656,6 @@ class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
             org = payment.organization
             org.is_paid = True
             
-            # Extend Organization Subscription by 1 Year securely
             if org.subscription_expires_at and org.subscription_expires_at > timezone.now():
                 org.subscription_expires_at += timedelta(days=365)
             else:
@@ -664,8 +663,12 @@ class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
                 
             org.save()
             payment.save()
+
+            SystemLog.objects.create(
+                organization=org, actor=request.user, level='INFO',
+                source='BILLING', message=f"SuperAdmin approved payment {payment.upi_reference}."
+            )
             
-            # Send Notification Email
             send_subscription_activated_email(org)
             
             return Response({"message": "Payment approved and subscription extended."}, status=status.HTTP_200_OK)
@@ -673,6 +676,12 @@ class SuperAdminPaymentViewSet(viewsets.ModelViewSet):
         elif action_type == 'REJECT':
             payment.status = 'REJECTED'
             payment.save()
+
+            SystemLog.objects.create(
+                organization=payment.organization, actor=request.user, level='WARNING',
+                source='BILLING', message=f"SuperAdmin rejected payment {payment.upi_reference}."
+            )
+
             return Response({"message": "Payment rejected."}, status=status.HTTP_200_OK)
             
         return Response({"error": "Invalid action parameter."}, status=status.HTTP_400_BAD_REQUEST)
@@ -696,7 +705,6 @@ class SuperAdminExtendSubscriptionView(APIView):
             
         org.save()
         
-        # Send Notification Email
         send_subscription_activated_email(org)
         
         return Response({"message": f"Extended successfully by {years} year(s)."}, status=status.HTTP_200_OK)
@@ -720,16 +728,13 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
         ticket.status = new_status
         ticket.save()
 
-        # --- TENANT NOTIFICATION PROTOCOL ---
         if message or new_status == 'RESOLVED':
             subject = f"Update on Support Ticket: TCKT-{str(ticket.id).zfill(4)}"
             
-            # Simple plain text fallback
             plain_message = f"Hello {ticket.created_by.first_name or 'Admin'},\n\nYour support ticket '{ticket.subject}' has been updated.\n\nStatus: {ticket.get_status_display()}"
             if message:
                 plain_message += f"\n\nSupport Team: {message}"
                 
-            # Modern HTML Template
             status_color = "#10b981" if new_status == 'RESOLVED' else "#3b82f6"
             html_message = f"""
             <!doctype html>
@@ -877,7 +882,6 @@ class SuperAdminSupportTicketViewSet(viewsets.ModelViewSet):
             </html>
             """
             
-            # Dispatch safely so a failed email doesn't crash the status update
             try:
                 send_async_email(
                     subject=subject,
@@ -903,26 +907,21 @@ class SystemCronWebhookView(APIView):
         if not provided_token or provided_token != expected_token:
             return Response({"error": "Unauthorized cron execution."}, status=status.HTTP_403_FORBIDDEN)
 
-        # === 1. Task: Purge Old Records ===
         deleted_count = 0
         try:
             cutoff_date = timezone.now() - timedelta(days=30)
             
-            # Fetch the stale records
             old_records = Donor.all_objects.filter(
                 is_deleted=True, 
                 deleted_at__lt=cutoff_date
             )
             
-            # Iterate and call your custom hard_delete() on each instance
             for donor in old_records:
                 donor.hard_delete()
                 deleted_count += 1
             
         except Exception as e:
             return Response({"error": f"Task Failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        # === Add more daily tasks here in the future ===
 
         return Response({
             "message": "Daily cron jobs executed successfully.",

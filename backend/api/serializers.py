@@ -8,10 +8,6 @@ from .models import (
     HeroImage
 )
 
-# ==========================================
-# 1. GEOGRAPHIC SERIALIZERS
-# ==========================================
-
 class MasterCountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterCountry
@@ -27,11 +23,6 @@ class MasterDistrictSerializer(serializers.ModelSerializer):
         model = MasterDistrict
         fields = ['id', 'name', 'state']
 
-
-# ==========================================
-# 2. USER SERIALIZER 
-# ==========================================
-
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -40,11 +31,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return CustomUser.objects.create_user(**validated_data)
-
-
-# ==========================================
-# 3. ORGANIZATION SERIALIZER
-# ==========================================
 
 class OrganizationSerializer(serializers.ModelSerializer):
     country_name = serializers.CharField(source='country.name', read_only=True)
@@ -69,16 +55,9 @@ class OrganizationSerializer(serializers.ModelSerializer):
         admin = CustomUser.objects.filter(organization=obj, role='ORG_ADMIN').first()
         return admin.is_email_verified if admin else False
 
-
-# ==========================================
-# 4. DONOR & DONATION SERIALIZERS
-# ==========================================
-
 class DonorSerializer(serializers.ModelSerializer):
     is_available_now = serializers.ReadOnlyField()
-    
     last_donation_date = serializers.DateField(required=False, allow_null=True)
-    
     masked_phone = serializers.SerializerMethodField()
     organization_name = serializers.CharField(source='organization.name', read_only=True)
     country_name = serializers.CharField(source='country.name', read_only=True)
@@ -174,11 +153,6 @@ class DonationRecordSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Donation date cannot be in the future.")
         return value
 
-
-# ==========================================
-# 5. ADVERTISEMENT & HERO IMAGES SERIALIZERS
-# ==========================================
-
 class AdvertisementSerializer(serializers.ModelSerializer):
     is_expired = serializers.ReadOnlyField()
 
@@ -196,21 +170,19 @@ class HeroImageSerializer(serializers.ModelSerializer):
         model = HeroImage
         fields = '__all__'
 
-
-# ==========================================
-# 6. SYSTEM LOG SERIALIZER
-# ==========================================
 class SystemLogSerializer(serializers.ModelSerializer):
     timestamp = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    actor_name = serializers.SerializerMethodField()
     
     class Meta:
         model = SystemLog
-        fields = ['id', 'timestamp', 'level', 'source', 'message', 'context']
+        fields = ['id', 'timestamp', 'level', 'source', 'message', 'context', 'actor_name']
 
+    def get_actor_name(self, obj):
+        if obj.actor:
+            return obj.actor.first_name or obj.actor.email
+        return 'System'
 
-# ==========================================
-# 7. CONTACT & SUPPORT SERIALIZERS
-# ==========================================
 class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage

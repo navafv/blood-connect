@@ -34,6 +34,7 @@ const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const ManageDonors = lazy(() => import("./pages/admin/ManageDonors"));
 const AddDonor = lazy(() => import("./pages/admin/AddDonor"));
 const Support = lazy(() => import("./pages/admin/Support"));
+const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 const ProfileSettings = lazy(
   () => import("./pages/admin/settings/ProfileSettings"),
 );
@@ -124,6 +125,7 @@ function App() {
                   <Route path="donors" element={<ManageDonors />} />
                   <Route path="add-donor" element={<AddDonor />} />
                   <Route path="support" element={<Support />} />
+                  <Route path="audit-logs" element={<AuditLogs />} />
                   <Route path="settings" element={<ProfileSettings />} />
                   <Route
                     path="settings/security"

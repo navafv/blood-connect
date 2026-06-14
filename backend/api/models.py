@@ -8,9 +8,6 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from simple_history.models import HistoricalRecords
 
-# ==========================================
-# GLOBAL VALIDATORS
-# ==========================================
 phone_regex = RegexValidator(
     regex=r'^\+?1?\d{9,15}$',
     message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
@@ -19,10 +16,6 @@ phone_regex = RegexValidator(
 def validate_past_date(value):
     if value > timezone.now().date():
         raise ValidationError("This date cannot be in the future.")
-
-# ==========================================
-# 1. GEOGRAPHIC MASTER DATA (The "Locks")
-# ==========================================
 
 class MasterCountry(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -37,7 +30,6 @@ class MasterCountry(models.Model):
         verbose_name_plural = "Master Countries"
         ordering = ['name']
 
-
 class MasterState(models.Model):
     country = models.ForeignKey(MasterCountry, on_delete=models.CASCADE, related_name='states')
     name = models.CharField(max_length=100)
@@ -49,7 +41,6 @@ class MasterState(models.Model):
         ordering = ['name']
         unique_together = ('country', 'name')
 
-
 class MasterDistrict(models.Model):
     state = models.ForeignKey(MasterState, on_delete=models.CASCADE, related_name='districts')
     name = models.CharField(max_length=100)
@@ -60,11 +51,6 @@ class MasterDistrict(models.Model):
     class Meta:
         ordering = ['name']
         unique_together = ('state', 'name')
-
-
-# ==========================================
-# 2. ORGANIZATION (The SaaS Tenant)
-# ==========================================
 
 class Organization(models.Model):
     ORG_TYPE_CHOICES = (
@@ -86,19 +72,13 @@ class Organization(models.Model):
     contact_email = models.EmailField(unique=True)
     contact_phone = models.CharField(validators=[phone_regex], max_length=20)
     description = models.TextField(blank=True, null=True)
-    
-    # Geographic Locking (Tenant is locked to these)
     country = models.ForeignKey(MasterCountry, on_delete=models.PROTECT)
     state = models.ForeignKey(MasterState, on_delete=models.PROTECT)
     district = models.ForeignKey(MasterDistrict, on_delete=models.PROTECT)
     address_line = models.TextField()
     google_map_link = models.TextField(blank=True, null=True, help_text="Google Maps Embed URL or iframe code")
-
-    # Mini-Website Image Fields
     logo = models.ImageField(upload_to='organization/logos/', blank=True, null=True, help_text="Square logo for dashboard & public profile")
     banner_image = models.ImageField(upload_to='organization/banners/', blank=True, null=True)
-
-    # SaaS Management & Privacy
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', db_index=True)
     is_paid = models.BooleanField(default=False, help_text="True if the organization has an active paid subscription.")
     is_searchable = models.BooleanField(default=True, help_text="If False, this organization's donors are hidden from public search.", db_index=True)
@@ -113,7 +93,6 @@ class Organization(models.Model):
         return self.subscription_expires_at > timezone.now()
     
     def save(self, *args, **kwargs):
-        # Auto-generate a slug if the organization doesn't have one yet
         if not self.slug:
             base_slug = slugify(self.name)[:140] 
             unique_id = str(uuid.uuid4())[:6]
@@ -129,11 +108,6 @@ class Organization(models.Model):
             models.Index(fields=['status', 'is_searchable']),
         ]
 
-
-# ==========================================
-# 3. CUSTOM USER (Handles Authentication & OTP)
-# ==========================================
-
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -147,7 +121,7 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('role', 'SUPER_ADMIN') # Automatically grant SuperAdmin role
+        extra_fields.setdefault('role', 'SUPER_ADMIN')
         extra_fields.setdefault('is_email_verified', True)
 
         if extra_fields.get('is_staff') is not True:
@@ -169,8 +143,6 @@ class CustomUser(AbstractUser):
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PUBLIC_USER')
     phone_number = models.CharField(validators=[phone_regex], max_length=20, unique=True, null=True, blank=True)
-    
-    # Verification Flags
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
     email_verification_otp = models.CharField(max_length=6, null=True, blank=True)
@@ -193,11 +165,6 @@ class CustomUser(AbstractUser):
         if not self.phone_number:
             self.phone_number = None
         super().save(*args, **kwargs)
-
-
-# ==========================================
-# 4. DONOR (Managed by Organizations)
-# ==========================================
 
 class SoftDeleteQuerySet(models.QuerySet):
     def delete(self):
@@ -222,7 +189,7 @@ class SoftDeleteQuerySet(models.QuerySet):
         return self.filter(organization=organization)
 
     def with_availability_context(self):
-        from .models import DonationRecord # Local import to prevent circularity
+        from .models import DonationRecord
         latest_donation_prefetch = Prefetch(
             'donation_records',
             queryset=DonationRecord.objects.order_by('-donation_date'),
@@ -256,36 +223,23 @@ class Donor(models.Model):
         ('O', 'Other'),
     )
 
-    # Multi-Tenant Link
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name='donors', help_text="Protected to prevent accidental hard-deletion of medical records if an Org is deleted.")
-    
-    # Personal Info
     full_name = models.CharField(max_length=255)
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, db_index=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     date_of_birth = models.DateField(validators=[validate_past_date])
     phone_number = models.CharField(validators=[phone_regex], max_length=20)
-    
-    # Geographic Locking
     country = models.ForeignKey(MasterCountry, on_delete=models.PROTECT, db_index=True)
     state = models.ForeignKey(MasterState, on_delete=models.PROTECT, db_index=True)
     district = models.ForeignKey(MasterDistrict, on_delete=models.PROTECT, db_index=True)
-    
-    # Medical & Availability Tracking
     is_permanently_deferred = models.BooleanField(default=False)
     deferral_reason = models.TextField(blank=True, null=True, help_text="e.g., Medical condition, recent tattoo")
     has_consented = models.BooleanField(default=False, help_text="Donor explicitly consented to data storage and contact.")
-    
-    # Soft Delete Fields
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
-    # Managers
     objects = ActiveDonorManager()
     all_objects = AllDonorManager()
-
-    # History Tracking
     history = HistoricalRecords()
 
     def __str__(self):
@@ -318,7 +272,7 @@ class Donor(models.Model):
             
         latest = self.latest_donation
         if not latest:
-            return True # Never donated = available
+            return True 
             
         today = timezone.now().date()
         days_since_donation = (today - latest.donation_date).days
@@ -326,7 +280,7 @@ class Donor(models.Model):
             return days_since_donation >= 14
         elif latest.donation_type == 'PLASMA':
             return days_since_donation >= 28
-        else: # WHOLE_BLOOD
+        else:
             cooldown_days = 90 if self.gender == 'M' else 120
             return days_since_donation >= cooldown_days
         
@@ -336,11 +290,6 @@ class Donor(models.Model):
             models.Index(fields=['organization', 'is_deleted']),
             models.Index(fields=['blood_group', 'district', 'state']),
         ]
-
-
-# =========================================
-# 5. DONATION RECORD
-# =========================================
 
 class DonationRecord(models.Model):
     DONATION_TYPES = (
@@ -361,15 +310,10 @@ class DonationRecord(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        ordering = ['-donation_date', '-created_at'] # Most recent first
+        ordering = ['-donation_date', '-created_at']
 
     def __str__(self):
         return f"{self.donor.full_name} - {self.get_donation_type_display()} on {self.donation_date}"
-
-
-# ==========================================
-# 6. ADVERTISEMENT (Managed by Super Admin)
-# ==========================================
 
 class Advertisement(models.Model):
     title = models.CharField(max_length=255)
@@ -393,11 +337,6 @@ class Advertisement(models.Model):
     def is_expired(self):
         return self.expires_at < timezone.now()
 
-
-# ==========================================
-# 7. SYSTEM LOGS (Super Admin Audit Trail)
-# ==========================================
-
 class SystemLog(models.Model):
     LEVEL_CHOICES = (
         ('INFO', 'Info'),
@@ -408,17 +347,15 @@ class SystemLog(models.Model):
     
     timestamp = models.DateTimeField(auto_now_add=True)
     level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='INFO')
-    source = models.CharField(max_length=50) # e.g., 'SYSTEM', 'AUTH', 'BILLING'
+    source = models.CharField(max_length=50)
     message = models.TextField()
     context = models.TextField(blank=True, null=True)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='audit_logs')
+    actor = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='action_logs')
 
     def __str__(self):
-        return f"[{self.level}] {self.source} - {self.timestamp}"
-    
-
-# ==========================================
-# 8. PUBLIC CONTACT MESSAGES
-# ==========================================
+        org_context = f"[{self.organization.name}]" if self.organization else "[GLOBAL]"
+        return f"{org_context} [{self.level}] {self.source} - {self.timestamp}"
 
 class ContactMessage(models.Model):
     name = models.CharField(max_length=255)
@@ -430,11 +367,6 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.subject} - {self.email}"
-    
-
-# ==========================================
-# 9. SUBSCRIPTION & UPI PAYMENTS
-# ==========================================
 
 class PaymentTransaction(models.Model):
     STATUS_CHOICES = (
@@ -454,11 +386,6 @@ class PaymentTransaction(models.Model):
 
     def __str__(self):
         return f"{self.organization.name} - ₹{self.amount} ({self.status})"
-
-
-# ==========================================
-# 10. TENANT DASHBOARD SUPPORT TICKETS
-# ==========================================
 
 class TenantSupportTicket(models.Model):
     STATUS_CHOICES = (
@@ -483,10 +410,6 @@ class TicketReply(models.Model):
     sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-# ==========================================
-# 11. HOME PAGE HERO IMAGES (Super Admin)
-# ==========================================
 
 class HeroImage(models.Model):
     image = models.ImageField(upload_to='hero_images/', help_text="Image to display in the Home Page Hero Slider")
