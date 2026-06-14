@@ -9,12 +9,12 @@ from .views import (
     RegisterOrganizationView, ResendEmailOTPView, SecuritySettingsView, Setup2FAView, 
     SuperAdminAdvertisementViewSet, SuperAdminArchivedDonorViewSet, SuperAdminContactMessageViewSet, 
     SuperAdminCountryViewSet, SuperAdminDashboardStatsView, SuperAdminDistrictViewSet, 
-    SuperAdminExtendSubscriptionView, SuperAdminHeroImageViewSet, SuperAdminOrganizationDetailView, 
-    SuperAdminOrganizationDonorsView, SuperAdminOrganizationListView, SuperAdminOrganizationStatusUpdateView, 
-    SuperAdminPaymentViewSet, SuperAdminStateViewSet, SuperAdminSupportTicketViewSet, SuperAdminSystemLogListView, 
-    SystemCronWebhookView, TenantDashboardStatsView, TenantDonorBulkUploadView, TenantDonorViewSet, 
-    TenantOrganizationView, TenantPaymentView, TenantSupportTicketViewSet, TenantSystemLogListView, Toggle2FAView, 
-    Verify2FALoginView, VerifyEmailOTPView,
+    SuperAdminExtendSubscriptionView, SuperAdminHeroImageViewSet, SuperAdminImpersonateTenantView, 
+    SuperAdminOrganizationDetailView, SuperAdminOrganizationDonorsView, SuperAdminOrganizationListView, 
+    SuperAdminOrganizationStatusUpdateView, SuperAdminPaymentViewSet, SuperAdminStateViewSet, 
+    SuperAdminSupportTicketViewSet, SuperAdminSystemLogListView, SystemCronWebhookView, TenantDashboardStatsView, 
+    TenantDonorBulkUploadView, TenantDonorViewSet, TenantOrganizationView, TenantPaymentView, 
+    TenantSupportTicketViewSet, TenantSystemLogListView, Toggle2FAView, Verify2FALoginView, VerifyEmailOTPView
 )
 
 router = DefaultRouter()
@@ -38,6 +38,7 @@ urlpatterns = [
     path('superadmin/dashboard-stats/', SuperAdminDashboardStatsView.as_view(), name='superadmin-dashboard-stats'),
     path('superadmin/organizations/<int:pk>/', SuperAdminOrganizationDetailView.as_view(), name='superadmin-org-detail'),
     path('superadmin/organizations/<int:pk>/donors/', SuperAdminOrganizationDonorsView.as_view(), name='superadmin-org-donors'),
+    path('superadmin/organizations/<int:pk>/impersonate/', SuperAdminImpersonateTenantView.as_view(), name='superadmin-impersonate'),
     path('superadmin/organizations/<int:pk>/status/', SuperAdminOrganizationStatusUpdateView.as_view(), name='superadmin-org-status'),
     path('superadmin/organizations/<int:pk>/extend-subscription/', SuperAdminExtendSubscriptionView.as_view(), name='superadmin-extend-sub'),
     

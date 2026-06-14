@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
@@ -16,7 +16,17 @@ import {
   ServerCrash,
   MailWarning,
   MailCheck,
+  DollarSign, // <-- [NEW] Icon for MRR Dashboard
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts"; // <-- [NEW] Recharts components
 import toast from "react-hot-toast";
 
 import {
@@ -28,6 +38,23 @@ import {
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import api from "../../lib/axios";
+
+// --- [NEW] MRR Chart Tooltip ---
+const MrrTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 border-slate-200 dark:bg-slate-900/95 dark:border-slate-700 backdrop-blur-xl border p-4 rounded-xl shadow-2xl transition-colors duration-300">
+        <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 transition-colors duration-300">
+          {label}
+        </p>
+        <p className="text-emerald-600 dark:text-emerald-400 font-black flex items-center gap-1 text-lg tracking-tight transition-colors duration-300">
+          ₹ {payload[0].value.toLocaleString()}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function GlobalDashboard() {
   const queryClient = useQueryClient();
@@ -43,7 +70,6 @@ export default function GlobalDashboard() {
   });
 
   // --- Query Pipeline: Organizations for Email Checks (Safe Fallback) ---
-  // To ensure the email verified badge always works even if the dashboard API doesn't return it
   const { data: fullOrgsList = [] } = useQuery({
     queryKey: ["superadmin-organizations"],
     queryFn: async () => {
@@ -116,7 +142,6 @@ export default function GlobalDashboard() {
     }
   };
 
-  // Safe getter for email status using the full organization list fallback
   const getEmailStatus = (orgId) => {
     const org = fullOrgsList.find((o) => o.id === orgId);
     return org ? org.is_email_verified : undefined;
@@ -157,7 +182,8 @@ export default function GlobalDashboard() {
     );
   }
 
-  const { globalStats, pendingOrgs, systemLogs } = data;
+  // Extracted mrrTrend array from backend endpoint
+  const { globalStats, pendingOrgs, systemLogs, mrrTrend } = data;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-24 p-6 transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
@@ -291,120 +317,201 @@ export default function GlobalDashboard() {
       {/* --- Section 2: Action Center & Logs --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Organization Approvals */}
-        <Card className="backdrop-blur-xl shadow-xl flex flex-col transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80">
-          <CardHeader className="border-b pb-5 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
-            <CardTitle className="text-lg font-bold tracking-tight flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
-              <ShieldAlert className="h-5 w-5 transition-colors duration-300 text-amber-600 dark:text-amber-500" />{" "}
-              Tenant Moderation Queue
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 flex-1 flex flex-col">
-            {pendingOrgs.length > 0 ? (
-              <div className="space-y-4">
-                {pendingOrgs.map((org) => {
-                  const isVerified = getEmailStatus(org.id);
+        <div className="space-y-6">
+          <Card className="backdrop-blur-xl shadow-xl flex flex-col transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80">
+            <CardHeader className="border-b pb-5 transition-colors duration-300 border-slate-200 dark:border-slate-800/60">
+              <CardTitle className="text-lg font-bold tracking-tight flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
+                <ShieldAlert className="h-5 w-5 transition-colors duration-300 text-amber-600 dark:text-amber-500" />{" "}
+                Tenant Moderation Queue
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 flex-1 flex flex-col">
+              {pendingOrgs.length > 0 ? (
+                <div className="space-y-4">
+                  {pendingOrgs.map((org) => {
+                    const isVerified = getEmailStatus(org.id);
 
-                  return (
-                    <div
-                      key={org.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border shadow-sm transition-colors duration-300 bg-white border-slate-200 hover:border-slate-300 dark:bg-slate-950/50 dark:border-slate-800 dark:hover:border-slate-700"
-                    >
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                          <h4 className="font-bold text-base transition-colors duration-300 text-slate-900 dark:text-white">
-                            {org.name}
-                          </h4>
-                          <Badge
-                            variant="default"
-                            className="text-[10px] py-0.5 px-2 uppercase tracking-widest font-semibold transition-colors duration-300 bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
-                          >
-                            {org.type}
-                          </Badge>
-                          {/* Appended Email Verification Check directly inside the moderation queue */}
-                          {isVerified !== undefined &&
-                            (isVerified ? (
-                              <Badge className="text-[10px] py-0.5 px-2 gap-1 uppercase tracking-widest transition-colors duration-300 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
-                                <MailCheck className="h-3 w-3" /> Verified
-                              </Badge>
-                            ) : (
-                              <Badge className="text-[10px] py-0.5 px-2 gap-1 uppercase tracking-widest transition-colors duration-300 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
-                                <MailWarning className="h-3 w-3" /> Unverified
-                              </Badge>
-                            ))}
+                    return (
+                      <div
+                        key={org.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border shadow-sm transition-colors duration-300 bg-white border-slate-200 hover:border-slate-300 dark:bg-slate-950/50 dark:border-slate-800 dark:hover:border-slate-700"
+                      >
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                            <h4 className="font-bold text-base transition-colors duration-300 text-slate-900 dark:text-white">
+                              {org.name}
+                            </h4>
+                            <Badge
+                              variant="default"
+                              className="text-[10px] py-0.5 px-2 uppercase tracking-widest font-semibold transition-colors duration-300 bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                            >
+                              {org.type}
+                            </Badge>
+                            {isVerified !== undefined &&
+                              (isVerified ? (
+                                <Badge className="text-[10px] py-0.5 px-2 gap-1 uppercase tracking-widest transition-colors duration-300 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                                  <MailCheck className="h-3 w-3" /> Verified
+                                </Badge>
+                              ) : (
+                                <Badge className="text-[10px] py-0.5 px-2 gap-1 uppercase tracking-widest transition-colors duration-300 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
+                                  <MailWarning className="h-3 w-3" /> Unverified
+                                </Badge>
+                              ))}
+                          </div>
+                          <p className="text-xs font-medium flex items-center gap-2 transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                            <span>
+                              <Globe2 className="h-3 w-3 inline mr-1" />
+                              {org.location}
+                            </span>
+                            <span>•</span>
+                            <span>Applied: {org.date}</span>
+                          </p>
                         </div>
-                        <p className="text-xs font-medium flex items-center gap-2 transition-colors duration-300 text-slate-500 dark:text-slate-400">
-                          <span>
-                            <Globe2 className="h-3 w-3 inline mr-1" />
-                            {org.location}
-                          </span>
-                          <span>•</span>
-                          <span>Applied: {org.date}</span>
-                        </p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={
+                              updateOrgMutation.isPending &&
+                              updateOrgMutation.variables?.id === org.id
+                            }
+                            className="font-semibold transition-colors duration-300 bg-white border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:bg-slate-900/50 dark:border-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                            onClick={() =>
+                              handleOrgStatusUpdate(
+                                org.id,
+                                "SUSPENDED",
+                                org.name,
+                              )
+                            }
+                          >
+                            {updateOrgMutation.isPending &&
+                            updateOrgMutation.variables?.id === org.id &&
+                            updateOrgMutation.variables?.status ===
+                              "SUSPENDED" ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <XCircle className="h-4 w-4 mr-1" />
+                            )}
+                            Reject
+                          </Button>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={
+                              updateOrgMutation.isPending &&
+                              updateOrgMutation.variables?.id === org.id
+                            }
+                            className="font-semibold shadow-md hover:shadow-lg transition-all dark:shadow-lg"
+                            onClick={() =>
+                              handleOrgStatusUpdate(org.id, "ACTIVE", org.name)
+                            }
+                          >
+                            {updateOrgMutation.isPending &&
+                            updateOrgMutation.variables?.id === org.id &&
+                            updateOrgMutation.variables?.status === "ACTIVE" ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4 mr-1" />
+                            )}
+                            Approve
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={
-                            updateOrgMutation.isPending &&
-                            updateOrgMutation.variables?.id === org.id
-                          }
-                          className="font-semibold transition-colors duration-300 bg-white border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:bg-slate-900/50 dark:border-rose-500/20 dark:text-rose-400 dark:hover:bg-rose-500/10"
-                          onClick={() =>
-                            handleOrgStatusUpdate(org.id, "SUSPENDED", org.name)
-                          }
-                        >
-                          {updateOrgMutation.isPending &&
-                          updateOrgMutation.variables?.id === org.id &&
-                          updateOrgMutation.variables?.status ===
-                            "SUSPENDED" ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                          ) : (
-                            <XCircle className="h-4 w-4 mr-1" />
-                          )}
-                          Reject
-                        </Button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          disabled={
-                            updateOrgMutation.isPending &&
-                            updateOrgMutation.variables?.id === org.id
-                          }
-                          className="font-semibold shadow-md hover:shadow-lg transition-all dark:shadow-lg"
-                          onClick={() =>
-                            handleOrgStatusUpdate(org.id, "ACTIVE", org.name)
-                          }
-                        >
-                          {updateOrgMutation.isPending &&
-                          updateOrgMutation.variables?.id === org.id &&
-                          updateOrgMutation.variables?.status === "ACTIVE" ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                          )}
-                          Approve
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center flex-1 py-12 text-center animate-in fade-in duration-500">
-                <div className="h-16 w-16 rounded-full flex items-center justify-center mb-4 shadow-inner border transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
-                  <CheckCircle2 className="h-8 w-8 transition-colors duration-300 text-slate-400 dark:text-slate-500" />
+                    );
+                  })}
                 </div>
-                <h3 className="text-lg font-bold mb-1 transition-colors duration-300 text-slate-900 dark:text-white">
-                  Queue Empty
-                </h3>
-                <p className="text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
-                  All tenant applications have been processed.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <div className="flex flex-col items-center justify-center flex-1 py-12 text-center animate-in fade-in duration-500">
+                  <div className="h-16 w-16 rounded-full flex items-center justify-center mb-4 shadow-inner border transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
+                    <CheckCircle2 className="h-8 w-8 transition-colors duration-300 text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-1 transition-colors duration-300 text-slate-900 dark:text-white">
+                    Queue Empty
+                  </h3>
+                  <p className="text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                    All tenant applications have been processed.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="backdrop-blur-xl shadow-xl flex flex-col bg-white/80 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80 transition-colors duration-300">
+            <CardHeader className="border-b pb-5 border-slate-200 dark:border-slate-800/60 transition-colors duration-300">
+              <CardTitle className="text-lg font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white transition-colors duration-300">
+                <DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />{" "}
+                Platform Monthly Recurring Revenue (MRR)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-8 flex-1 min-h-[260px]">
+              {mrrTrend && mrrTrend.every((data) => data.revenue === 0) ? (
+                <div className="flex flex-col h-full items-center justify-center text-center animate-in fade-in py-8">
+                  <div className="h-16 w-16 bg-slate-100 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 border rounded-full flex items-center justify-center mb-4 shadow-inner transition-colors duration-300">
+                    <DollarSign className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 transition-colors duration-300">
+                    No Financial Data
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 transition-colors duration-300">
+                    Process tenant subscription payments to populate revenue
+                    metrics.
+                  </p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart
+                    data={mrrTrend}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      className="stroke-slate-200 dark:stroke-slate-800/50 transition-colors duration-300"
+                    />
+                    <XAxis
+                      dataKey="month"
+                      stroke="#64748b"
+                      tick={{ fill: "#64748b", fontSize: 13, fontWeight: 700 }}
+                      axisLine={false}
+                      tickLine={false}
+                      dy={10}
+                    />
+                    <YAxis
+                      stroke="#64748b"
+                      tick={{ fill: "#64748b", fontSize: 12, fontWeight: 500 }}
+                      axisLine={false}
+                      tickLine={false}
+                      dx={-10}
+                      tickFormatter={(value) => `₹${value}`}
+                    />
+                    <Tooltip
+                      content={<MrrTooltip />}
+                      cursor={{
+                        className: "stroke-slate-300 dark:stroke-slate-700",
+                        strokeWidth: 1,
+                        strokeDasharray: "5 5",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#10b981"
+                      strokeWidth={4}
+                      dot={{
+                        r: 5,
+                        fill: "#10b981",
+                        strokeWidth: 2,
+                        stroke: "#ffffff",
+                      }}
+                      activeDot={{ r: 7, strokeWidth: 0 }}
+                      animationDuration={1500}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Global System Logs */}
         <Card className="backdrop-blur-xl shadow-xl flex flex-col transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/80">
@@ -417,7 +524,7 @@ export default function GlobalDashboard() {
           <CardContent className="pt-6 flex-1">
             <div className="space-y-7">
               {systemLogs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full">
+                <div className="flex flex-col items-center justify-center h-full py-8">
                   <p className="text-sm transition-colors duration-300 text-slate-500 dark:text-slate-400">
                     No events recorded.
                   </p>

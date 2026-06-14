@@ -1,31 +1,34 @@
+import calendar
 from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 from django.utils.timezone import localtime
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.db.models.deletion import ProtectedError
+from django.db.models.functions import TruncMonth
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..tasks import send_async_email
 from ..models import (
-    MasterCountry, MasterDistrict, MasterState, Organization, Donor, Advertisement, PaymentTransaction, 
-    SystemLog, TenantSupportTicket, TicketReply, ContactMessage, HeroImage
+    MasterCountry, MasterDistrict, MasterState, Organization, Donor, Advertisement, PaymentTransaction, SystemLog, 
+    TenantSupportTicket, TicketReply, ContactMessage, HeroImage, CustomUser
 )
 from ..serializers import (
-    MasterCountrySerializer, MasterDistrictSerializer, MasterStateSerializer, OrganizationSerializer, DonorSerializer, AdvertisementSerializer, 
-    PaymentTransactionSerializer, SystemLogSerializer, PublicDonorSearchSerializer,
-    TenantSupportTicketSerializer, ContactMessageSerializer, HeroImageSerializer
+    MasterCountrySerializer, MasterDistrictSerializer, MasterStateSerializer, OrganizationSerializer, 
+    DonorSerializer, AdvertisementSerializer, PaymentTransactionSerializer, SystemLogSerializer, 
+    PublicDonorSearchSerializer,TenantSupportTicketSerializer, ContactMessageSerializer, HeroImageSerializer
 )
 from .public_views import StandardResultsSetPagination
 
 
 def send_subscription_activated_email(organization):
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'https://www.bloodonate.org')
     login_link = f"{frontend_url}/login"
     
     subject = "Subscription Activated - Bloodonate 🩸"
@@ -177,7 +180,7 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
         }, status=status.HTTP_200_OK)
 
     def send_approval_email(self, organization):
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://www.bloodonate.org')
         login_link = f"{frontend_url}/login"
         
         subject = "Welcome to Bloodonate! Your Dashboard is Ready 🩸"
@@ -317,6 +320,55 @@ class SuperAdminOrganizationStatusUpdateView(APIView):
             html_message=html_message
         )
 
+class SuperAdminImpersonateTenantView(APIView):
+    permission_classes = [IsSuperAdmin]
+
+    def post(self, request, pk):
+        org = get_object_or_404(Organization, pk=pk)
+        
+        admin_user = CustomUser.objects.filter(organization=org, role='ORG_ADMIN').first()
+        if not admin_user:
+            return Response({"error": "No active administrator found for this organization."}, status=status.HTTP_404_NOT_FOUND)
+        
+        refresh = RefreshToken.for_user(admin_user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        cookie_kwargs = {
+            'secure': settings.SIMPLE_JWT.get('AUTH_COOKIE_SECURE', False),
+            'httponly': settings.SIMPLE_JWT.get('AUTH_COOKIE_HTTP_ONLY', True),
+            'samesite': settings.SIMPLE_JWT.get('AUTH_COOKIE_SAMESITE', 'Lax'),
+            'path': settings.SIMPLE_JWT.get('AUTH_COOKIE_PATH', '/')
+        }
+        
+        access_max_age = int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
+        refresh_max_age = int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
+        
+        response = Response({
+            "message": f"Successfully impersonating {org.name}",
+            "role": "ORG_ADMIN"
+        }, status=status.HTTP_200_OK)
+
+        response.set_cookie(
+            key=settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
+            value=access_token,
+            max_age=access_max_age,
+            **cookie_kwargs
+        )
+        response.set_cookie(
+            key=settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'),
+            value=refresh_token,
+            max_age=refresh_max_age,
+            **cookie_kwargs
+        )
+
+        SystemLog.objects.create(
+            organization=org, actor=request.user, level='CRITICAL',
+            source='SYSTEM_ADMIN', message=f"SuperAdmin initiated impersonation session for tenant {org.name}."
+        )
+        
+        return response
+
 class SuperAdminDashboardStatsView(APIView):
     permission_classes = [IsSuperAdmin]
 
@@ -347,6 +399,37 @@ class SuperAdminDashboardStatsView(APIView):
             for log in logs_qs
         ]
 
+        today = timezone.now().date()
+        mrr_data = []
+        for i in range(5, -1, -1):
+            m = today.month - i
+            y = today.year
+            if m <= 0:
+                m += 12
+                y -= 1
+            mrr_data.append({"month": calendar.month_abbr[m], "revenue": 0, "year": y, "m_num": m})
+
+        six_months_ago_limit = (today.replace(day=1) - timedelta(days=160)).replace(day=1)
+
+        payments_6m = PaymentTransaction.objects.filter(
+            status='APPROVED',
+            created_at__gte=six_months_ago_limit
+        ).annotate(
+            month_trunc=TruncMonth('created_at')
+        ).values('month_trunc').annotate(total=Sum('amount')).order_by('month_trunc')
+
+        for p in payments_6m:
+            if not p['month_trunc']: continue
+            p_month = p['month_trunc'].month
+            p_year = p['month_trunc'].year
+            for t in mrr_data:
+                if t['m_num'] == p_month and t['year'] == p_year:
+                    t['revenue'] = float(p['total'])
+
+        for t in mrr_data:
+            del t['year']
+            del t['m_num']
+
         return Response({
             "globalStats": {
                 "totalOrganizations": Organization.objects.exclude(status='SUSPENDED').count(),
@@ -355,7 +438,8 @@ class SuperAdminDashboardStatsView(APIView):
                 "activeSubscriptions": Organization.objects.filter(status='ACTIVE').count()
             },
             "pendingOrgs": pending_orgs_data,
-            "systemLogs": system_logs_data
+            "systemLogs": system_logs_data,
+            "mrrTrend": mrr_data
         }, status=status.HTTP_200_OK)
 
 class SuperAdminSystemLogListView(generics.ListAPIView):
@@ -704,7 +788,6 @@ class SuperAdminExtendSubscriptionView(APIView):
             org.subscription_expires_at = timezone.now() + timedelta(days=365 * years)
             
         org.save()
-        
         send_subscription_activated_email(org)
         
         return Response({"message": f"Extended successfully by {years} year(s)."}, status=status.HTTP_200_OK)

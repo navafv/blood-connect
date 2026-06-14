@@ -129,6 +129,7 @@ class PublicDonorSearchSerializer(serializers.ModelSerializer):
     district_name = serializers.CharField(source='district.name', read_only=True)
     is_available_now = serializers.ReadOnlyField()
     last_donation_date = serializers.ReadOnlyField()
+    total_donations = serializers.SerializerMethodField()
 
     class Meta:
         model = Donor
@@ -136,11 +137,14 @@ class PublicDonorSearchSerializer(serializers.ModelSerializer):
             'id', 'full_name', 'phone_number', 'anonymous_label', 'blood_group', 'gender', 
             'organization_name', 'organization_contact',
             'country_name', 'state_name', 'district_name', 
-            'last_donation_date', 'is_available_now'
+            'last_donation_date', 'is_available_now', 'total_donations'
         ]
 
     def get_anonymous_label(self, obj):
         return f"{obj.blood_group} Donor (ID: #{obj.id})"
+
+    def get_total_donations(self, obj):
+        return obj.donation_records.count()
 
 class DonationRecordSerializer(serializers.ModelSerializer):
     class Meta:

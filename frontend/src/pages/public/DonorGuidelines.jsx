@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -10,6 +11,8 @@ import {
   CalendarClock,
   ArrowRight,
   Info,
+  RefreshCcw,
+  UserCheck,
 } from "lucide-react";
 
 import { Button } from "../../components/ui/Button";
@@ -19,7 +22,155 @@ import {
   CardTitle,
   CardContent,
 } from "../../components/ui/Card";
-import { AdBanner } from "../../components/ads/AdBanner"; // Added AdBanner import
+import { AdBanner } from "../../components/ads/AdBanner";
+
+// --- [NEW] Interactive Quiz Component ---
+function EligibilityQuiz() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [result, setResult] = useState(null); // 'pass' or 'fail'
+
+  const questions = [
+    {
+      id: 1,
+      question:
+        "Are you between the ages of 18 and 65, and weigh at least 50 kg (110 lbs)?",
+      passAnswer: "Yes",
+    },
+    {
+      id: 2,
+      question: "Have you had a tattoo or body piercing in the last 6 months?",
+      passAnswer: "No",
+    },
+    {
+      id: 3,
+      question:
+        "Are you currently feeling unwell, taking antibiotics, or recovering from a fever/infection?",
+      passAnswer: "No",
+    },
+    {
+      id: 4,
+      question: "Have you been pregnant or given birth in the past 6 months?",
+      passAnswer: "No",
+    },
+    {
+      id: 5,
+      question:
+        "Have you donated whole blood in the last 90 days (if male) or 120 days (if female)?",
+      passAnswer: "No",
+    },
+  ];
+
+  const handleAnswer = (answer) => {
+    const currentQ = questions[currentStep];
+    if (answer !== currentQ.passAnswer) {
+      setResult("fail");
+    } else if (currentStep === questions.length - 1) {
+      setResult("pass");
+    } else {
+      setCurrentStep((prev) => prev + 1);
+    }
+  };
+
+  const resetQuiz = () => {
+    setCurrentStep(0);
+    setResult(null);
+  };
+
+  return (
+    <Card className="backdrop-blur-md shadow-xl transition-colors duration-300 bg-white border-blue-200 dark:bg-slate-900/40 dark:border-blue-500/20 overflow-hidden relative">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
+      <CardHeader className="border-b pb-6 transition-colors duration-300 bg-blue-50 border-blue-100 dark:bg-blue-500/5 dark:border-slate-800">
+        <CardTitle className="flex items-center gap-3 text-2xl transition-colors duration-300 text-blue-700 dark:text-blue-400">
+          <UserCheck className="h-7 w-7" aria-hidden="true" />
+          Interactive Eligibility Checker
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-8">
+        {result === null ? (
+          <div className="animate-in fade-in duration-500 text-center max-w-lg mx-auto py-4">
+            <div className="flex justify-center gap-2 mb-8">
+              {questions.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                    idx <= currentStep
+                      ? "bg-blue-600 dark:bg-blue-500"
+                      : "bg-slate-200 dark:bg-slate-800"
+                  }`}
+                />
+              ))}
+            </div>
+            <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-8 min-h-[80px] flex items-center justify-center">
+              {questions[currentStep].question}
+            </h3>
+            <div className="flex justify-center gap-4">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => handleAnswer("Yes")}
+                className="w-32 py-6 text-lg font-bold border-2 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-400"
+              >
+                Yes
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => handleAnswer("No")}
+                className="w-32 py-6 text-lg font-bold border-2 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+              >
+                No
+              </Button>
+            </div>
+          </div>
+        ) : result === "pass" ? (
+          <div className="animate-in zoom-in-95 duration-500 text-center py-8">
+            <div className="mx-auto h-20 w-20 rounded-full bg-emerald-100 border-2 border-emerald-500 flex items-center justify-center mb-6 dark:bg-emerald-500/20">
+              <CheckCircle2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+              You are likely eligible!
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md mx-auto">
+              Based on your answers, you meet the primary criteria to safely
+              donate blood. A final assessment will be done by the medical staff
+              at your local facility.
+            </p>
+            <div className="flex justify-center gap-4">
+              <Button variant="ghost" onClick={resetQuiz}>
+                Start Over
+              </Button>
+              <Link to="/register-org">
+                <Button
+                  variant="primary"
+                  className="shadow-lg hover:shadow-xl dark:shadow-emerald-500/20"
+                >
+                  Contact a Hospital Today
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="animate-in zoom-in-95 duration-500 text-center py-8">
+            <div className="mx-auto h-20 w-20 rounded-full bg-amber-100 border-2 border-amber-500 flex items-center justify-center mb-6 dark:bg-amber-500/20">
+              <AlertTriangle className="h-10 w-10 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+              Temporary Deferral
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md mx-auto">
+              For your safety or the safety of the recipient, you currently do
+              not meet the criteria to donate blood. Please review the detailed
+              guidelines below to see when you might be eligible again.
+            </p>
+            <Button variant="outline" onClick={resetQuiz} className="gap-2">
+              <RefreshCcw className="h-4 w-4" /> Retake Quiz
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function DonorGuidelines() {
   const basicRequirements = [
@@ -61,7 +212,6 @@ export default function DonorGuidelines() {
 
   return (
     <>
-      {/* SEO Configuration */}
       <Helmet>
         <title>Donor Eligibility & Guidelines | Bloodonate</title>
         <meta
@@ -73,7 +223,6 @@ export default function DonorGuidelines() {
           content="blood donor eligibility, who can donate blood, blood donation requirements, blood donation guidelines, temporary deferrals, permanent deferrals"
         />
 
-        {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta
           property="og:title"
@@ -83,13 +232,11 @@ export default function DonorGuidelines() {
           property="og:description"
           content="Review essential medical guidelines to determine if you are eligible to donate blood safely."
         />
-        {/* Replace with your actual deployed URL */}
         <meta
           property="og:url"
           content="https://www.bloodonate.org/guidelines"
         />
 
-        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
@@ -100,7 +247,6 @@ export default function DonorGuidelines() {
           content="Review essential medical guidelines to determine if you are eligible to donate blood safely."
         />
 
-        {/* Canonical Link */}
         <link rel="canonical" href="https://www.bloodonate.org/guidelines" />
       </Helmet>
 
@@ -131,6 +277,9 @@ export default function DonorGuidelines() {
         </section>
 
         <div className="container mx-auto max-w-5xl px-4 space-y-12 relative z-10">
+          {/* --- [NEW] Interactive Quiz Segment --- */}
+          <EligibilityQuiz />
+
           {/* --- Eligibility Grid --- */}
           <Card className="backdrop-blur-md shadow-xl transition-colors duration-300 bg-white border border-emerald-200 dark:bg-slate-900/40 dark:border-emerald-500/20 dark:shadow-2xl">
             <CardHeader className="border-b pb-6 transition-colors duration-300 border-emerald-100 dark:border-slate-800">
@@ -189,7 +338,6 @@ export default function DonorGuidelines() {
             })}
           </div>
 
-          {/* --- INJECTED: Advertisement Banner Break --- */}
           <div className="py-4">
             <AdBanner format="banner" />
           </div>

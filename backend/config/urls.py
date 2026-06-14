@@ -23,7 +23,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-urlpatterns += [
-    # Catch-all for React SPA fallback (ignores api, media, schema, and static paths)
-    re_path(r'^(?!api/|media/|static/|supersecureadmin/).*$', TemplateView.as_view(template_name='index.html'), name='spa-fallback')
-]
+# urlpatterns += [
+#     # Catch-all for React SPA fallback (ignores api, media, schema, and static paths)
+#     re_path(r'^(?!api/|media/|static/|supersecureadmin/).*$', TemplateView.as_view(template_name='index.html'), name='spa-fallback')
+# ]

@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Building2,
@@ -14,8 +14,11 @@ import {
   Activity,
   Loader2,
   ServerCrash,
+  MessageCircle,
+  UserCheck, // <-- [NEW] Icon for Impersonation
 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import toast from "react-hot-toast"; // <-- Ensure toast is imported
 
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
@@ -26,7 +29,6 @@ export default function OrganizationDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Fetch Single Organization Details
   const {
     data: org,
     isLoading: isOrgLoading,
@@ -39,14 +41,29 @@ export default function OrganizationDetail() {
     },
   });
 
-  // Fetch Organization Donors
   const { data: donorsResponse, isLoading: isDonorsLoading } = useQuery({
     queryKey: ["superadmin-org-donors", id],
     queryFn: async () => {
       const res = await api.get(`/superadmin/organizations/${id}/donors/`);
       return res.data;
     },
-    enabled: !!org, // Only run once the org details are loaded
+    enabled: !!org,
+  });
+
+  // --- [NEW] Impersonation Mutation ---
+  const impersonateMutation = useMutation({
+    mutationFn: async () => {
+      return api.post(`/superadmin/organizations/${id}/impersonate/`);
+    },
+    onSuccess: () => {
+      toast.success("Impersonation successful. Switching context...");
+      // Hard refresh is necessary here to wipe React Query cache and global context state,
+      // forcing the frontend to reboot recognizing the new JWT cookie role.
+      window.location.href = "/admin/dashboard";
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.error || "Failed to impersonate tenant.");
+    },
   });
 
   const donors = donorsResponse?.results || donorsResponse || [];
@@ -62,7 +79,7 @@ export default function OrganizationDetail() {
 
   if (isOrgLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
         <Loader2 className="h-10 w-10 animate-spin text-rose-600 dark:text-rose-500 mb-4" />
         <p className="text-sm font-bold uppercase tracking-widest text-slate-500">
           Loading Organization Data...
@@ -73,7 +90,7 @@ export default function OrganizationDetail() {
 
   if (isOrgError || !org) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-slate-50 dark:bg-slate-950 text-center px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-center px-4">
         <div className="h-20 w-20 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-center mb-6 dark:bg-rose-500/10 dark:border-rose-500/20">
           <ServerCrash className="h-10 w-10 text-rose-600 dark:text-rose-500" />
         </div>
@@ -91,26 +108,47 @@ export default function OrganizationDetail() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 bg-slate-50 dark:bg-slate-950">
       <Helmet>
         <title>{org.name} | SuperAdmin Console</title>
       </Helmet>
 
       {/* --- Breadcrumb & Actions --- */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 border-b border-slate-200 dark:border-slate-800 pb-4">
         <button
           onClick={() => navigate("/superadmin/organizations")}
-          className="flex items-center text-sm font-semibold transition-colors duration-300 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          className="flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Organizations
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Organizations
         </button>
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (
+              window.confirm(
+                `Are you sure you want to securely impersonate ${org.name}? Your current session will be temporarily replaced.`,
+              )
+            ) {
+              impersonateMutation.mutate();
+            }
+          }}
+          disabled={impersonateMutation.isPending}
+          className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/30 shadow-sm transition-colors"
+        >
+          {impersonateMutation.isPending ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <UserCheck className="h-4 w-4 mr-2" />
+          )}
+          Impersonate Tenant
+        </Button>
       </div>
 
       {/* --- Header Identity Card --- */}
-      <Card className="overflow-hidden backdrop-blur-xl shadow-md transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
+      <Card className="overflow-hidden backdrop-blur-xl shadow-md bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
         <div className="p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6">
-          <div className="h-24 w-24 rounded-2xl border flex items-center justify-center font-bold text-2xl uppercase shadow-inner overflow-hidden shrink-0 transition-colors duration-300 bg-slate-100 border-slate-200 text-slate-500 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-400">
+          <div className="h-24 w-24 rounded-2xl border flex items-center justify-center font-bold text-2xl uppercase shadow-inner overflow-hidden shrink-0 bg-slate-100 border-slate-200 text-slate-500 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-400">
             {org.logo ? (
               <img
                 src={org.logo}
@@ -123,7 +161,7 @@ export default function OrganizationDetail() {
           </div>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                 {org.name}
               </h1>
               <Badge
@@ -148,9 +186,9 @@ export default function OrganizationDetail() {
                 </Badge>
               )}
             </div>
-            <p className="text-sm font-medium flex items-center gap-2 transition-colors duration-300 text-slate-500 dark:text-slate-400">
-              <Activity className="h-4 w-4" />
-              Registered on {formatDate(org.created_at)}
+            <p className="text-sm font-medium flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <Activity className="h-4 w-4" /> Registered on{" "}
+              {formatDate(org.created_at)}
             </p>
           </div>
         </div>
@@ -158,14 +196,13 @@ export default function OrganizationDetail() {
 
       {/* --- Intelligence Grid --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Contact Info */}
-        <Card className="backdrop-blur-xl shadow-sm transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
+        <Card className="backdrop-blur-xl shadow-sm bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
           <div className="p-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest mb-4 transition-colors duration-300 text-slate-500 dark:text-slate-400">
+            <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-slate-500 dark:text-slate-400">
               Contact Intelligence
             </h3>
             <div className="space-y-4">
-              <div className="flex items-center gap-3 transition-colors duration-300 text-slate-700 dark:text-slate-300">
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
                 <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800/80 shrink-0">
                   <Mail className="h-4 w-4 text-slate-500" />
                 </div>
@@ -178,7 +215,7 @@ export default function OrganizationDetail() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 transition-colors duration-300 text-slate-700 dark:text-slate-300">
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
                 <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800/80 shrink-0">
                   <Phone className="h-4 w-4 text-slate-500" />
                 </div>
@@ -195,13 +232,12 @@ export default function OrganizationDetail() {
           </div>
         </Card>
 
-        {/* Location Info */}
-        <Card className="backdrop-blur-xl shadow-sm transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
+        <Card className="backdrop-blur-xl shadow-sm bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
           <div className="p-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest mb-4 transition-colors duration-300 text-slate-500 dark:text-slate-400">
+            <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-slate-500 dark:text-slate-400">
               Geographic Region
             </h3>
-            <div className="flex items-start gap-3 transition-colors duration-300 text-slate-700 dark:text-slate-300">
+            <div className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
               <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800/80 shrink-0">
                 <MapPin className="h-4 w-4 text-slate-500" />
               </div>
@@ -220,14 +256,13 @@ export default function OrganizationDetail() {
           </div>
         </Card>
 
-        {/* Subscription Info */}
-        <Card className="backdrop-blur-xl shadow-sm transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
+        <Card className="backdrop-blur-xl shadow-sm bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
           <div className="p-6 h-full flex flex-col justify-between">
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 transition-colors duration-300 text-slate-500 dark:text-slate-400">
+              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-slate-500 dark:text-slate-400">
                 Billing & License
               </h3>
-              <div className="flex items-start gap-3 transition-colors duration-300 text-slate-700 dark:text-slate-300">
+              <div className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
                 <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800/80 shrink-0">
                   <Clock className="h-4 w-4 text-slate-500" />
                 </div>
@@ -259,11 +294,10 @@ export default function OrganizationDetail() {
         </Card>
       </div>
 
-      {/* --- Donor Registry Data Table --- */}
       <div className="pt-6">
         <div className="flex items-center justify-between mb-4 px-2">
-          <h2 className="text-lg font-bold flex items-center gap-2 transition-colors duration-300 text-slate-900 dark:text-white">
-            <Users className="h-5 w-5 text-rose-600 dark:text-rose-500" />
+          <h2 className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+            <Users className="h-5 w-5 text-rose-600 dark:text-rose-500" />{" "}
             Registered Donor Base
           </h2>
           <Badge variant="outline" className="font-mono">
@@ -271,24 +305,25 @@ export default function OrganizationDetail() {
           </Badge>
         </div>
 
-        <Card className="overflow-hidden backdrop-blur-xl shadow-xl transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
+        <Card className="overflow-hidden backdrop-blur-xl shadow-xl bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm transition-colors duration-300 text-slate-700 dark:text-slate-300">
-              <thead className="text-xs uppercase font-bold border-b transition-colors duration-300 bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-950/40 dark:border-slate-800/80">
+            <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+              <thead className="text-xs uppercase font-bold border-b bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-950/40 dark:border-slate-800/80">
                 <tr>
                   <th className="px-6 py-5">Blood Group</th>
-                  <th className="px-6 py-5">Anonymous Reference</th>
+                  <th className="px-6 py-5">Name</th>
+                  <th className="px-6 py-5">Contact</th>
                   <th className="px-6 py-5">Gender</th>
                   <th className="px-6 py-5">Last Donation</th>
                   <th className="px-6 py-5 text-right">Eligibility</th>
                 </tr>
               </thead>
-              <tbody className="divide-y transition-colors duration-300 divide-slate-200 dark:divide-slate-800/50">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
                 {isDonorsLoading ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-24 text-center">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
-                      <p className="text-sm font-medium tracking-widest uppercase transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                    <td colSpan="6" className="px-6 py-24 text-center">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-rose-600 dark:text-rose-500" />
+                      <p className="text-sm font-medium tracking-widest uppercase text-slate-500 dark:text-slate-400">
                         Extracting Registry...
                       </p>
                     </td>
@@ -296,16 +331,16 @@ export default function OrganizationDetail() {
                 ) : donors.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="5"
+                      colSpan="6"
                       className="px-6 py-24 text-center animate-in fade-in duration-500"
                     >
-                      <div className="h-20 w-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
-                        <Users className="h-10 w-10 transition-colors duration-300 text-slate-400 dark:text-slate-500" />
+                      <div className="h-20 w-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
+                        <Users className="h-10 w-10 text-slate-400 dark:text-slate-500" />
                       </div>
-                      <h3 className="text-xl font-bold mb-2 tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
+                      <h3 className="text-xl font-bold mb-2 tracking-tight text-slate-900 dark:text-white">
                         Registry Empty
                       </h3>
-                      <p className="max-w-sm mx-auto leading-relaxed text-sm transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      <p className="max-w-sm mx-auto leading-relaxed text-sm text-slate-600 dark:text-slate-400">
                         This organization has not yet added any donors to their
                         private database.
                       </p>
@@ -322,17 +357,20 @@ export default function OrganizationDetail() {
                           {donor.blood_group}
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-bold transition-colors duration-300 text-slate-900 dark:text-white">
-                        {donor.anonymous_label}
+                      <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
+                        {donor.full_name}
                       </td>
-                      <td className="px-6 py-4 font-medium transition-colors duration-300 text-slate-600 dark:text-slate-400 capitalize">
+                      <td className="px-6 py-4 font-medium text-slate-600 dark:text-slate-400">
+                        {donor.phone_number}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-slate-600 dark:text-slate-400 capitalize">
                         {donor.gender === "M"
                           ? "Male"
                           : donor.gender === "F"
                             ? "Female"
                             : "Other"}
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs font-medium transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                      <td className="px-6 py-4 font-mono text-xs font-medium text-slate-500 dark:text-slate-400">
                         {formatDate(donor.last_donation_date)}
                       </td>
                       <td className="px-6 py-4 text-right">

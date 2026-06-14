@@ -6,18 +6,17 @@ import {
   CalendarClock,
   ShieldCheck,
   MessageCircle,
+  Award, // <-- [NEW] Imported Award icon
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 
 export function DonorCard({ donor, viewMode = "list" }) {
-  // WhatsApp formatting routed to the DONOR's phone number
   const cleanPhone = donor.phone_number?.replace(/[^0-9]/g, "");
   const waMessage = encodeURIComponent(
     `Hello ${donor.full_name}, I am reaching out via Bloodonate regarding an urgent ${donor.blood_group} blood requirement. Are you currently available to donate?`,
   );
 
-  // Status rendering based purely on backend flags
   const renderStatusBadge = () => {
     if (donor.is_available_now) {
       return (
@@ -39,6 +38,39 @@ export function DonorCard({ donor, viewMode = "list" }) {
     );
   };
 
+  // --- [NEW] Gamification Logic ---
+  const renderGamificationBadge = () => {
+    const total = donor.total_donations || 0;
+    if (total < 5) return null; // No badge for < 5 donations
+
+    let badgeClass = "";
+    let label = "";
+
+    if (total >= 25) {
+      badgeClass =
+        "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-yellow-500/30 shadow-[0_0_10px_rgba(234,179,8,0.2)]";
+      label = "Gold Lifesaver";
+    } else if (total >= 10) {
+      badgeClass =
+        "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-500 shadow-[0_0_10px_rgba(148,163,184,0.2)]";
+      label = "Silver Lifesaver";
+    } else if (total >= 5) {
+      badgeClass =
+        "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20 shadow-[0_0_10px_rgba(249,115,22,0.1)]";
+      label = "Bronze Lifesaver";
+    }
+
+    return (
+      <div
+        title={`${total} Verified Donations`}
+        className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider transition-colors ${badgeClass}`}
+      >
+        <Award className="h-3 w-3" />
+        {label} ({total})
+      </div>
+    );
+  };
+
   // ==========================================================================
   // LIST VIEW LAYOUT
   // ==========================================================================
@@ -46,7 +78,6 @@ export function DonorCard({ donor, viewMode = "list" }) {
     return (
       <Card className="group relative bg-white/80 border-slate-200 backdrop-blur-xl overflow-hidden hover:border-rose-300 hover:shadow-lg transition-all duration-300 flex flex-col dark:bg-slate-900/60 dark:border-slate-800 dark:hover:border-rose-500/50">
         <div className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 relative z-10">
-          {/* Section 1: Blood Group & Identity */}
           <div className="flex items-center gap-4 lg:w-1/4 shrink-0">
             <div className="h-14 w-14 rounded-2xl bg-rose-50 border border-rose-100 flex flex-col items-center justify-center shadow-inner transition-colors dark:bg-rose-500/10 dark:border-rose-500/20">
               <span className="font-black text-rose-600 text-xl tracking-tighter leading-none dark:text-rose-500">
@@ -54,9 +85,11 @@ export function DonorCard({ donor, viewMode = "list" }) {
               </span>
             </div>
             <div className="flex flex-col">
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-tight transition-colors dark:text-white">
-                {donor.full_name}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight leading-tight transition-colors dark:text-white">
+                  {donor.full_name}
+                </h3>
+              </div>
               <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mt-1 dark:text-slate-400">
                 <span className="capitalize">
                   {donor.gender === "M"
@@ -71,15 +104,16 @@ export function DonorCard({ donor, viewMode = "list" }) {
                   {donor.district_name}, {donor.state_name}
                 </span>
               </div>
+
+              {/* --- [NEW] Render Badge in List View --- */}
+              <div className="mt-1.5">{renderGamificationBadge()}</div>
             </div>
           </div>
 
-          {/* Section 2: Status */}
           <div className="flex items-center justify-start lg:justify-center lg:w-1/4">
             {renderStatusBadge()}
           </div>
 
-          {/* Section 3: Organization Data */}
           <div className="flex items-center gap-3 lg:w-1/4 px-4 py-2 lg:py-0 border-l-2 border-slate-100 transition-colors dark:border-slate-800">
             <div className="p-2 rounded-xl bg-white border border-slate-200 shrink-0 transition-colors dark:bg-slate-800 dark:border-slate-700">
               <Building2 className="h-5 w-5 text-slate-400" />
@@ -94,7 +128,6 @@ export function DonorCard({ donor, viewMode = "list" }) {
             </div>
           </div>
 
-          {/* Section 4: Fast Actions */}
           <div className="flex items-center gap-2 w-full lg:w-auto lg:ml-auto border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100 dark:border-slate-800">
             <a
               href={`https://wa.me/${cleanPhone}?text=${waMessage}`}
@@ -102,15 +135,13 @@ export function DonorCard({ donor, viewMode = "list" }) {
               rel="noopener noreferrer"
               className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md hover:-translate-y-0.5"
             >
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp
+              <MessageCircle className="h-4 w-4" /> WhatsApp
             </a>
             <a
               href={`tel:${donor.phone_number}`}
               className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md hover:-translate-y-0.5"
             >
-              <Phone className="h-4 w-4" />
-              Call
+              <Phone className="h-4 w-4" /> Call
             </a>
           </div>
         </div>
@@ -129,6 +160,10 @@ export function DonorCard({ donor, viewMode = "list" }) {
             <h3 className="text-xl font-bold text-slate-900 tracking-tight mb-1 transition-colors dark:text-white">
               {donor.full_name}
             </h3>
+
+            {/* --- [NEW] Render Badge in Grid View --- */}
+            <div className="mb-2">{renderGamificationBadge()}</div>
+
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
               <span className="capitalize">
                 {donor.gender === "M"

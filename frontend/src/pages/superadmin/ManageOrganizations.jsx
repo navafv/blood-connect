@@ -42,7 +42,7 @@ export default function ManageOrganizations() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview"); // 'overview' | 'donors'
+  const [activeTab, setActiveTab] = useState("overview");
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [extendYears, setExtendYears] = useState("1");
 
@@ -151,12 +151,6 @@ export default function ManageOrganizations() {
     setIsManageModalOpen(true);
   };
 
-  const openDetailModal = (org) => {
-    setSelectedOrg(org);
-    setActiveTab("overview");
-    setIsDetailModalOpen(true);
-  };
-
   const getPendingPayment = (orgId) => {
     return payments.find(
       (p) => p.organization === orgId && p.status === "PENDING",
@@ -210,9 +204,9 @@ export default function ManageOrganizations() {
         </div>
       </div>
 
-      {/* --- Primary Data Table Area --- */}
       <Card className="overflow-hidden backdrop-blur-xl shadow-xl dark:shadow-2xl transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/60 dark:border-slate-800/80">
-        <div className="overflow-x-auto">
+        {/* --- DESKTOP VIEW (Table) --- */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm transition-colors duration-300 text-slate-700 dark:text-slate-300">
             <thead className="text-xs uppercase font-bold border-b transition-colors duration-300 bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-950/40 dark:border-slate-800/80">
               <tr>
@@ -251,7 +245,6 @@ export default function ManageOrganizations() {
                     </p>
                     <Button
                       variant="outline"
-                      className="transition-colors duration-300 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                       onClick={() => {
                         refetchOrgs();
                         refetchPayments();
@@ -281,26 +274,16 @@ export default function ManageOrganizations() {
                 </tr>
               ) : filteredOrgs.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="px-6 py-24 text-center animate-in fade-in duration-300"
-                  >
+                  <td colSpan="5" className="px-6 py-24 text-center">
                     <SearchX className="h-12 w-12 mb-4 mx-auto transition-colors duration-300 text-slate-400 dark:text-slate-600" />
                     <h3 className="text-lg font-bold mb-2 transition-colors duration-300 text-slate-900 dark:text-white">
                       No Matches Found
                     </h3>
-                    <p className="text-sm max-w-sm mx-auto transition-colors duration-300 text-slate-600 dark:text-slate-400">
-                      No tenant organizations match the query:{" "}
-                      <strong className="transition-colors duration-300 text-slate-900 dark:text-slate-300">
-                        "{searchTerm}"
-                      </strong>
-                    </p>
                   </td>
                 </tr>
               ) : (
                 filteredOrgs.map((org) => {
                   const pendingPayment = getPendingPayment(org.id);
-
                   return (
                     <tr
                       key={org.id}
@@ -330,14 +313,14 @@ export default function ManageOrganizations() {
                               {org.is_email_verified ? (
                                 <Badge
                                   variant="success"
-                                  className="text-[9px] py-0 px-1.5 uppercase tracking-widest flex items-center gap-1 transition-colors duration-300 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-500 dark:border-emerald-500/20"
+                                  className="text-[9px] py-0 px-1.5 uppercase tracking-widest flex items-center gap-1"
                                 >
                                   <MailCheck className="h-3 w-3" /> Verified
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="warning"
-                                  className="text-[9px] py-0 px-1.5 uppercase tracking-widest flex items-center gap-1 transition-colors duration-300 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-500 dark:border-amber-500/20"
+                                  className="text-[9px] py-0 px-1.5 uppercase tracking-widest flex items-center gap-1"
                                 >
                                   <MailWarning className="h-3 w-3" /> Unverified
                                 </Badge>
@@ -402,7 +385,7 @@ export default function ManageOrganizations() {
                         {pendingPayment ? (
                           <Badge
                             variant="warning"
-                            className="gap-1.5 px-2.5 py-1 transition-colors duration-300 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20"
+                            className="gap-1.5 px-2.5 py-1"
                           >
                             <Clock className="h-3.5 w-3.5" /> Pending
                           </Badge>
@@ -410,18 +393,18 @@ export default function ManageOrganizations() {
                           <div className="flex flex-col">
                             <Badge
                               variant="success"
-                              className="w-fit gap-1.5 mb-1.5 px-2.5 py-1 transition-colors duration-300 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
+                              className="w-fit gap-1.5 mb-1.5 px-2.5 py-1"
                             >
                               <ShieldCheck className="h-3.5 w-3.5" /> Active
                             </Badge>
-                            <span className="text-[10px] font-medium transition-colors duration-300 text-slate-500 dark:text-slate-500">
+                            <span className="text-[10px] font-medium text-slate-500">
                               Exp: {formatDate(org.subscription_expires_at)}
                             </span>
                           </div>
                         ) : (
                           <Badge
                             variant="danger"
-                            className="gap-1.5 px-2.5 py-1 transition-colors duration-300 bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20"
+                            className="gap-1.5 px-2.5 py-1"
                           >
                             <Ban className="h-3.5 w-3.5" /> Expired
                           </Badge>
@@ -429,14 +412,14 @@ export default function ManageOrganizations() {
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <Button
                             onClick={() =>
                               navigate(`/superadmin/organizations/${org.id}`)
                             }
                             variant="ghost"
                             size="sm"
-                            className="transition-colors duration-300 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                            className="transition-colors duration-300 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                             title="View Full Profile"
                           >
                             <Eye className="h-4 w-4" />
@@ -446,8 +429,8 @@ export default function ManageOrganizations() {
                             size="sm"
                             className={`transition-all duration-300 ${
                               pendingPayment
-                                ? "bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 dark:bg-transparent dark:border-amber-500/50 dark:text-amber-400 dark:shadow-[0_0_15px_rgba(245,158,11,0.15)] dark:hover:border-amber-500 dark:hover:text-amber-300"
-                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                                ? "bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 dark:bg-transparent dark:border-amber-500/50 dark:text-amber-400 dark:shadow-[0_0_15px_rgba(245,158,11,0.15)] dark:hover:border-amber-500"
+                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                             }`}
                             onClick={() => openManageModal(org)}
                             title="Manage Billing"
@@ -463,11 +446,145 @@ export default function ManageOrganizations() {
             </tbody>
           </table>
         </div>
+
+        {/* --- MOBILE STACKED VIEW --- */}
+        <div className="md:hidden flex flex-col gap-4 p-4">
+          {isOrgsLoading || isPaymentsLoading ? (
+            <div className="py-24 text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-rose-600 dark:text-rose-500" />
+              <p className="text-sm font-medium tracking-widest uppercase text-slate-500">
+                Loading Tenants...
+              </p>
+            </div>
+          ) : isOrgsError || isPaymentsError ? (
+            <div className="py-24 text-center">
+              <ServerCrash className="h-10 w-10 mx-auto mb-4 text-rose-600 dark:text-rose-500" />
+              <p className="text-sm text-slate-600">Telemetry Failure.</p>
+            </div>
+          ) : filteredOrgs.length === 0 ? (
+            <div className="py-24 text-center">
+              <SearchX className="h-10 w-10 mx-auto mb-4 text-slate-400 dark:text-slate-500" />
+              <p className="text-sm text-slate-600">No organizations found.</p>
+            </div>
+          ) : (
+            filteredOrgs.map((org) => {
+              const pendingPayment = getPendingPayment(org.id);
+              return (
+                <div
+                  key={org.id}
+                  className="border rounded-2xl p-4 flex flex-col gap-4 shadow-sm transition-colors duration-300 bg-white dark:bg-slate-900/50 dark:border-slate-800"
+                >
+                  {/* Header: Logo, Name, Email & Status */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl border flex items-center justify-center font-bold uppercase shadow-inner shrink-0 bg-slate-100 text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400">
+                        {org.logo ? (
+                          <img
+                            src={org.logo}
+                            alt={org.name}
+                            className="h-full w-full object-cover rounded-xl"
+                          />
+                        ) : (
+                          org.name.substring(0, 2)
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-[15px] leading-tight text-slate-900 dark:text-white">
+                          {org.name}
+                        </p>
+                        <p className="text-xs font-medium font-mono text-slate-500 mt-1 truncate max-w-[150px]">
+                          {org.contact_email}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge
+                      variant={org.status === "ACTIVE" ? "success" : "danger"}
+                      className="text-[10px] px-1.5 py-0.5 shrink-0"
+                    >
+                      {org.status === "ACTIVE" ? "Active" : "Suspended"}
+                    </Badge>
+                  </div>
+
+                  {/* Grid Data: Location & Subscription */}
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700">
+                      <span className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
+                        Location
+                      </span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300 truncate block">
+                        {org.district_name}, {org.state_name}
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-xl border bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700">
+                      <span className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
+                        Subscription
+                      </span>
+                      {pendingPayment ? (
+                        <span className="text-amber-600 font-bold flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> Pending
+                        </span>
+                      ) : org.has_active_subscription ? (
+                        <span className="text-emerald-600 font-bold flex items-center gap-1">
+                          <ShieldCheck className="h-3 w-3" /> Active
+                        </span>
+                      ) : (
+                        <span className="text-rose-600 font-bold flex items-center gap-1">
+                          <Ban className="h-3 w-3" /> Expired
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions Row */}
+                  <div className="flex items-center justify-between pt-3 border-t dark:border-slate-800">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Are you sure you want to toggle access for ${org.name}?`,
+                          )
+                        ) {
+                          toggleOrgStatusMutation.mutate({
+                            orgId: org.id,
+                            currentStatus: org.status,
+                          });
+                        }
+                      }}
+                      className="px-2 h-8 text-[11px] font-bold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                    >
+                      Toggle Access
+                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          navigate(`/superadmin/organizations/${org.id}`)
+                        }
+                        className="h-8 w-8 p-0 border dark:border-slate-700"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openManageModal(org)}
+                        className={`h-8 w-8 p-0 ${pendingPayment ? "border-amber-400 text-amber-600 bg-amber-50 dark:bg-amber-500/10" : "dark:border-slate-700"}`}
+                      >
+                        <CreditCard className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </Card>
 
-      {/* =====================================================================
-          1. MANAGE BILLING MODAL
-      ====================================================================== */}
+      {/* --- MANAGE BILLING MODAL --- */}
       <Modal
         isOpen={isManageModalOpen}
         onClose={() => setIsManageModalOpen(false)}
@@ -605,247 +722,6 @@ export default function ManageOrganizations() {
                 </div>
               </div>
             )}
-          </div>
-        )}
-      </Modal>
-
-      {/* =====================================================================
-          2. GOD MODE: ORGANIZATION DETAIL MODAL
-      ====================================================================== */}
-      <Modal
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        title="Organization Intelligence"
-        size="4xl" // If your modal supports size props, else it defaults
-      >
-        {selectedOrg && (
-          <div className="flex flex-col h-[75vh] sm:h-[80vh] w-full">
-            {/* Header Identity */}
-            <div className="flex items-start gap-5 shrink-0 border-b pb-6 mb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
-              <div className="h-16 w-16 rounded-xl border flex items-center justify-center font-bold uppercase shadow-inner overflow-hidden shrink-0 transition-colors duration-300 bg-slate-100 border-slate-200 text-slate-500 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-400">
-                {selectedOrg.logo ? (
-                  <img
-                    src={selectedOrg.logo}
-                    alt={selectedOrg.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  selectedOrg.name.substring(0, 2)
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-4">
-                  <h2 className="text-2xl font-bold truncate transition-colors duration-300 text-slate-900 dark:text-white">
-                    {selectedOrg.name}
-                  </h2>
-                  <Badge variant="outline" className="shrink-0">
-                    {selectedOrg.org_type.replace("_", " ")}
-                  </Badge>
-                </div>
-                <div className="flex flex-wrap gap-4 mt-2">
-                  <span className="flex items-center gap-1.5 text-sm font-medium transition-colors duration-300 text-slate-500 dark:text-slate-400">
-                    <MapPin className="h-4 w-4 text-slate-400" />
-                    {selectedOrg.district_name}, {selectedOrg.state_name}
-                  </span>
-                  <span className="flex items-center gap-1.5 text-sm font-medium transition-colors duration-300 text-slate-500 dark:text-slate-400">
-                    <Activity className="h-4 w-4 text-slate-400" />
-                    Registered: {formatDate(selectedOrg.created_at)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation Tabs */}
-            <div className="flex border-b mb-6 shrink-0 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
-              <button
-                onClick={() => setActiveTab("overview")}
-                className={`pb-3 px-4 text-sm font-bold transition-all border-b-2 ${
-                  activeTab === "overview"
-                    ? "border-rose-600 text-rose-600 dark:border-rose-500 dark:text-rose-400"
-                    : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" /> Overview
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab("donors")}
-                className={`pb-3 px-4 text-sm font-bold transition-all border-b-2 ${
-                  activeTab === "donors"
-                    ? "border-rose-600 text-rose-600 dark:border-rose-500 dark:text-rose-400"
-                    : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" /> Registered Donors
-                </div>
-              </button>
-            </div>
-
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-              {/* TAB: OVERVIEW */}
-              {activeTab === "overview" && (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                  {/* Contact Block */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl border transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-900/50 dark:border-slate-800">
-                      <p className="text-xs font-bold uppercase tracking-wider mb-3 transition-colors duration-300 text-slate-500 dark:text-slate-500">
-                        Primary Contact
-                      </p>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 transition-colors duration-300 text-slate-700 dark:text-slate-300">
-                          <Mail className="h-4 w-4 text-slate-400" />
-                          <span className="text-sm font-medium">
-                            {selectedOrg.contact_email}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 transition-colors duration-300 text-slate-700 dark:text-slate-300">
-                          <Phone className="h-4 w-4 text-slate-400" />
-                          <span className="text-sm font-medium font-mono">
-                            {selectedOrg.contact_phone}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl border transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-900/50 dark:border-slate-800">
-                      <p className="text-xs font-bold uppercase tracking-wider mb-3 transition-colors duration-300 text-slate-500 dark:text-slate-500">
-                        Configuration
-                      </p>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium transition-colors duration-300 text-slate-600 dark:text-slate-400">
-                            Public Searchable
-                          </span>
-                          {selectedOrg.is_searchable ? (
-                            <Badge variant="success">Enabled</Badge>
-                          ) : (
-                            <Badge variant="outline">Hidden</Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium transition-colors duration-300 text-slate-600 dark:text-slate-400">
-                            Public Handle (Slug)
-                          </span>
-                          <span className="text-xs font-mono font-medium px-2 py-1 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                            /{selectedOrg.slug}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Address Block */}
-                  <div className="p-4 rounded-xl border transition-colors duration-300 bg-white border-slate-200 dark:bg-slate-900/50 dark:border-slate-800">
-                    <p className="text-xs font-bold uppercase tracking-wider mb-3 transition-colors duration-300 text-slate-500 dark:text-slate-500">
-                      Physical Address
-                    </p>
-                    <p className="text-sm leading-relaxed transition-colors duration-300 text-slate-700 dark:text-slate-300">
-                      {selectedOrg.address_line}
-                    </p>
-                  </div>
-
-                  {/* Bio Block */}
-                  {selectedOrg.description && (
-                    <div className="p-4 rounded-xl border transition-colors duration-300 bg-slate-50 border-slate-200 dark:bg-slate-900/20 dark:border-slate-800">
-                      <p className="text-xs font-bold uppercase tracking-wider mb-3 transition-colors duration-300 text-slate-500 dark:text-slate-500">
-                        About Organization
-                      </p>
-                      <p className="text-sm leading-relaxed transition-colors duration-300 text-slate-600 dark:text-slate-400">
-                        {selectedOrg.description}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB: DONORS */}
-              {activeTab === "donors" && (
-                <div className="animate-in fade-in duration-300">
-                  {isDonorsLoading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                      <Loader2 className="h-8 w-8 animate-spin mb-4 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
-                      <p className="text-sm font-medium tracking-widest uppercase transition-colors duration-300 text-slate-500 dark:text-slate-400">
-                        Extracting Registry...
-                      </p>
-                    </div>
-                  ) : orgDonors.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed rounded-2xl transition-colors duration-300 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/20">
-                      <Users className="h-10 w-10 mb-4 transition-colors duration-300 text-slate-400 dark:text-slate-600" />
-                      <h3 className="text-lg font-bold mb-1 transition-colors duration-300 text-slate-900 dark:text-white">
-                        Registry Empty
-                      </h3>
-                      <p className="text-sm transition-colors duration-300 text-slate-500 dark:text-slate-400">
-                        This organization has not registered any donors yet.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="border rounded-xl overflow-hidden transition-colors duration-300 border-slate-200 dark:border-slate-800">
-                      <table className="w-full text-left text-sm">
-                        <thead className="text-xs uppercase font-bold border-b transition-colors duration-300 bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900/80 dark:border-slate-800">
-                          <tr>
-                            <th className="px-4 py-3">Blood Group</th>
-                            <th className="px-4 py-3">Donor Ref</th>
-                            <th className="px-4 py-3">Location</th>
-                            <th className="px-4 py-3 text-right">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y transition-colors duration-300 divide-slate-200 dark:divide-slate-800">
-                          {orgDonors.map((donor) => (
-                            <tr
-                              key={donor.id}
-                              className="transition-colors duration-300 hover:bg-slate-50 dark:hover:bg-slate-900/40"
-                            >
-                              <td className="px-4 py-3">
-                                <span className="font-black text-rose-600 dark:text-rose-500 tracking-tight">
-                                  {donor.blood_group}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 font-medium transition-colors duration-300 text-slate-700 dark:text-slate-300">
-                                {donor.anonymous_label}
-                              </td>
-                              <td className="px-4 py-3 text-xs transition-colors duration-300 text-slate-500 dark:text-slate-400">
-                                {donor.district_name}, {donor.state_name}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                {donor.is_available_now ? (
-                                  <Badge
-                                    variant="success"
-                                    className="text-[10px] px-1.5 py-0.5"
-                                  >
-                                    Available
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    variant="warning"
-                                    className="text-[10px] px-1.5 py-0.5"
-                                  >
-                                    Resting
-                                  </Badge>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Sticky Bottom Actions */}
-            <div className="pt-4 border-t mt-4 flex justify-end shrink-0 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
-              <Button
-                variant="outline"
-                onClick={() => setIsDetailModalOpen(false)}
-                className="transition-colors duration-300 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              >
-                Close View
-              </Button>
-            </div>
           </div>
         )}
       </Modal>

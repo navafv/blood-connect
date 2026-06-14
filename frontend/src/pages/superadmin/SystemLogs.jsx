@@ -27,11 +27,9 @@ export default function SystemLogs() {
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("ALL");
 
-  // Fetch Logs via React Query
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["systemLogs", pageUrl, searchTerm, levelFilter],
     queryFn: async () => {
-      // Append query parameters to support server-side filtering
       const params = new URLSearchParams();
       if (searchTerm) params.append("search", searchTerm);
       if (levelFilter !== "ALL") params.append("level", levelFilter);
@@ -46,7 +44,6 @@ export default function SystemLogs() {
 
   const logs = data?.results || [];
 
-  // Robust URL parsing to handle full domain URLs returned by Django's pagination
   const getRelativeUrl = (fullUrl) => {
     if (!fullUrl) return null;
     try {
@@ -65,7 +62,6 @@ export default function SystemLogs() {
   const prevUrl = getRelativeUrl(data?.previous);
   const totalCount = data?.count || 0;
 
-  // Reset to Page 1 when searching or filtering
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setPageUrl("/superadmin/logs/");
@@ -108,7 +104,6 @@ export default function SystemLogs() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-24 transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
-      {/* --- Workspace Header --- */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6 transition-colors duration-300 border-slate-200 dark:border-slate-800/80">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3 transition-colors duration-300 text-slate-900 dark:text-white">
@@ -123,7 +118,6 @@ export default function SystemLogs() {
         </div>
       </div>
 
-      {/* --- Search & Filter Toolbar --- */}
       <div className="flex flex-col sm:flex-row gap-4 p-5 rounded-2xl border shadow-sm backdrop-blur-md transition-colors duration-300 bg-white/80 border-slate-200 dark:bg-slate-900/40 dark:border-slate-800/60">
         <div className="relative w-full sm:w-96 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-300 text-slate-400 group-focus-within:text-rose-600 dark:text-slate-500 dark:group-focus-within:text-rose-500" />
@@ -149,7 +143,6 @@ export default function SystemLogs() {
         </div>
       </div>
 
-      {/* --- Log Terminal Display --- */}
       <Card className="shadow-xl overflow-hidden transition-colors duration-300 bg-white border-slate-200 dark:border-slate-800/80 dark:bg-slate-950 dark:shadow-2xl">
         <div className="border-b px-6 py-3 flex items-center justify-between transition-colors duration-300 bg-slate-100/80 border-slate-200 dark:bg-slate-900/80 dark:border-slate-800">
           <div className="flex items-center gap-2">
@@ -220,7 +213,6 @@ export default function SystemLogs() {
                 logs.map((log) => {
                   const config = getLevelConfig(log.level);
                   const Icon = config.icon;
-
                   return (
                     <tr
                       key={log.id}
@@ -251,17 +243,16 @@ export default function SystemLogs() {
         </div>
 
         {/* --- MOBILE VIEW (Cards) --- */}
-        {/* FIX: Removed table tags (tr/td) inside div to prevent hydration errors */}
-        <div className="md:hidden flex flex-col divide-y transition-colors duration-300 divide-slate-200 text-slate-700 dark:divide-slate-800/50 dark:text-slate-300">
+        <div className="md:hidden flex flex-col gap-4 p-4 transition-colors duration-300 bg-slate-50/50 dark:bg-slate-950">
           {isLoading ? (
-            <div className="px-6 py-24 flex flex-col items-center justify-center transition-colors duration-300 text-slate-500">
+            <div className="py-24 flex flex-col items-center justify-center transition-colors duration-300 text-slate-500">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
               <p className="text-sm tracking-widest uppercase">
                 Connecting to stream...
               </p>
             </div>
           ) : isError ? (
-            <div className="px-6 py-24 flex flex-col items-center justify-center">
+            <div className="py-24 flex flex-col items-center justify-center">
               <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors duration-300 bg-rose-50 dark:bg-rose-500/10">
                 <ServerCrash className="h-8 w-8 transition-colors duration-300 text-rose-600 dark:text-rose-500" />
               </div>
@@ -270,38 +261,37 @@ export default function SystemLogs() {
               </p>
             </div>
           ) : logs.length === 0 ? (
-            <div className="px-6 py-24 text-center transition-colors duration-300 text-slate-500">
+            <div className="py-24 text-center transition-colors duration-300 text-slate-500">
               No log entries match your criteria.
             </div>
           ) : (
             logs.map((log) => {
               const config = getLevelConfig(log.level);
               const Icon = config.icon;
-
               return (
                 <div
                   key={log.id}
-                  className="p-5 flex flex-col gap-3 font-mono text-sm transition-colors duration-300 hover:bg-slate-50 dark:hover:bg-slate-900/50"
+                  className="border rounded-2xl p-4 flex flex-col gap-3 shadow-sm transition-colors duration-300 bg-white dark:bg-slate-900/50 dark:border-slate-800"
                 >
                   <div className="flex items-center justify-between">
                     <Badge
-                      className={`transition-colors duration-300 ${config.badge} gap-1.5 font-bold uppercase`}
+                      className={`transition-colors duration-300 ${config.badge} gap-1.5 font-bold uppercase text-[10px] px-1.5 py-0.5`}
                     >
                       <Icon className="h-3 w-3" /> {log.level}
                     </Badge>
-                    <span className="text-xs font-medium transition-colors duration-300 text-slate-500 dark:text-slate-400">
+                    <span className="text-[11px] font-medium transition-colors duration-300 text-slate-500 dark:text-slate-400">
                       {log.timestamp}
                     </span>
                   </div>
-                  <div>
-                    <span className="text-[11px] font-semibold uppercase tracking-widest block mb-1 transition-colors duration-300 text-slate-400 dark:text-slate-500">
+                  <div className="font-mono text-xs">
+                    <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 transition-colors duration-300 text-slate-400 dark:text-slate-500">
                       Source
                     </span>
                     <span className="font-medium px-2 py-1 rounded-md border break-all transition-colors duration-300 bg-slate-50 border-slate-200 text-slate-600 dark:bg-slate-950/50 dark:border-slate-800/80 dark:text-slate-400">
                       [{log.source}]
                     </span>
                   </div>
-                  <div className="mt-1 leading-relaxed p-3 rounded-lg border shadow-inner wrap-break-word transition-colors duration-300 bg-slate-50 border-slate-200 text-slate-800 dark:bg-slate-900/50 dark:border-slate-800/50 dark:text-slate-200">
+                  <div className="mt-1 text-sm leading-relaxed p-3 rounded-lg border shadow-inner transition-colors duration-300 bg-slate-50 border-slate-200 text-slate-800 dark:bg-slate-950/50 dark:border-slate-800/50 dark:text-slate-300">
                     {log.message}
                   </div>
                 </div>
